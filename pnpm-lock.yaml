@@ -1,0 +1,32 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      dotenv:
+        specifier: ^16.0.0
+        version: 16.6.1
+      v0-sdk:
+        specifier: ^0.15.3
+        version: 0.15.3
+
+packages:
+
+  dotenv@16.6.1:
+    resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
+    engines: {node: '>=12'}
+
+  v0-sdk@0.15.3:
+    resolution: {integrity: sha512-5bjDWTt9OTdOWaT4iH0wtyi9Cji8R4woV+fYxsz1sfRFvi9GzZ0t1LwwIgphatSXhT2n9VjuTWeYjn3EVz0YKA==}
+    engines: {node: '>=22', pnpm: '>=9'}
+
+snapshots:
+
+  dotenv@16.6.1: {}
+
+  v0-sdk@0.15.3: {}

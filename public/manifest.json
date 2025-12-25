@@ -1,0 +1,44 @@
+{
+  "name": "FiveM Tools V7 - Premium FiveM Resource Hub",
+  "short_name": "FiveM Tools",
+  "description": "Free FiveM Scripts, MLO, Vehicles, EUP, Decrypt CFX V7, Upvotes Bot. QBCore, ESX, QBox Resources.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "orientation": "portrait-primary",
+  "dir": "ltr",
+  "lang": "en-US",
+  "icons": [
+    {
+      "src": "https://r2.fivemanage.com/IKG5gF4pHPjLHEhuHxEh0/Untitleddesign-26.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://r2.fivemanage.com/IKG5gF4pHPjLHEhuHxEh0/Untitleddesign-26.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://r2.fivemanage.com/IKG5gF4pHPjLHEhuHxEh0/Untitleddesign-26.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["games", "utilities", "entertainment"],
+  "keywords": ["fivem", "gta v", "scripts", "mlo", "decrypt", "upvotes", "qbcore", "esx", "gaming", "roleplay"],
+  "screenshots": [
+    {
+      "src": "https://r2.fivemanage.com/GTB2ekcdxMdnkeOh40eMi/fivembanner.gif",
+      "sizes": "1200x630",
+      "type": "image/gif"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

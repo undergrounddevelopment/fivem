@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: fivecfx-decrypt-bot
+    env: node
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: CLIENT_ID
+        sync: false
+      - key: GUILD_ID
+        sync: false
+      - key: LOG_CHANNEL_ID
+        sync: false
+      - key: VOUCH_CHANNEL_ID
+        sync: false

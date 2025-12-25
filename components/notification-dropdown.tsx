@@ -1,0 +1,144 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Bell, MessageCircle, Heart, Info, Download, Check } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
+import { useAuth } from "@/components/auth-provider"
+
+interface Notification {
+  id: string
+  userId: string
+  type: "reply" | "like" | "system" | "mention" | "download"
+  title: string
+  message: string
+  link: string | null
+  read: boolean
+  createdAt: string
+}
+
+const iconMap = {
+  reply: MessageCircle,
+  like: Heart,
+  system: Info,
+  mention: MessageCircle,
+  download: Download,
+}
+
+export function NotificationDropdown() {
+  const { user } = useAuth()
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  const unreadCount = notifications.filter((n) => !n.read).length
+
+  useEffect(() => {
+    if (!user) return
+
+    const fetchNotifications = async () => {
+      setIsLoading(true)
+      try {
+        const res = await fetch("/api/notifications")
+        if (res.ok) {
+          const data = await res.json()
+          setNotifications(Array.isArray(data) ? data : [])
+        }
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchNotifications()
+  }, [user])
+
+  const markAllRead = async () => {
+    try {
+      await fetch("/api/notifications/read", { method: "POST" })
+      setNotifications(notifications.map((n) => ({ ...n, read: true })))
+    } catch (error) {
+      console.error("Failed to mark notifications as read:", error)
+    }
+  }
+
+  if (!user) {
+    return (
+      <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
+        <Bell className="h-5 w-5" />
+      </Button>
+    )
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground">
+              {unreadCount}
+            </span>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80 bg-card border-border">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <h3 className="font-semibold text-foreground">Notifications</h3>
+          {unreadCount > 0 && (
+            <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={markAllRead}>
+              <Check className="h-3 w-3 mr-1" />
+              Mark all read
+            </Button>
+          )}
+        </div>
+        <div className="max-h-96 overflow-y-auto">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No notifications yet</p>
+            </div>
+          ) : (
+            notifications.map((notification) => {
+              const Icon = iconMap[notification.type] || Info
+              return (
+                <DropdownMenuItem
+                  key={notification.id}
+                  className={cn(
+                    "flex items-start gap-3 px-4 py-3 cursor-pointer",
+                    !notification.read && "bg-primary/5",
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-full",
+                      notification.type === "like" && "bg-pink-500/20 text-pink-500",
+                      notification.type === "reply" && "bg-blue-500/20 text-blue-500",
+                      notification.type === "system" && "bg-primary/20 text-primary",
+                      notification.type === "download" && "bg-green-500/20 text-green-500",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">{notification.title}</p>
+                    <p className="text-xs text-muted-foreground">{notification.message}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {new Date(notification.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  {!notification.read && <div className="h-2 w-2 rounded-full bg-primary" />}
+                </DropdownMenuItem>
+              )
+            })
+          )}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}

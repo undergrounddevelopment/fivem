@@ -1,0 +1,109 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env
+.env*.local
+.env.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Backup files
+*.bak
+*.backup
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+
+# Qodo/Zencoder
+.qodo/
+.zencoder/
+.zenflow/
+
+# Executables
+*.exe
+acli.exe
+
+# HTML files (if not needed)
+Dokumen_PT_LELANGMOBIL.html
+gtm-implementation.html
+
+# Old documentation (already cleaned up)
+ANALISIS_*.md
+DATABASE_*.md
+DEPLOYMENT_*.md
+FORUM_FIXES_*.md
+QUICK_FIX.md
+MIGRATE_TO_NEON.md
+SUPABASE_MIGRATION*.md
+
+# Old scripts (already cleaned up)
+check-admin.ts
+force-admin.ts
+setup-database.js
+test-*.ts
+v0-*.js
+*.py
+
+# Keep only essential files
+!SETUP_INSTRUCTIONS.md
+!FEATURE_INTEGRATION.md
+!AUTOMATIC_VERIFICATION.md
+!FULL_SETUP_GUIDE.md
+!CLEAN_STRUCTURE.md
