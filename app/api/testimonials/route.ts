@@ -24,9 +24,29 @@ export async function GET(request: NextRequest) {
 
     const query = supabase.from("testimonials").select("*").order("created_at", { ascending: false })
 
-    // Non-admin only sees featured/visible testimonials
+    // Non-admin only sees featured/visible testimonials (or all if none are featured)
     if (!isAdmin) {
-      query.eq("is_featured", true)
+      // First try to get featured testimonials
+      const { data: featuredTestimonials } = await supabase
+        .from("testimonials")
+        .select("*")
+        .eq("is_featured", true)
+        .order("created_at", { ascending: false })
+        .limit(50)
+
+      // If no featured testimonials, return all
+      if (!featuredTestimonials || featuredTestimonials.length === 0) {
+        const { data: allTestimonials, error } = await supabase
+          .from("testimonials")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(50)
+
+        if (error) throw error
+        return NextResponse.json(allTestimonials || [])
+      }
+
+      return NextResponse.json(featuredTestimonials)
     }
 
     const { data: testimonials, error } = await query.limit(50)

@@ -115,7 +115,7 @@ export const FRAMEWORK_LOGOS = {
   qbox: "https://www.qbox.re/static/screenshots/qbox-logo2.png",
   qbcore: "https://avatars.githubusercontent.com/u/81791099?s=280&v=4",
   esx: "https://docs.esx-framework.org/logo.png",
-  standalone: "/standalone-script-icon.jpg",
+  standalone: "/standalone-script-icon.svg",
 }
 
 // Sponsor Banners

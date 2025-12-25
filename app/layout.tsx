@@ -6,6 +6,11 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { AuthProvider } from "@/components/auth-provider"
 import { AppWrapper } from "@/components/app-wrapper"
 import { SpinWinNotifications } from "@/components/spin-win-notifications"
+import { ToastContainer } from "@/components/modern-toast"
+import { ErrorBoundary } from "@/components/error-boundary"
+import { HolidayEffects } from "@/components/holiday-effects"
+import { HolidayBanner } from "@/components/holiday-banner"
+import { LanguageProvider } from "@/components/language-provider"
 import { SITE_NAME, SITE_DESCRIPTION, SITE_URL, SITE_LOGO, SEO_KEYWORDS } from "@/lib/constants"
 import Script from "next/script"
 import "./globals.css"
@@ -455,10 +460,17 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </noscript>
 
         <AuthProvider>
-          <AppWrapper>
-            {children}
-            <SpinWinNotifications />
-          </AppWrapper>
+          <LanguageProvider>
+            <ErrorBoundary>
+              <HolidayBanner />
+              <AppWrapper>
+                {children}
+                <SpinWinNotifications />
+                <ToastContainer />
+                <HolidayEffects />
+              </AppWrapper>
+            </ErrorBoundary>
+          </LanguageProvider>
         </AuthProvider>
         <Analytics />
         <SpeedInsights />

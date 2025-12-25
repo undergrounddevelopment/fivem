@@ -1,3 +1,5 @@
+import { CONFIG } from "@/lib/config"
+import { sanitizeInput } from "@/lib/sanitize"
 import type { NextAuthOptions } from "next-auth"
 import DiscordProvider from "next-auth/providers/discord"
 
@@ -23,14 +25,12 @@ declare module "next-auth" {
 
 async function getAdminSupabase() {
   const { createClient } = await import("@supabase/supabase-js")
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!url || !key) {
+  
+  if (!CONFIG.supabase.url || !CONFIG.supabase.serviceKey) {
     throw new Error("Missing Supabase configuration")
   }
 
-  return createClient(url, key, {
+  return createClient(CONFIG.supabase.url, CONFIG.supabase.serviceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -41,14 +41,11 @@ async function getAdminSupabase() {
 function getProviders() {
   const providers = []
 
-  const clientId = process.env.DISCORD_CLIENT_ID
-  const clientSecret = process.env.DISCORD_CLIENT_SECRET
-
-  if (clientId && clientSecret) {
+  if (CONFIG.discord.clientId && CONFIG.discord.clientSecret) {
     providers.push(
       DiscordProvider({
-        clientId,
-        clientSecret,
+        clientId: CONFIG.discord.clientId,
+        clientSecret: CONFIG.discord.clientSecret,
         authorization: { params: { scope: "identify email" } },
       }),
     )
@@ -59,19 +56,18 @@ function getProviders() {
 
 export const authOptions: NextAuthOptions = {
   providers: getProviders(),
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: CONFIG.auth.secret,
   debug: true, // Enable debug mode to see errors
   callbacks: {
     async jwt({ token, account, profile }) {
       if (account?.provider === "discord" && profile) {
-        const discordId = (profile as any).id
-        const adminId = process.env.ADMIN_DISCORD_ID || "1047719075322810378"
-        const isAdminUser = discordId === adminId
+        const discordId = sanitizeInput((profile as any).id)
+        const isAdminUser = discordId === CONFIG.auth.adminDiscordId
 
         try {
           const supabase = await getAdminSupabase()
           const avatarUrl = (profile as any).avatar
-            ? `https://cdn.discordapp.com/avatars/${discordId}/${(profile as any).avatar}.png`
+            ? `https://cdn.discordapp.com/avatars/${discordId}/${sanitizeInput((profile as any).avatar)}.png`
             : null
 
           // Check if user exists
@@ -84,7 +80,7 @@ export const authOptions: NextAuthOptions = {
             const { data: updatedUser, error: updateError } = await supabase
               .from("users")
               .update({
-                username: (profile as any).username,
+                username: sanitizeInput((profile as any).username),
                 email: token.email,
                 avatar: avatarUrl,
                 is_admin: isAdminUser || existingUser.is_admin,
@@ -103,10 +99,10 @@ export const authOptions: NextAuthOptions = {
               .from("users")
               .insert({
                 discord_id: discordId,
-                username: (profile as any).username,
+                username: sanitizeInput((profile as any).username),
                 email: token.email,
                 avatar: avatarUrl,
-                coins: isAdminUser ? 999999 : 100,
+                coins: isAdminUser ? CONFIG.features.adminCoins : CONFIG.features.newUserCoins,
                 is_admin: isAdminUser,
                 membership: isAdminUser ? "admin" : "free",
               })
