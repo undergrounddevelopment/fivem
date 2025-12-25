@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GTM & Google Analytics Implementation - FiveM Tools</title>
+  
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-N3GV4T4M');</script>
+  <!-- End Google Tag Manager -->
+  
+  <!-- Google Consent Mode -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    
+    // EU Region - Denied by default
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'regions': ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'GB', 'IS', 'LI', 'NO', 'CH']
+    });
+    
+    // Non-EU Region - Granted by default
+    gtag('consent', 'default', {
+      'ad_storage': 'granted',
+      'ad_user_data': 'granted',
+      'ad_personalization': 'granted',
+      'analytics_storage': 'granted'
+    });
+  </script>
+  
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-30YPXMETSE"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-30YPXMETSE', {
+      page_path: window.location.pathname,
+      cookie_flags: 'SameSite=None;Secure',
+      anonymize_ip: true,
+      allow_google_signals: true,
+      send_page_view: true
+    });
+  </script>
+  
+  <!-- V0 Branding Removal Script -->
+  <script src="/v0-removal.js"></script>
+  
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      padding: 2rem;
+      margin: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #58a6ff;
+    }
+    .status {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    .success {
+      border-left: 3px solid #2ea043;
+    }
+    code {
+      background: #161b22;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      color: #79c0ff;
+    }
+  </style>
+</head>
+<body>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N3GV4T4M"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <div class="container">
+    <h1>🎯 GTM & Google Analytics Implementation</h1>
+    
+    <div class="status success">
+      <h2>✅ Google Tag Manager (GTM)</h2>
+      <p><strong>Container ID:</strong> <code>GTM-N3GV4T4M</code></p>
+      <p>GTM script dipasang di <code>&lt;head&gt;</code> dan noscript iframe di <code>&lt;body&gt;</code></p>
+    </div>
+    
+    <div class="status success">
+      <h2>✅ Google Analytics 4</h2>
+      <p><strong>Measurement ID:</strong> <code>G-30YPXMETSE</code></p>
+      <p>Configured dengan anonymize_ip, cookie flags, dan proper consent mode</p>
+    </div>
+    
+    <div class="status success">
+      <h2>✅ Google Consent Mode v2</h2>
+      <p>GDPR compliance untuk EU region dengan proper consent defaults</p>
+    </div>
+    
+    <div class="status success">
+      <h2>✅ V0 Branding Removal</h2>
+      <p>6 strategi removal dengan MutationObserver monitoring</p>
+    </div>
+    
+    <h2>📊 Testing</h2>
+    <p>Untuk memverifikasi instalasi:</p>
+    <ol>
+      <li>Install <strong>Google Tag Assistant</strong> extension</li>
+      <li>Buka halaman ini dan klik extension</li>
+      <li>Verifikasi GTM-N3GV4T4M dan G-30YPXMETSE terdeteksi</li>
+      <li>Cek Console untuk event tracking</li>
+    </ol>
+    
+    <h2>🔗 Links</h2>
+    <ul>
+      <li><a href="https://tagassistant.google.com/" target="_blank">Google Tag Assistant</a></li>
+      <li><a href="https://analytics.google.com/" target="_blank">Google Analytics Dashboard</a></li>
+      <li><a href="https://tagmanager.google.com/" target="_blank">Google Tag Manager Dashboard</a></li>
+    </ul>
+  </div>
+  
+  <script>
+    // Test tracking event
+    console.log('[GTM] Page loaded - tracking initialized');
+    
+    // Push custom event to dataLayer
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      'event': 'page_view',
+      'page_title': document.title,
+      'page_location': window.location.href,
+      'page_path': window.location.pathname
+    });
+    
+    console.log('[GTM] Custom event pushed to dataLayer');
+  </script>
+</body>
+</html>

@@ -9,6 +9,7 @@ import { Download, Star, ArrowUpRight, CheckCircle, Sparkles } from "lucide-reac
 import { useState } from "react"
 import { CoinIcon } from "@/components/coin-icon"
 import { motion } from "framer-motion"
+import { SeasonalCard } from "@/components/seasonal-card"
 
 interface AssetCardProps {
   asset: Asset
@@ -110,11 +111,12 @@ export function AssetCard({ asset, variant = "default" }: AssetCardProps) {
 
   return (
     <Link href={`/asset/${asset.id}`}>
-      <motion.div 
-        className="group relative overflow-hidden rounded-2xl glass glass-hover"
-        whileHover={{ y: -5 }}
-        transition={{ type: "spring", stiffness: 300 }}
-      >
+      <SeasonalCard>
+        <motion.div 
+          className="group relative overflow-hidden rounded-2xl glass glass-hover"
+          whileHover={{ y: -5 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
         {/* Image */}
         <div className="relative aspect-[16/10] overflow-hidden">
           <SmartImage
@@ -232,6 +234,7 @@ export function AssetCard({ asset, variant = "default" }: AssetCardProps) {
         {/* Bottom glow effect */}
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       </motion.div>
+      </SeasonalCard>
     </Link>
   )
 }

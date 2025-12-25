@@ -3,12 +3,13 @@ import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
 import { AnnouncementBar } from "@/components/announcement-bar"
 import { ModernHero } from "@/components/modern-hero"
+import { SeasonalHero } from "@/components/seasonal-hero"
 import { ModernStats } from "@/components/modern-stats"
 import { ModernFeatures } from "@/components/modern-features"
 import { TrendingSection } from "@/components/trending-section"
 import { RecentAssets } from "@/components/recent-assets"
 import { ActivityFeed } from "@/components/activity-feed"
-import { TestimonialsSection } from "@/components/testimonials-section"
+
 import { ScrollToTop } from "@/components/scroll-to-top"
 
 export const metadata: Metadata = {
@@ -52,6 +53,7 @@ export default function HomePage() {
         <AnnouncementBar />
         <Header />
         <div className="p-6 space-y-12">
+          <SeasonalHero />
           <ModernHero />
           <ModernStats />
           <ModernFeatures />
@@ -64,7 +66,7 @@ export default function HomePage() {
               <ActivityFeed />
             </div>
           </div>
-          <TestimonialsSection />
+
         </div>
       </main>
       

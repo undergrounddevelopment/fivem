@@ -8,7 +8,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useState, useEffect, useCallback } from "react"
 import { Coins, Trophy, History, Gift, Sparkles, Loader2, RotateCw } from "lucide-react"
-import confetti from "canvas-confetti"
+import dynamic from "next/dynamic"
+
+const confetti = dynamic(() => import("canvas-confetti").then(mod => mod.default), { ssr: false })
 
 const MARIO_COINS_GIF = "/single-gold-coin.png"
 
@@ -114,7 +116,9 @@ export default function SpinWheelPage() {
         setUserTickets(data.newTickets)
         setCanClaimDaily(false)
         setStreak(data.newStreak)
-        confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } })
+        if (typeof confetti === "function") {
+          confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } })
+        }
       }
     } catch (error) {
       console.error("Error claiming daily:", error)
@@ -177,10 +181,12 @@ export default function SpinWheelPage() {
         ])
 
         // Confetti for big wins
-        if (data.prize.coins >= 100) {
-          confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } })
-        } else if (data.prize.coins >= 25) {
-          confetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } })
+        if (typeof confetti === "function") {
+          if (data.prize.coins >= 100) {
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } })
+          } else if (data.prize.coins >= 25) {
+            confetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } })
+          }
         }
       }, 5000)
     } catch (error) {
@@ -236,19 +242,31 @@ export default function SpinWheelPage() {
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Wheel Section */}
             <div className="lg:col-span-2 flex flex-col items-center">
-              {/* Wheel Container */}
-              <div className="relative w-72 h-72 md:w-96 md:h-96">
+              {/* Wheel Container with 3D */}
+              <div 
+                className="relative w-72 h-72 md:w-96 md:h-96"
+                style={{
+                  transform: "perspective(1000px) rotateX(5deg)",
+                  transformStyle: "preserve-3d"
+                }}
+              >
                 {/* Outer glow ring */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-500/30 via-orange-500/30 to-red-500/30 blur-2xl animate-pulse" />
+                <div 
+                  className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-500/30 via-orange-500/30 to-red-500/30 blur-2xl animate-pulse"
+                  style={{ transform: "translateZ(-20px)" }}
+                />
 
                 {/* Wheel border */}
-                <div className="absolute inset-0 rounded-full border-4 border-yellow-500/50 shadow-2xl shadow-yellow-500/20" />
+                <div 
+                  className="absolute inset-0 rounded-full border-4 border-yellow-500/50 shadow-2xl shadow-yellow-500/20"
+                  style={{ transform: "translateZ(10px)" }}
+                />
 
                 {/* Wheel */}
                 <div
                   className="absolute inset-3 rounded-full overflow-hidden transition-transform"
                   style={{
-                    transform: `rotate(${rotation}deg)`,
+                    transform: `translateZ(20px) rotate(${rotation}deg)`,
                     transitionDuration: spinning ? "5000ms" : "0ms",
                     transitionTimingFunction: "cubic-bezier(0.17, 0.67, 0.12, 0.99)",
                   }}
@@ -299,14 +317,20 @@ export default function SpinWheelPage() {
                 </div>
 
                 {/* Center coin */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div 
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  style={{ transform: "translateZ(40px)" }}
+                >
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg flex items-center justify-center border-4 border-yellow-300/50">
                     <Coins className="h-8 w-8 text-yellow-900" />
                   </div>
                 </div>
 
                 {/* Pointer - positioned at right side (3 o'clock) */}
-                <div className="absolute top-1/2 -right-2 transform -translate-y-1/2 z-10">
+                <div 
+                  className="absolute top-1/2 -right-2 transform -translate-y-1/2 z-10"
+                  style={{ transform: "translateZ(50px) translateY(-50%)" }}
+                >
                   <div className="w-0 h-0 border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent border-r-[20px] border-r-red-500 drop-shadow-lg" />
                 </div>
               </div>

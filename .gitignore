@@ -1,38 +1,34 @@
 # Dependencies
 node_modules/
-/.pnp
+.pnp
 .pnp.js
 
 # Testing
-/coverage
+coverage/
 
 # Next.js
-/.next/
-/out/
+.next/
+out/
+build/
+dist/
 
 # Production
-/build
-
-# Misc
-.DS_Store
-*.pem
-
-# Debug
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
 
-# Local env files
+# Environment variables
 .env
 .env*.local
-.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Vercel
 .vercel
-
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
 
 # IDE
 .vscode/
@@ -40,70 +36,25 @@ next-env.d.ts
 *.swp
 *.swo
 *~
+.project
+.classpath
+.settings/
 
 # OS
-Thumbs.db
 .DS_Store
+Thumbs.db
+desktop.ini
 
-# Logs
-logs/
-*.log
-
-# Database
-*.db
-*.sqlite
-
-# Temporary files
-*.tmp
-*.temp
+# Misc
+*.pem
 .cache/
+.turbo/
+.contentlayer/
 
-# Backup files
-*.bak
-*.backup
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-ENV/
-
-# Qodo/Zencoder
-.qodo/
-.zencoder/
-.zenflow/
-
-# Executables
-*.exe
-acli.exe
-
-# HTML files (if not needed)
-Dokumen_PT_LELANGMOBIL.html
-gtm-implementation.html
-
-# Old documentation (already cleaned up)
-ANALISIS_*.md
-DATABASE_*.md
-DEPLOYMENT_*.md
-FORUM_FIXES_*.md
-QUICK_FIX.md
-MIGRATE_TO_NEON.md
-SUPABASE_MIGRATION*.md
-
-# Old scripts (already cleaned up)
-check-admin.ts
-force-admin.ts
-setup-database.js
-test-*.ts
-v0-*.js
-*.py
-
-# Keep only essential files
-!SETUP_INSTRUCTIONS.md
-!FEATURE_INTEGRATION.md
-!AUTOMATIC_VERIFICATION.md
-!FULL_SETUP_GUIDE.md
-!CLEAN_STRUCTURE.md
+# Local Netlify folder
+.netlify
