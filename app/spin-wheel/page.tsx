@@ -71,7 +71,6 @@ export default function SpinWheelPage() {
     try {
       setLoading(true)
       
-      // Fetch prizes first
       const prizesRes = await fetch("/api/spin-wheel/prizes", {
         cache: 'no-store',
         headers: { 'Cache-Control': 'no-cache' }
@@ -83,7 +82,6 @@ export default function SpinWheelPage() {
         setPrizes(fetchedPrizes)
       }
 
-      // Fetch user data if logged in
       if (user) {
         const [userRes, historyRes, dailyRes] = await Promise.all([
           fetch("/api/user/balance"),
@@ -113,11 +111,11 @@ export default function SpinWheelPage() {
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [])
 
   useEffect(() => {
     fetchData()
-  }, [fetchData])
+  }, [])
 
   const claimDailyTicket = async () => {
     if (claiming || !canClaimDaily) return
