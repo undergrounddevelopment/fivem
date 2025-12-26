@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import Image from "next/image"
 
 const COIN_GIF_URL = "https://media.tenor.com/jX0Ytn_JLcIAAAAj/mario-coins.gif"
@@ -17,7 +18,7 @@ const sizeMap = {
   xl: 56,
 }
 
-export function CoinIcon({ size = "md", className = "" }: CoinIconProps) {
+export const CoinIcon = memo(function CoinIcon({ size = "md", className = "" }: CoinIconProps) {
   const dimension = sizeMap[size]
 
   return (
@@ -28,8 +29,9 @@ export function CoinIcon({ size = "md", className = "" }: CoinIconProps) {
       height={dimension}
       className={className}
       unoptimized
+      loading="lazy"
     />
   )
-}
+})
 
 export const COIN_ICON_URL = COIN_GIF_URL

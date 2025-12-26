@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Download, Heart, Star, Eye, Package, Sparkles, Crown, ExternalLink } from "lucide-react"
+import { Download, Heart, Star, Eye, Package, Sparkles, Crown } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, memo, useCallback, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { SnowPile } from "@/components/snow-pile"
 
@@ -34,7 +34,7 @@ interface AssetCardProps {
   variant?: "default" | "compact"
 }
 
-export function AssetCard({ asset }: AssetCardProps) {
+export const AssetCard = memo(function AssetCard({ asset }: AssetCardProps) {
   const [imageError, setImageError] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   
@@ -42,12 +42,15 @@ export function AssetCard({ asset }: AssetCardProps) {
   const hasImage = imageUrl && !imageError
   const isPremium = asset.isPremium || (asset.price && Number(asset.price) > 0)
   
-  const formatNumber = (num: number | string | undefined) => {
+  const formatNumber = useCallback((num: number | string | undefined) => {
     if (!num) return "0"
     const n = typeof num === "string" ? parseInt(num) : num
     if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
     return n.toString()
-  }
+  }, [])
+  
+  const handleImageError = useCallback(() => setImageError(true), [])
+  const toggleLike = useCallback(() => setIsLiked(prev => !prev), [])
 
   return (
     <motion.div
@@ -87,7 +90,7 @@ export function AssetCard({ asset }: AssetCardProps) {
                   src={imageUrl}
                   alt={asset.title || asset.name || "Asset"}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  onError={() => setImageError(true)}
+                  onError={handleImageError}
                 />
                 {/* Overlay gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -219,7 +222,7 @@ export function AssetCard({ asset }: AssetCardProps) {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setIsLiked(!isLiked)}
+            onClick={toggleLike}
             className={cn(
               "p-3 rounded-xl border transition-all duration-300",
               isLiked 
@@ -233,4 +236,4 @@ export function AssetCard({ asset }: AssetCardProps) {
       </Card>
     </motion.div>
   )
-}
+})

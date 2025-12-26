@@ -1,16 +1,16 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-import { motion } from "framer-motion"
+import { useEffect, useRef, memo, useCallback } from "react"
 
-export function FloatingParticles() {
+export const FloatingParticles = memo(function FloatingParticles() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const animationRef = useRef<number | null>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const ctx = canvas.getContext("2d")
+    const ctx = canvas.getContext("2d", { alpha: true })
     if (!ctx) return
 
     canvas.width = window.innerWidth
@@ -25,7 +25,8 @@ export function FloatingParticles() {
       opacity: number
     }> = []
 
-    for (let i = 0; i < 50; i++) {
+    // Reduced particle count from 50 to 30 for better performance
+    for (let i = 0; i < 30; i++) {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
@@ -53,7 +54,7 @@ export function FloatingParticles() {
         ctx.fill()
       })
 
-      requestAnimationFrame(animate)
+      animationRef.current = requestAnimationFrame(animate)
     }
 
     animate()
@@ -63,15 +64,18 @@ export function FloatingParticles() {
       canvas.height = window.innerHeight
     }
 
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
+    window.addEventListener("resize", handleResize, { passive: true })
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      if (animationRef.current) cancelAnimationFrame(animationRef.current)
+    }
   }, [])
 
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-0 opacity-30"
-      style={{ mixBlendMode: "screen" }}
+      style={{ mixBlendMode: "screen", willChange: "transform" }}
     />
   )
-}
+})

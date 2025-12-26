@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useMemo } from "react"
 import { cn } from "@/lib/utils"
 
 interface SnowPileProps {
@@ -8,12 +9,10 @@ interface SnowPileProps {
   size?: "sm" | "md" | "lg"
 }
 
-export function SnowPile({ className, variant = "top", size = "md" }: SnowPileProps) {
-  const heights = {
-    sm: "h-2",
-    md: "h-3",
-    lg: "h-4"
-  }
+const heights = { sm: "h-2", md: "h-3", lg: "h-4" }
+
+export const SnowPile = memo(function SnowPile({ className, variant = "top", size = "md" }: SnowPileProps) {
+  const sparkles = useMemo(() => Array.from({ length: 5 }), [])
 
   return (
     <div 
@@ -44,7 +43,7 @@ export function SnowPile({ className, variant = "top", size = "md" }: SnowPilePr
       
       {/* Sparkle dots */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(5)].map((_, i) => (
+        {sparkles.map((_, i) => (
           <div
             key={i}
             className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
@@ -59,15 +58,9 @@ export function SnowPile({ className, variant = "top", size = "md" }: SnowPilePr
       </div>
     </div>
   )
-}
+})
 
-export function SnowPileBottom({ className, size = "md" }: Omit<SnowPileProps, "variant">) {
-  const heights = {
-    sm: "h-2",
-    md: "h-3",
-    lg: "h-4"
-  }
-
+export const SnowPileBottom = memo(function SnowPileBottom({ className, size = "md" }: Omit<SnowPileProps, "variant">) {
   return (
     <div 
       className={cn(
@@ -94,4 +87,4 @@ export function SnowPileBottom({ className, size = "md" }: Omit<SnowPileProps, "
       </svg>
     </div>
   )
-}
+})
