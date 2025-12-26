@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono, Manrope } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { AuthProvider } from "@/components/auth-provider"
@@ -29,6 +29,14 @@ const geistMono = Geist_Mono({
   display: "swap",
   preload: true,
   variable: "--font-geist-mono",
+})
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  display: "swap",
+  preload: true,
+  variable: "--font-manrope",
+  weight: ["400", "700"],
 })
 
 export const metadata: Metadata = {
@@ -148,7 +156,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`dark ${geist.variable} ${geistMono.variable}`}>
+    <html lang="en" className={`dark ${geist.variable} ${geistMono.variable} ${manrope.variable}`}>
       <head>
         <Script
           id="gtm-script"
