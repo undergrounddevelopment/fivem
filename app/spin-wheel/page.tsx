@@ -116,7 +116,7 @@ export default function SpinWheelPage() {
   const [history, setHistory] = useState<SpinHistoryItem[]>([])
   const [userCoins, setUserCoins] = useState(0)
   const [userTickets, setUserTickets] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(true)
   const [canClaimDaily, setCanClaimDaily] = useState(false)
   const [claiming, setClaiming] = useState(false)
   const [winners, setWinners] = useState<WinnerHistory[]>([])
@@ -131,9 +131,9 @@ export default function SpinWheelPage() {
       }))
     : DEFAULT_ITEMS
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (isInitial = false) => {
     try {
-      setLoading(true)
+      if (isInitial) setInitialLoading(true)
       
       const prizesRes = await fetch("/api/spin-wheel/prizes", {
         cache: 'no-store',
@@ -178,13 +178,18 @@ export default function SpinWheelPage() {
     } catch (error) {
       console.error("Error fetching data:", error)
     } finally {
-      setLoading(false)
+      if (isInitial) setInitialLoading(false)
     }
   }, [user])
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    fetchData(true)
+  }, [])
+
+  // Fetch user data when user changes (without showing loading)
+  useEffect(() => {
+    if (user) fetchData(false)
+  }, [user])
 
 
   const claimDailyTicket = async () => {
@@ -276,7 +281,7 @@ export default function SpinWheelPage() {
     }
   }
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#161920" }}>
         <Loader2 className="h-12 w-12 animate-spin text-[#6579FE]" />
