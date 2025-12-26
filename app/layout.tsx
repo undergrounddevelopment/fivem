@@ -274,7 +274,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
         <meta name="google-site-verification" content="1C9OLiOYFZjjSl2iE84XV83Ga4pT7ScpQxcUnKETTj0" />
         <link rel="dns-prefetch" href="https://cdn.discordapp.com" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://r2.fivemanage.com" />
+        <link rel="dns-prefetch" href="https://assets.codepen.io" />
         <link rel="preconnect" href="https://cdn.discordapp.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://r2.fivemanage.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

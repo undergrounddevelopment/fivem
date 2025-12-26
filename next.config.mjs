@@ -35,7 +35,24 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+    optimizePackageImports: [
+      'lucide-react', 
+      '@radix-ui/react-icons', 
+      '@radix-ui/react-dialog', 
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-select',
+      '@radix-ui/react-tooltip',
+      '@radix-ui/react-popover',
+      '@radix-ui/react-avatar',
+      '@radix-ui/react-checkbox',
+      '@radix-ui/react-switch',
+      '@radix-ui/react-label',
+      '@radix-ui/react-slot',
+      'framer-motion',
+      'date-fns',
+      'class-variance-authority'
+    ],
     scrollRestoration: true,
   },
   headers: async () => [
@@ -67,6 +84,24 @@ const nextConfig = {
       source: '/_next/image',
       headers: [
         { key: 'Cache-Control', value: 'public, max-age=86400, s-maxage=86400, stale-while-revalidate' },
+      ],
+    },
+    {
+      source: '/fonts/:path*',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+      ],
+    },
+    {
+      source: '/:path*.ico',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+      ],
+    },
+    {
+      source: '/:path*.png',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=86400, s-maxage=86400' },
       ],
     },
   ],
