@@ -110,7 +110,7 @@ export default function SpinWheelPage() {
   const wheelRef = useRef<SVGGElement>(null)
   const [prizes, setPrizes] = useState<Prize[]>([])
   const [spinning, setSpinning] = useState(false)
-  const [finalRotation, setFinalRotation] = useState(0)
+  const [wheelRotation, setWheelRotation] = useState(0)
   const [result, setResult] = useState<Prize | null>(null)
   const [showResult, setShowResult] = useState(false)
   const [history, setHistory] = useState<SpinHistoryItem[]>([])
@@ -119,7 +119,6 @@ export default function SpinWheelPage() {
   const [loading, setLoading] = useState(true)
   const [canClaimDaily, setCanClaimDaily] = useState(false)
   const [claiming, setClaiming] = useState(false)
-  // Removed isAutoSpinning state - using CSS animation instead
   const [winners, setWinners] = useState<WinnerHistory[]>([])
 
   // Items for display (use API prizes or defaults)
@@ -231,30 +230,46 @@ export default function SpinWheelPage() {
       const segmentAngle = 36 // 360 / 10 segments
       const prizeIndex = displayItems.findIndex(item => item.coins === data.prize.coins)
       const targetAngle = prizeIndex * segmentAngle
-      const newFinalRotation = finalRotation + (numSpins * 360) + targetAngle + (Math.random() * 20 - 10)
+      const targetRotation = wheelRotation + (numSpins * 360) + targetAngle + (Math.random() * 20 - 10)
 
-      // Set the final rotation - CSS transition handles the animation
-      setFinalRotation(newFinalRotation)
+      // Animate using requestAnimationFrame for smooth animation
+      const startRotation = wheelRotation
+      const duration = 5000
+      const startTime = performance.now()
 
-      // Wait for animation to complete (5 seconds)
-      setTimeout(() => {
-        setResult(data.prize)
-        setShowResult(true)
-        setSpinning(false)
-        setUserTickets(data.newTickets)
-        setUserCoins(data.newBalance)
+      const animate = (currentTime: number) => {
+        const elapsed = currentTime - startTime
+        const progress = Math.min(elapsed / duration, 1)
         
-        setHistory((prev) => [
-          {
-            id: Date.now().toString(),
-            prize_name: data.prize.name,
-            coins_won: data.prize.coins,
-            spin_type: "ticket",
-            created_at: new Date().toISOString(),
-          },
-          ...prev.slice(0, 9),
-        ])
-      }, 5000)
+        // Easing function - cubic ease out
+        const easeOut = 1 - Math.pow(1 - progress, 3)
+        const currentRotation = startRotation + (targetRotation - startRotation) * easeOut
+        
+        setWheelRotation(currentRotation)
+
+        if (progress < 1) {
+          requestAnimationFrame(animate)
+        } else {
+          setResult(data.prize)
+          setShowResult(true)
+          setSpinning(false)
+          setUserTickets(data.newTickets)
+          setUserCoins(data.newBalance)
+          
+          setHistory((prev) => [
+            {
+              id: Date.now().toString(),
+              prize_name: data.prize.name,
+              coins_won: data.prize.coins,
+              spin_type: "ticket",
+              created_at: new Date().toISOString(),
+            },
+            ...prev.slice(0, 9),
+          ])
+        }
+      }
+
+      requestAnimationFrame(animate)
     } catch (error) {
       console.error("Spin error:", error)
       setSpinning(false)
@@ -329,11 +344,9 @@ export default function SpinWheelPage() {
             {/* Rotating Wheel */}
             <g 
               ref={wheelRef}
-              className={spinning ? '' : 'wheel-idle-spin'}
               style={{ 
-                transform: spinning ? `rotate(${finalRotation}deg)` : undefined,
-                transformOrigin: "1000px 1000px",
-                transition: spinning ? "transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99)" : undefined
+                transform: `rotate(${wheelRotation}deg)`,
+                transformOrigin: "1000px 1000px"
               }}
             >
               <g transform="translate(1000, 1000)">
