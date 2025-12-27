@@ -22,6 +22,7 @@ export async function GET(
       price: asset.coin_price === 0 ? 'free' : 'premium',
       coinPrice: asset.coin_price,
       author: asset.author_name ? {
+        id: asset.author_id,
         username: asset.author_name,
         avatar: asset.author_avatar,
         membership: asset.membership

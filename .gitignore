@@ -67,3 +67,6 @@ supabase/
 config/
 secrets/
 tokens/
+
+# Sentry Config File
+.env.sentry-build-plugin

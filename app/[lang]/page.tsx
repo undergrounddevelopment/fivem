@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 
-export default function LanguageRedirect({ params }: { params: { lang: string } }) {
+export default async function LanguageRedirect({ params }: { params: Promise<{ lang: string }> }) {
+  await params
   redirect('/')
 }
 

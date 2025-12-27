@@ -41,22 +41,51 @@ export default function AssetDetailPage() {
   }, [params?.id])
 
   const handleDownload = async () => {
+    console.log('Download clicked', { session, params })
+    
     if (!session) {
-      toast.error("Please login to download")
+      console.log('No session, showing login toast')
+      toast.error("Login Required", {
+        description: "You must be logged in to download assets. Please login with Discord to continue.",
+        duration: 5000,
+      })
       return
     }
+    
+    console.log('Starting download...')
     setDownloading(true)
+    
     try {
-      const res = await fetch(`/api/assets/${params?.id}/download`, { method: "POST" })
+      const url = `/api/download/${params?.id}`
+      console.log('Fetching:', url)
+      
+      const res = await fetch(url, { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: session.user.id })
+      })
+      
+      console.log('Response status:', res.status)
       const data = await res.json()
-      if (data.success && data.downloadUrl) {
+      console.log('Response data:', data)
+      
+      if (res.ok && data.downloadUrl) {
+        console.log('Opening download:', data.downloadUrl)
         window.open(data.downloadUrl, "_blank")
-        toast.success("Download started!")
+        toast.success("Download Started!", {
+          description: data.coinsSpent ? `You spent ${data.coinsSpent} coins` : "Enjoy your download!"
+        })
       } else {
-        toast.error(data.error || "Download failed")
+        console.error('Download failed:', data)
+        toast.error("Download Failed", {
+          description: data.error || "Something went wrong. Please try again."
+        })
       }
     } catch (error) {
-      toast.error("Download failed")
+      console.error("Download error:", error)
+      toast.error("Download Failed", {
+        description: "Network error. Please check your connection."
+      })
     } finally {
       setDownloading(false)
     }

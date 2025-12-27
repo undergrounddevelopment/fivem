@@ -102,7 +102,18 @@ export function ModernNavbar() {
                 <Link href="/dashboard">
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button variant="ghost" className="glass-hover gap-2">
-                      <img src={user.avatar} alt="" className="w-7 h-7 rounded-full ring-2 ring-primary/20" />
+                      {user.avatar ? (
+                        <img 
+                          src={user.avatar} 
+                          alt={user.username || 'User avatar'} 
+                          className="w-7 h-7 rounded-full ring-2 ring-primary/20" 
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder-user.jpg'
+                          }}
+                        />
+                      ) : (
+                        <User className="w-7 h-7" />
+                      )}
                       <span className="hidden sm:inline">{user.username}</span>
                     </Button>
                   </motion.div>

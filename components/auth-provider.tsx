@@ -6,7 +6,11 @@ import { useEffect, useState, useCallback } from "react"
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   return (
-    <SessionProvider refetchInterval={5 * 60} refetchOnWindowFocus={true}>
+    <SessionProvider 
+      refetchInterval={0} // Disable auto refetch - reduces unnecessary API calls
+      refetchOnWindowFocus={false} // Disable refetch on window focus - prevents logout issues
+      refetchWhenOffline={false}
+    >
       {children}
     </SessionProvider>
   )
@@ -42,20 +46,22 @@ export function useAuth() {
     : null
 
   // Force check admin status from API if needed
-  const checkAdminStatus = async () => {
+  const checkAdminStatus = useCallback(async () => {
     if (!user?.id) return false
     try {
       const res = await fetch("/api/force-admin")
+      if (!res.ok) throw new Error('Failed to check admin status')
       const data = await res.json()
       if (data.currentUser?.isAdmin && !user.isAdmin) {
         await update() // Refresh session
         return true
       }
       return data.currentUser?.isAdmin || false
-    } catch {
+    } catch (error) {
+      console.error('Admin check error:', error)
       return false
     }
-  }
+  }, [user?.id, user?.isAdmin, update])
 
   const refreshUser = useCallback(async () => {
     try {

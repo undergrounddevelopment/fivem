@@ -41,7 +41,9 @@ export default function AdminCoinsPage() {
         const res = await fetch("/api/users")
         const data = await res.json()
         setUsers(data.users || [])
-      } catch (e) {}
+      } catch (e) {
+        console.error("Failed to load users:", e)
+      }
     }
     loadUsers()
   }, [])

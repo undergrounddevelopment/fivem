@@ -16,10 +16,13 @@ export function ModernFooter() {
               <div className="relative w-12 h-12 rounded-xl overflow-hidden ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all glow-sm">
                 <Image 
                   src={SITE_LOGO} 
-                  alt={SITE_NAME} 
+                  alt={`${SITE_NAME} Logo`} 
                   fill 
                   className="object-cover" 
-                  unoptimized 
+                  unoptimized
+                  onError={(e) => {
+                    e.currentTarget.src = '/placeholder-logo.png'
+                  }}
                 />
               </div>
               <span className="font-bold text-lg gradient-text group-hover:opacity-80 transition-opacity">{SITE_NAME}</span>

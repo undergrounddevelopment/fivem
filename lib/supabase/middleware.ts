@@ -6,9 +6,17 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase credentials')
+    return { supabaseResponse, user: null, supabase: null }
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
@@ -25,9 +33,14 @@ export async function updateSession(request: NextRequest) {
     },
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  return { supabaseResponse, user, supabase }
+    return { supabaseResponse, user, supabase }
+  } catch (error) {
+    console.error('Supabase auth error:', error)
+    return { supabaseResponse, user: null, supabase }
+  }
 }

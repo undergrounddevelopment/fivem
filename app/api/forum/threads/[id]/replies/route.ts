@@ -155,7 +155,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         title: "New Reply",
         message: `${author?.username || 'Someone'} replied to your thread: ${thread.title}`,
         link: `/forum/thread/${id}`,
-      }).then()
+      })
     }
 
     // Log activity (non-blocking)
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       type: "reply",
       action: `replied to thread "${thread.title}"`,
       target_id: id,
-    }).then()
+    })
 
     const formattedReply = {
       id: reply.id,

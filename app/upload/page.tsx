@@ -155,18 +155,24 @@ function ThreadEditor({
     }
   }
 
-  const renderMarkdown = (text: string) => {
-    return text
+  const renderMarkdown = useCallback((text: string) => {
+    // Sanitize input to prevent XSS
+    const sanitized = text
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#x27;")
+
+    return sanitized
       .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
       .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold mt-4 mb-2">$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mt-4 mb-2">$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-4 mb-2">$1</h1>')
-      .replace(/^- (.*$)/gim, '<li class="ml-4">$1</li>')
-      .replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-primary pl-4 italic my-2">$1</blockquote>')
-      .replace(/`(.*?)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-sm">$1</code>')
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/#{1,6}\s+(.+)/g, (match, content) => {
+        const level = match.match(/^#+/)?.[0].length || 1
+        return `<h${level}>${content}</h${level}>`
+      })
       .replace(/\n/g, "<br>")
-  }
+  }, [])
 
   return (
     <div className="border border-border rounded-xl overflow-hidden bg-card">
@@ -573,7 +579,9 @@ export default function UploadPage() {
             setAutoDetected(true)
             setDetectionConfidence(result.confidence || 0)
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error("Auto-detection failed:", e)
+        }
       }
     },
     [formData.description],

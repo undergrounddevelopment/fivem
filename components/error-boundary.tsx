@@ -26,6 +26,11 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: any) {
     console.error("ErrorBoundary caught:", error, errorInfo)
+    
+    // Log to external service in production
+    if (process.env.NODE_ENV === 'production') {
+      // TODO: Send to error tracking service (Sentry, etc.)
+    }
   }
 
   render() {

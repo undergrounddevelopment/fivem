@@ -39,6 +39,7 @@ export function ActivityFeed() {
         }
       } catch (error) {
         console.error("Failed to fetch activity:", error)
+        setActivities([]) // Set empty on error
       } finally {
         setIsLoading(false)
       }

@@ -18,6 +18,9 @@ interface PublicNotification {
 }
 
 export function PublicNotifications() {
+  // Temporarily disabled - API not available
+  return null
+  
   const [notifications, setNotifications] = useState<PublicNotification[]>([])
   const [dismissedIds, setDismissedIds] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)

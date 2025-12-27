@@ -162,9 +162,12 @@ export function GlobalSearch() {
                               <div className="h-10 w-10 rounded-lg glass flex items-center justify-center overflow-hidden">
                                 {asset.thumbnail ? (
                                   <img
-                                    src={asset.thumbnail || "/placeholder.svg"}
-                                    alt=""
+                                    src={asset.thumbnail}
+                                    alt={asset.title || 'Asset thumbnail'}
                                     className="h-full w-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.src = '/placeholder.svg'
+                                    }}
                                   />
                                 ) : (
                                   <FileCode className="h-5 w-5 text-[var(--primary)]" />
@@ -227,8 +230,11 @@ export function GlobalSearch() {
                             >
                               <img
                                 src={user.avatar || "/placeholder.svg?height=40&width=40&query=user"}
-                                alt=""
+                                alt={user.username || 'User avatar'}
                                 className="h-10 w-10 rounded-full object-cover ring-2 ring-[var(--primary)]/20"
+                                onError={(e) => {
+                                  e.currentTarget.src = '/placeholder-user.jpg'
+                                }}
                               />
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium text-[var(--text)]">{user.username}</p>

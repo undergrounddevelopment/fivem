@@ -72,7 +72,14 @@ export default function DecryptPage() {
       // Additional structured data can be added here
     }
 
-    document.head.innerHTML += `<script type="application/ld+json">${JSON.stringify(structuredData)}</script>`
+    const script = document.createElement('script')
+    script.type = 'application/ld+json'
+    script.textContent = JSON.stringify(structuredData)
+    document.head.appendChild(script)
+    
+    return () => {
+      script.remove()
+    }
   }, [])
 
   return (

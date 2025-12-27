@@ -53,7 +53,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       type: "admin_action",
       action: `Updated thread "${thread.title || id}"`,
       target_id: id,
-    }).then()
+    })
 
     return NextResponse.json({ success: true, thread })
   } catch (error: any) {

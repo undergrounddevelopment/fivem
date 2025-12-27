@@ -91,13 +91,16 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
     setError("")
 
     try {
+      console.log("Starting download for asset:", assetId)
       const res = await fetch(`/api/download/${assetId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user?.id }),
       })
 
+      console.log("Download response status:", res.status)
       const data = await res.json()
+      console.log("Download response data:", data)
 
       if (!res.ok) {
         if (data.error === "Insufficient coins") {
@@ -108,6 +111,10 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
           setShowModal(false)
           return
         }
+        toast.error("Download Failed", {
+          description: data.error || "Download failed",
+          duration: 5000,
+        })
         setError(data.error || "Download failed")
         return
       }

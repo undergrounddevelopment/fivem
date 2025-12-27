@@ -63,13 +63,6 @@ export const security = {
   verifyCSRFToken(token: string, sessionId: string): boolean {
     if (!token || !sessionId) return false
     try {
-      const decoded = Buffer.from(token, "base64url").toString()
-      const [, timestamp] = decoded.split(":")
-      const tokenAge = Date.now() - Number.parseInt(timestamp)
-
-      // Token expires after 1 hour
-      if (tokenAge > 3600000) return false
-
       const expected = this.generateCSRFToken(sessionId)
       return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected))
     } catch {

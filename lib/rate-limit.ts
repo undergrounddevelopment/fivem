@@ -3,12 +3,24 @@ import { NextRequest } from 'next/server'
 
 const rateLimit = new Map<string, { count: number; resetTime: number }>()
 
+// Cleanup old entries every 5 minutes
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now()
+    for (const [key, value] of rateLimit.entries()) {
+      if (now > value.resetTime) {
+        rateLimit.delete(key)
+      }
+    }
+  }, 300000)
+}
+
 export function checkRateLimit(
   req: NextRequest,
   limit: number = 10,
   windowMs: number = 60000
 ): { success: boolean; remaining: number } {
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  const ip = (req as any).ip || req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
   const now = Date.now()
   const record = rateLimit.get(ip)
 
@@ -25,12 +37,19 @@ export function checkRateLimit(
   return { success: true, remaining: limit - record.count }
 }
 
-// Cleanup old entries every 5 minutes
-setInterval(() => {
+export function clearRateLimit(identifier: string): void {
+  rateLimit.delete(identifier)
+}
+
+export function getRateLimitStats(): { total: number; blocked: number } {
+  let blocked = 0
   const now = Date.now()
-  for (const [key, value] of rateLimit.entries()) {
-    if (now > value.resetTime) {
-      rateLimit.delete(key)
+  
+  for (const [, value] of rateLimit.entries()) {
+    if (value.count >= 10 && now < value.resetTime) {
+      blocked++
     }
   }
-}, 300000)
+  
+  return { total: rateLimit.size, blocked }
+}

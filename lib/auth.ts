@@ -20,6 +20,7 @@ declare module "next-auth" {
     coins?: number
     membership?: string
     isAdmin?: boolean
+    lastSync?: number
   }
 }
 
@@ -57,9 +58,25 @@ function getProviders() {
 export const authOptions: NextAuthOptions = {
   providers: getProviders(),
   secret: CONFIG.auth.secret,
-  debug: process.env.NODE_ENV === 'development', // Only enable debug in development
+  debug: process.env.NODE_ENV === 'development',
+  logger: {
+    error: (code, metadata) => {
+      console.error('[NextAuth Error]', code, metadata)
+    },
+    warn: (code) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[NextAuth Warning]', code)
+      }
+    },
+    debug: (code, metadata) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[NextAuth Debug]', code, metadata)
+      }
+    },
+  },
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile, trigger }) {
+      // Only sync with database on sign in, not on every token refresh
       if (account?.provider === "discord" && profile) {
         const discordId = sanitizeInput((profile as any).id)
         const isAdminUser = discordId === CONFIG.auth.adminDiscordId
@@ -118,6 +135,7 @@ export const authOptions: NextAuthOptions = {
           token.membership = dbUser.membership
           token.isAdmin = dbUser.is_admin
           token.sub = dbUser.discord_id
+          token.lastSync = Date.now()
         } catch (dbError: any) {
           console.error("[NextAuth] Database error:", dbError)
           // Set defaults even on error
@@ -125,14 +143,15 @@ export const authOptions: NextAuthOptions = {
           token.coins = 100
           token.membership = "free"
           token.isAdmin = isAdminUser
+          token.lastSync = Date.now()
         }
-      } else if (token.discordId) {
-        // Refresh token data from database
+      } else if (token.discordId && trigger === "update") {
+        // Only refresh from DB when explicitly triggered (manual refresh)
         try {
           const supabase = await getAdminSupabase()
           const { data: dbUser } = await supabase
             .from("users")
-            .select("*")
+            .select("coins, membership, is_admin")
             .eq("discord_id", token.discordId as string)
             .single()
 
@@ -140,36 +159,22 @@ export const authOptions: NextAuthOptions = {
             token.coins = dbUser.coins
             token.membership = dbUser.membership
             token.isAdmin = dbUser.is_admin
+            token.lastSync = Date.now()
           }
         } catch (error) {
           // Keep existing token data on error
         }
       }
+      // For normal token refresh, just return existing token data (no DB call)
       return token
     },
     async session({ session, token }) {
+      // Use token data directly - no database call needed
       if (token.discordId) {
-        try {
-          const supabase = await getAdminSupabase()
-          const { data: dbUser } = await supabase
-            .from("users")
-            .select("*")
-            .eq("discord_id", token.discordId as string)
-            .single()
-
-          if (dbUser) {
-            session.user.id = dbUser.discord_id
-            session.user.coins = dbUser.coins
-            session.user.membership = dbUser.membership
-            session.user.isAdmin = dbUser.is_admin
-          }
-        } catch (error) {
-          // Use token data as fallback
-          session.user.id = token.discordId as string
-          session.user.coins = token.coins as number
-          session.user.membership = token.membership as string
-          session.user.isAdmin = token.isAdmin as boolean
-        }
+        session.user.id = token.discordId as string
+        session.user.coins = token.coins as number
+        session.user.membership = token.membership as string
+        session.user.isAdmin = token.isAdmin as boolean
       }
       return session
     },

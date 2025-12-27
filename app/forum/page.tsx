@@ -180,8 +180,8 @@ export default function ForumPage() {
     }
     fetchOnlineUsers()
 
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchOnlineUsers, 30000)
+    // Refresh every 60 seconds (reduced frequency for better performance)
+    const interval = setInterval(fetchOnlineUsers, 60000)
     return () => clearInterval(interval)
   }, [])
 

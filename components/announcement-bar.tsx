@@ -18,6 +18,9 @@ interface Announcement {
 }
 
 export function AnnouncementBar() {
+  // Temporarily disabled - API not available
+  return null
+  
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
@@ -27,10 +30,12 @@ export function AnnouncementBar() {
   const fetchAnnouncements = useCallback(async () => {
     try {
       const res = await fetch("/api/announcements")
+      if (!res.ok) throw new Error('Failed to fetch')
       const data = await res.json()
       setAnnouncements(data.announcements || [])
     } catch (error) {
       console.error("Failed to fetch announcements:", error)
+      setAnnouncements([]) // Set empty array on error
     } finally {
       setIsLoading(false)
     }

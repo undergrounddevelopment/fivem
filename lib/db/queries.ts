@@ -424,7 +424,7 @@ export const assetsQueries = {
 
   getById: async (id: string) => {
     const result = await sql`
-      SELECT a.*, u.username as author_name, u.avatar as author_avatar, u.membership
+      SELECT a.*, u.discord_id as author_id, u.username as author_name, u.avatar as author_avatar, u.membership
       FROM assets a
       LEFT JOIN users u ON a.author_id = u.discord_id
       WHERE a.id = ${id}

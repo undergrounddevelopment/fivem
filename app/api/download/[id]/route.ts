@@ -3,6 +3,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { logger } from "@/lib/logger"
+import { logErrorToHTML } from "@/lib/error-logger"
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -18,12 +19,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (assetError || !asset) {
       console.error("Asset error:", assetError)
+      logErrorToHTML(assetError, `Download API - Asset not found: ${id}`)
       return NextResponse.json({ error: "Asset not found" }, { status: 404 })
     }
 
     // Check if download_link exists
     if (!asset.download_link) {
       console.error("No download_link for asset:", id)
+      logErrorToHTML(new Error("No download_link"), `Download API - Missing download_link for asset: ${id}`)
       return NextResponse.json({ error: "Download link not available" }, { status: 400 })
     }
 
@@ -35,6 +38,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (userError || !user) {
       console.error("User error:", userError)
+      logErrorToHTML(userError, `Download API - User not found: ${session.user.id}`)
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
@@ -116,6 +120,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       assetId: id,
       endpoint: `/api/download/${id}`,
     })
+    logErrorToHTML(error, `Download API - Internal error for asset: ${id}`)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
