@@ -19,7 +19,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     // Update user profile
     const { data, error } = await supabase

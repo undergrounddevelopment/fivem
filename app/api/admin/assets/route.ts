@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     if (!(await verifyAdmin(session, supabase))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
@@ -94,7 +94,7 @@ export async function PATCH(request: NextRequest) {
 
     const { assetId, status } = await request.json()
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     if (!(await verifyAdmin(session, supabase))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })

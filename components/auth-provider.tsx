@@ -37,7 +37,7 @@ export function useAuth() {
         membership: session.user.membership || "free",
         coins: session.user.coins || 100,
         isAdmin: session.user.isAdmin === true,
-        bio: session.user.bio || "",
+        bio: (session.user as any).bio || "",
       }
     : null
 

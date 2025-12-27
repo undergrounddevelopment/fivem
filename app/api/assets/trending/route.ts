@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     const { data: assets, error } = await supabase
       .from("assets")

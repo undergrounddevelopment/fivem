@@ -8,7 +8,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     const { data: replies, error } = await supabase
       .from("forum_replies")
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const sanitizedContent = content.trim()
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     // Check if thread exists and is not locked
     const { data: thread, error: threadError } = await supabase

@@ -12,7 +12,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     const { data: asset, error: assetError } = await supabase.from("assets").select("*").eq("id", id).single()
 

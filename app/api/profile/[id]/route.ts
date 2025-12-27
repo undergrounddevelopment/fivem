@@ -5,7 +5,7 @@ import { logger } from "@/lib/logger"
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   try {
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     const { data: user, error } = await supabase.from("users").select("*").eq("discord_id", id).single()
 

@@ -19,7 +19,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Invalid input" }, { status: 400 })
     }
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     if (action === "ban") {
       const ban = Boolean(body.ban)
@@ -172,7 +172,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: "Cannot delete own account" }, { status: 400 })
     }
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     // Get user info before deletion for logging
     const { data: targetUser, error: fetchError } = await supabase

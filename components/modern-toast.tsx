@@ -61,7 +61,6 @@ const ToastContainer = () => (
     theme="dark"
     className="glass-effect border border-[hsl(330,100%,65%)]/30"
     toastClassName="glass-effect border border-[hsl(330,100%,65%)]/30"
-    bodyClassName="text-white"
   />
 );
 

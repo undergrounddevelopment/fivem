@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ results: [], total: 0 })
     }
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
     const results: any = { assets: [], threads: [], users: [] }
     let total = 0
 

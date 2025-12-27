@@ -61,7 +61,7 @@ export default function MessagesPage() {
   const { user, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const toUserId = searchParams.get("to")
+  const toUserId = searchParams?.get("to") ?? null
 
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [newMessage, setNewMessage] = useState("")

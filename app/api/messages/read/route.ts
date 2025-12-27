@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing otherUserId" }, { status: 400 })
     }
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
     const currentUserId = (session.user as any).discord_id || session.user.id
 
     const { error } = await supabase

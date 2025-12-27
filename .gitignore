@@ -59,8 +59,9 @@ build/
 .vscode/
 .idea/
 
-# Supabase
+# Supabase (only supabase/ folder, not lib/supabase)
 supabase/
+!lib/supabase/middleware.ts
 
 # Sensitive files
 config/

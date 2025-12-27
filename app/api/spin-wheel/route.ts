@@ -49,78 +49,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/spin-wheel/spin
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { userId } = body
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'User ID required' },
-        { status: 400 }
-      )
-    }
-
-    // Use ticket
-    const ticketResult = await db.spinWheel.useTicket(userId)
-    
-    if (!ticketResult.success) {
-      return NextResponse.json(
-        { success: false, error: ticketResult.error },
-        { status: 400 }
-      )
-    }
-
-    // Get prizes
-    const prizes = await db.spinWheel.getPrizes()
-    
-    // Calculate winner based on probability
-    const random = Math.random() * 100
-    let cumulative = 0
-    let winner = prizes[0]
-
-    for (const prize of prizes) {
-      cumulative += parseFloat(prize.probability.toString())
-      if (random <= cumulative) {
-        winner = prize
-        break
-      }
-    }
-
-    // Record spin
-    const spinRecord = await db.spinWheel.recordSpin({
-      user_id: userId,
-      prize_id: winner.id,
-      prize_name: winner.name,
-      prize_type: winner.type,
-      prize_value: winner.value,
-    })
-
-    // Award prize
-    if (winner.type === 'coins' && winner.value > 0) {
-      await db.coins.addCoins({
-        user_id: userId,
-        amount: winner.value,
-        type: 'spin',
-        description: `Won ${winner.value} coins from spin wheel`,
-      })
-    } else if (winner.type === 'ticket') {
-      await db.spinWheel.addTicket(userId, 'reward')
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        prize: winner,
-        record: spinRecord[0],
-      },
-    })
-  } catch (error) {
-    console.error('Error spinning wheel:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to spin wheel' },
-      { status: 500 }
-    )
-  }
+// POST - DISABLED for security - use /api/spin-wheel/spin instead
+// This endpoint was insecure because it accepted userId from body without authentication
+export async function POST() {
+  return NextResponse.json(
+    { success: false, error: 'This endpoint is disabled. Use /api/spin-wheel/spin instead.' },
+    { status: 403 }
+  )
 }

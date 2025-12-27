@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const limit = 50
     const offset = (page - 1) * limit
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     let query = supabase
       .from("users")

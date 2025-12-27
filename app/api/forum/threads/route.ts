@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 
 // GET /api/forum/threads - Get all threads
@@ -53,11 +55,23 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/forum/threads - Create new thread
+// POST /api/forum/threads - Create new thread (SECURED)
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Require authentication
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
-    const { title, content, category_id, author_id, images } = body
+    const { title, content, category_id, images } = body
+    
+    // SECURITY: Use session user ID, NOT from body (prevents impersonation)
+    const author_id = session.user.id
 
     // Validation
     if (!title || title.length < 1 || title.length > 200) {

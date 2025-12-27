@@ -42,6 +42,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const defaultStyle = variant === "default" ? { background: "var(--primary)", ...style } : style
 
     if (animated) {
+      const { onDrag, onDragStart, onDragEnd, ...motionProps } = props as any
       return (
         <motion.button
           whileHover={{ scale: 1.03 }}
@@ -49,7 +50,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           className={buttonClasses}
           style={defaultStyle}
           ref={ref}
-          {...props}
+          {...motionProps}
         />
       )
     }

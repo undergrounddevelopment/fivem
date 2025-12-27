@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     const { notificationId } = await request.json()
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     if (notificationId) {
       await supabase.from("notifications").update({ is_read: true }).eq("id", notificationId)

@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 
-// GET /api/coins/balance?userId=xxx
-export async function GET(request: NextRequest) {
+// GET /api/coins/balance - SECURED: requires authentication
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-
-    if (!userId) {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { success: false, error: 'User ID required' },
-        { status: 400 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       )
     }
 
-    const balance = await db.coins.getUserBalance(userId)
+    const balance = await db.coins.getUserBalance(session.user.id)
 
     return NextResponse.json({
       success: true,
@@ -29,18 +29,20 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/coins/claim-daily
-export async function POST(request: NextRequest) {
+// POST /api/coins/claim-daily - SECURED: requires authentication
+export async function POST() {
   try {
-    const body = await request.json()
-    const { userId, claimType = 'coins', amount = 100 } = body
-
-    if (!userId) {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { success: false, error: 'User ID required' },
-        { status: 400 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       )
     }
+
+    const userId = session.user.id
+    const claimType = 'coins'
+    const amount = 100
 
     // Check if can claim
     const canClaim = await db.coins.canClaimDaily(userId, claimType)

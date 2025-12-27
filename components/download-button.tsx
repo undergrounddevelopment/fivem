@@ -52,8 +52,16 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
 
   const handleDownload = async () => {
     if (!user) {
-      toast.error("Please login to download", {
-        description: "You need to be logged in to download assets",
+      toast.error("Login Required", {
+        description: "You must be logged in to download assets. Click the Login button to continue.",
+        action: {
+          label: "Login",
+          onClick: () => {
+            const { signIn } = require("next-auth/react")
+            signIn("discord")
+          },
+        },
+        duration: 5000,
       })
       return
     }

@@ -38,7 +38,7 @@ class Logger {
     console.warn(`[WARN] ${message}`, data || '')
   }
 
-  error(message: string, error?: any, context?: { userId?: string; ip?: string; endpoint?: string }) {
+  error(message: string, error?: any, context?: { userId?: string; ip?: string; endpoint?: string; [key: string]: any }) {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level: 'ERROR',
@@ -50,7 +50,7 @@ class Logger {
     console.error(`[ERROR] ${message}`, error)
   }
 
-  critical(message: string, error?: any, context?: { userId?: string; ip?: string; endpoint?: string }) {
+  critical(message: string, error?: any, context?: { userId?: string; ip?: string; endpoint?: string; [key: string]: any }) {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level: 'CRITICAL',

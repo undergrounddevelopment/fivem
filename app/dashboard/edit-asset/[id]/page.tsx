@@ -71,7 +71,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
         const data = await response.json()
 
         // Check ownership
-        if (data.author_id !== user?.discord_id) {
+        if (data.author_id !== user?.discordId) {
           toast.error("You don't have permission to edit this asset")
           router.push(`/asset/${resolvedParams.id}`)
           return

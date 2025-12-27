@@ -4,7 +4,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase/server"
 export async function POST() {
   try {
     const adminId = process.env.ADMIN_DISCORD_ID || "1047719075322810378"
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     // Check if already seeded
     const { count: existingAssets } = await supabase.from("assets").select("*", { count: "exact", head: true })

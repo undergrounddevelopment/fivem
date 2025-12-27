@@ -165,10 +165,10 @@ export const authOptions: NextAuthOptions = {
           }
         } catch (error) {
           // Use token data as fallback
-          session.user.id = token.discordId
-          session.user.coins = token.coins
-          session.user.membership = token.membership
-          session.user.isAdmin = token.isAdmin
+          session.user.id = token.discordId as string
+          session.user.coins = token.coins as number
+          session.user.membership = token.membership as string
+          session.user.isAdmin = token.isAdmin as boolean
         }
       }
       return session

@@ -233,8 +233,8 @@ export default function AdminAssetsPage() {
   }
 
   const insertEmoji = (emoji: string) => {
-    const field = activeTab === "basic" ? "description" : activeTab
-    if (field === "basic") {
+    const field = (activeTab as string) === "basic" ? "description" : activeTab
+    if ((field as string) === "basic") {
       setEditForm((prev) => ({
         ...prev,
         description: (prev.description || "") + emoji,

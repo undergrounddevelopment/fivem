@@ -56,7 +56,7 @@ export async function logDownloadAttempt(
   ipAddress: string,
   userAgent: string
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   
   await supabase.from('linkvertise_downloads').insert({
     asset_id: assetId,

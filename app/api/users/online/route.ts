@@ -10,7 +10,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 })
     }
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
 

@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 })
     }
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     // Get counts
     const [usersResult, assetsResult, downloadsResult, threadsResult, repliesResult] = await Promise.all([

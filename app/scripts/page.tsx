@@ -134,7 +134,7 @@ export default function ScriptsPage() {
                     </div>
                     <div className="aspect-video relative overflow-hidden">
                       <img
-                        src={asset.thumbnail || "/placeholder.svg?height=200&width=400&query=script"}
+                        src={(asset as any).thumbnail || "/placeholder.svg?height=200&width=400&query=script"}
                         alt={asset.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />

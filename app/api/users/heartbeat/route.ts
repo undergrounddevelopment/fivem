@@ -11,7 +11,7 @@ export async function POST() {
       return NextResponse.json({ success: false }, { status: 401 })
     }
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     // Update user's last_seen timestamp
     const { error } = await supabase

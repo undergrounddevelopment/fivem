@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Missing userId parameter" }, { status: 400 })
     }
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
     const currentUserId = (session.user as any).discord_id || session.user.id
 
     // Fetch messages between the two users
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
     const senderId = (session.user as any).discord_id || session.user.id
 
     // Check if receiver exists

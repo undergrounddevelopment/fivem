@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { assetId } = await req.json();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: settings } = await supabase
     .from('site_settings')

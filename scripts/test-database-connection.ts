@@ -5,6 +5,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+// @ts-ignore
 import { Client } from 'pg'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://linnqtixdfjwbrixitrb.supabase.co'
@@ -67,7 +68,7 @@ async function testPostgresConnection() {
 
     console.log(`📋 Found ${tables.rows.length} tables in public schema`)
     if (tables.rows.length > 0) {
-      console.log('Tables:', tables.rows.map((r) => r.table_name).join(', '))
+      console.log('Tables:', tables.rows.map((r: any) => r.table_name).join(', '))
     }
 
     await client.end()

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { sendDiscordNotification } from '@/lib/discord-webhook'
 
 export async function GET(request: NextRequest) {
   try {
@@ -70,6 +71,18 @@ export async function POST(request: NextRequest) {
       tags: data.tags || [],
       author_id: session.user.id,
     })
+
+    // Send Discord notification for new asset
+    if (asset && asset[0]) {
+      await sendDiscordNotification({
+        title: asset[0].title,
+        description: asset[0].description,
+        category: asset[0].category,
+        thumbnail: asset[0].thumbnail,
+        author: { username: session.user.name || 'Unknown' },
+        id: asset[0].id,
+      })
+    }
 
     return NextResponse.json(asset[0], { status: 201 })
   } catch (error) {

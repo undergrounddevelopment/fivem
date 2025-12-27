@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Gift, Sparkles, Flame } from "lucide-react"
+// @ts-ignore
 import confetti from "canvas-confetti"
 
 const SPIN_TICKET_ICON = "https://cdn3d.iconscout.com/3d/premium/thumb/ticket-3d-icon-png-download-9964703.png"

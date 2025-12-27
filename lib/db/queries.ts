@@ -82,10 +82,21 @@ export const forumQueries = {
     is_pinned: boolean
     is_locked: boolean
   }>) => {
-    const updates = Object.entries(data).map(([key, value]) => sql`${sql(key)} = ${value}`)
+    const title = data.title ?? null
+    const content = data.content ?? null
+    const status = data.status ?? null
+    const is_pinned = data.is_pinned ?? null
+    const is_locked = data.is_locked ?? null
+    
     return await sql`
       UPDATE forum_threads 
-      SET ${sql(updates)}, updated_at = NOW()
+      SET 
+        title = COALESCE(${title}, title),
+        content = COALESCE(${content}, content),
+        status = COALESCE(${status}, status),
+        is_pinned = COALESCE(${is_pinned}, is_pinned),
+        is_locked = COALESCE(${is_locked}, is_locked),
+        updated_at = NOW()
       WHERE id = ${id}
       RETURNING *
     `
@@ -207,20 +218,75 @@ export const spinWheelQueries = {
   },
 
   getTickets: async (userId: string) => {
-    return await sql`
+    // First check spin_wheel_tickets table
+    const tableTickets = await sql`
       SELECT * FROM spin_wheel_tickets 
       WHERE user_id = ${userId} 
       AND is_used = false
       AND (expires_at IS NULL OR expires_at > NOW())
       ORDER BY created_at ASC
     `
+    
+    // Also check users.spin_tickets field (legacy) - try both discord_id and id
+    const userTickets = await sql`
+      SELECT spin_tickets FROM users 
+      WHERE discord_id = ${userId} OR id::text = ${userId}
+    `
+    const legacyCount = userTickets[0]?.spin_tickets || 0
+    
+    console.log('[getTickets] userId:', userId, 'tableTickets:', tableTickets?.length, 'legacyCount:', legacyCount)
+    
+    // Return combined count as array-like structure
+    const totalCount = (tableTickets?.length || 0) + legacyCount
+    
+    // Return array with length representing total tickets
+    return Array.from({ length: totalCount }, (_, i) => ({ 
+      id: i < (tableTickets?.length || 0) ? tableTickets[i]?.id : `legacy_${i}`,
+      source: i < (tableTickets?.length || 0) ? 'table' : 'legacy'
+    }))
   },
 
   useTicket: async (userId: string) => {
-    const result = await sql`
-      SELECT use_spin_ticket(${userId}) as result
+    // First try to use ticket from spin_wheel_tickets table
+    const tableTickets = await sql`
+      SELECT id FROM spin_wheel_tickets 
+      WHERE user_id = ${userId} 
+      AND is_used = false
+      AND (expires_at IS NULL OR expires_at > NOW())
+      ORDER BY created_at ASC
+      LIMIT 1
     `
-    return result[0]?.result
+    
+    if (tableTickets && tableTickets.length > 0) {
+      // Mark the ticket as used
+      await sql`
+        UPDATE spin_wheel_tickets 
+        SET is_used = true, used_at = NOW()
+        WHERE id = ${tableTickets[0].id}
+      `
+      return { success: true }
+    }
+    
+    // Fallback: check users.spin_tickets (legacy field) - try both discord_id and id
+    const userTickets = await sql`
+      SELECT id, discord_id, spin_tickets FROM users 
+      WHERE discord_id = ${userId} OR id::text = ${userId}
+    `
+    const legacyCount = userTickets[0]?.spin_tickets || 0
+    const matchedDiscordId = userTickets[0]?.discord_id
+    
+    console.log('[useTicket] userId:', userId, 'legacyCount:', legacyCount, 'matchedDiscordId:', matchedDiscordId)
+    
+    if (legacyCount > 0 && matchedDiscordId) {
+      // Decrement legacy tickets using the actual discord_id found
+      await sql`
+        UPDATE users SET spin_tickets = spin_tickets - 1 
+        WHERE discord_id = ${matchedDiscordId} AND spin_tickets > 0
+      `
+      return { success: true }
+    }
+    
+    return { success: false, error: "No tickets available" }
   },
 
   addTicket: async (userId: string, ticketType: string) => {
@@ -381,20 +447,37 @@ export const assetsQueries = {
   }) => {
     return await sql`
       INSERT INTO assets (title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, tags, author_id)
-      VALUES (${data.title}, ${data.description}, ${data.category}, ${data.framework || 'standalone'}, ${data.version || '1.0.0'}, ${data.coin_price || 0}, ${data.thumbnail}, ${data.download_link}, ${data.file_size}, ${data.tags || []}, ${data.author_id})
+      VALUES (${data.title}, ${data.description}, ${data.category}, ${data.framework || 'standalone'}, ${data.version || '1.0.0'}, ${data.coin_price || 0}, ${data.thumbnail || null}, ${data.download_link || null}, ${data.file_size || null}, ${data.tags || []}, ${data.author_id})
       RETURNING *
     `
   },
 
   update: async (id: string, data: any) => {
-    const fields = Object.keys(data).filter(k => data[k] !== undefined)
-    if (fields.length === 0) return []
-    
-    const sets = fields.map(f => sql`${sql(f)} = ${data[f]}`)
+    const title = data.title ?? null
+    const description = data.description ?? null
+    const category = data.category ?? null
+    const framework = data.framework ?? null
+    const version = data.version ?? null
+    const coin_price = data.coin_price ?? null
+    const thumbnail = data.thumbnail ?? null
+    const download_link = data.download_link ?? null
+    const file_size = data.file_size ?? null
+    const status = data.status ?? null
     
     return await sql`
       UPDATE assets 
-      SET ${sql(sets, ', ')}, updated_at = NOW()
+      SET 
+        title = COALESCE(${title}, title),
+        description = COALESCE(${description}, description),
+        category = COALESCE(${category}, category),
+        framework = COALESCE(${framework}, framework),
+        version = COALESCE(${version}, version),
+        coin_price = COALESCE(${coin_price}, coin_price),
+        thumbnail = COALESCE(${thumbnail}, thumbnail),
+        download_link = COALESCE(${download_link}, download_link),
+        file_size = COALESCE(${file_size}, file_size),
+        status = COALESCE(${status}, status),
+        updated_at = NOW()
       WHERE id = ${id}
       RETURNING *
     `

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { db } from "@/lib/db"
 
 export async function POST() {
   try {
@@ -50,14 +51,14 @@ export async function POST() {
     if (newStreak >= 7) bonusTickets = 3
     else if (newStreak >= 3) bonusTickets = 2
 
-    // Get current user data
-    const { data: userData } = await supabase.from("users").select("spin_tickets").eq("discord_id", discordId).single()
+    // Add tickets to spin_wheel_tickets table (not users.spin_tickets)
+    for (let i = 0; i < bonusTickets; i++) {
+      await db.spinWheel.addTicket(discordId, 'daily')
+    }
 
-    const currentTickets = userData?.spin_tickets || 0
-    const newTickets = currentTickets + bonusTickets
-
-    // Update user tickets
-    await supabase.from("users").update({ spin_tickets: newTickets }).eq("discord_id", discordId)
+    // Get updated ticket count
+    const tickets = await db.spinWheel.getTickets(discordId)
+    const newTickets = tickets.length
 
     // Record the claim
     await supabase.from("daily_claims").insert({

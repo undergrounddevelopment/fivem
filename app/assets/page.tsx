@@ -92,7 +92,7 @@ export default function AssetsPage() {
 
         // Calculate stats
         const freeCount = assetArray.filter(
-          (a: Asset) => a.price === "free" || a.coinPrice === 0 || a.coin_price === 0,
+          (a: Asset) => a.price === "free" || a.coinPrice === 0 || (a as any).coin_price === 0,
         ).length
         setStats({
           total: data.total || assetArray.length,

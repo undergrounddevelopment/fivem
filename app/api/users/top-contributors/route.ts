@@ -10,7 +10,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 })
     }
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     // Get users with most contributions (posts + replies + assets)
     const { data: users, error } = await supabase

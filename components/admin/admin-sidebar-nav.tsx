@@ -21,6 +21,7 @@ import {
   Coins,
   ChevronRight,
   Crown,
+  Star,
 } from "lucide-react"
 
 const adminNavItems = [
@@ -93,6 +94,13 @@ const adminNavItems = [
     icon: Bell,
     color: "from-red-500 to-pink-500",
     badge: null,
+  },
+  {
+    title: "Testimonials",
+    href: "/admin/testimonials",
+    icon: Star,
+    color: "from-yellow-500 to-amber-500",
+    badge: "New",
   },
   {
     title: "Database",

@@ -5,7 +5,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     const { data: user, error } = await supabase.from("users").select("*").eq("discord_id", id).single()
 

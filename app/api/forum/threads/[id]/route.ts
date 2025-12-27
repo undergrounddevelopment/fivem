@@ -5,7 +5,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     const { data: thread, error } = await supabase.from("forum_threads").select("*").eq("id", id).single()
 

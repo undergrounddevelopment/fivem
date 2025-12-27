@@ -6,7 +6,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase/server"
 // GET - Fetch all testimonials (public gets featured only, admin gets all)
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
     const session = await getServerSession(authOptions)
 
     // Check if admin
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
 // POST - Create new testimonial (admin only)
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 // PUT - Update testimonial (admin only)
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
@@ -180,7 +180,7 @@ export async function PUT(request: NextRequest) {
 // DELETE - Delete testimonial (admin only)
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {

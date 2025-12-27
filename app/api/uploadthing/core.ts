@@ -60,7 +60,7 @@ export const ourFileRouter = {
       )
 
       try {
-        const supabase = await getSupabaseAdminClient()
+        const supabase = getSupabaseAdminClient()
         await supabase.from("coin_transactions").insert({
           user_id: metadata.userId,
           amount: 0,

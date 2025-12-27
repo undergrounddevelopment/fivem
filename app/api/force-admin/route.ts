@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const secretKey = request.headers.get("x-admin-secret")
     const envSecret = process.env.ADMIN_SECRET || "setup-admin-2024"
 
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     // Count existing admins
     const { count: existingAdmins } = await supabase
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     const { count: adminCount } = await supabase
       .from("users")

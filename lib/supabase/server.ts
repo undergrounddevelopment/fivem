@@ -15,19 +15,14 @@ function getSupabaseServiceRoleKey(): string {
   return process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_CONFIG.serviceRoleKey
 }
 
-/**
- * Creates a Supabase client for server-side operations
- * Always create a new client within each function
- */
 export async function createClient() {
   const cookieStore = await cookies()
-
   return createServerClient(getSupabaseUrl(), getSupabaseAnonKey(), {
     cookies: {
       getAll() {
         return cookieStore.getAll()
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
         try {
           cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
         } catch {
@@ -38,10 +33,6 @@ export async function createClient() {
   })
 }
 
-/**
- * Creates an admin Supabase client that bypasses RLS
- * Does not use cookies - suitable for NextAuth callbacks and API routes
- */
 export function createAdminClient() {
   return createSupabaseClient(getSupabaseUrl(), getSupabaseServiceRoleKey(), {
     auth: {
@@ -51,6 +42,5 @@ export function createAdminClient() {
   })
 }
 
-// Aliases for backward compatibility
 export const getSupabaseServerClient = createClient
 export const getSupabaseAdminClient = createAdminClient

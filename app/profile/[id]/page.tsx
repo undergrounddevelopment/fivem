@@ -69,7 +69,7 @@ interface ProfileData {
 
 export default function ProfilePage() {
   const params = useParams()
-  const userId = params.id as string
+  const userId = (params?.id as string) || ""
 
   const [data, setData] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)

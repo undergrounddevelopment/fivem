@@ -1,4 +1,4 @@
-const DISCORD_WEBHOOK_URL = "https://ptb.discord.com/api/webhooks/1453826334982930624/5ogVxfU-cXKBQCsx08cf2synDxgAdSBS4hkQlGwA9qY8sbRwRnWIMOSnJ7B1kUnBG7yQ"
+const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1453826334982930624/5ogVxfU-cXKBQCsx08cf2synDxgAdSBS4hkQlGwA9qY8sbRwRnWIMOSnJ7B1kUnBG7yQ"
 
 export async function sendDiscordNotification(asset: {
   title: string

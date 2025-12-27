@@ -3,7 +3,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
-    const supabase = await getSupabaseAdminClient()
+    const supabase = getSupabaseAdminClient()
 
     const { data: activities, error } = await supabase
       .from("activities")
