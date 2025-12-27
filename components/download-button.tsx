@@ -91,26 +91,14 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
     setError("")
 
     try {
-      console.log("Starting download for asset:", assetId)
       const res = await fetch(`/api/download/${assetId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user?.id }),
       })
 
-      console.log("Download response status:", res.status)
       const data = await res.json()
-      console.log("Download response data:", data)
 
       if (!res.ok) {
-        if (data.error === "Insufficient coins") {
-          toast.error("Insufficient Coins", {
-            description: `You need ${data.required} coins but only have ${data.available} coins`,
-            duration: 5000,
-          })
-          setShowModal(false)
-          return
-        }
         toast.error("Download Failed", {
           description: data.error || "Download failed",
           duration: 5000,
@@ -119,30 +107,26 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
         return
       }
 
-      if ((data.coinsSpent || 0) > 0) {
-        await refreshSession()
-        toast.success("Purchase Successful!", {
-          description: `You spent ${data.coinsSpent} coins. Download starting...`,
-        })
-        setIsPurchased(true)
-      } else if (data.message === "Already purchased") {
-        toast.info("Re-downloading", {
-          description: "You already own this asset. Download starting...",
-        })
+      if (data.downloadUrl) {
+        if (data.coinsSpent > 0) {
+          await refreshSession()
+          toast.success("Purchase Successful!", {
+            description: `Spent ${data.coinsSpent} coins`,
+          })
+          setIsPurchased(true)
+        } else {
+          toast.success("Download Starting")
+        }
+        window.open(data.downloadUrl, "_blank")
+        setShowModal(false)
       } else {
-        toast.success("Download Starting", {
-          description: "Your download will begin shortly",
-        })
+        throw new Error("No download URL")
       }
-
-      window.open(data.downloadUrl, "_blank")
-      setShowModal(false)
     } catch (error) {
-      console.error("Download error:", error)
       toast.error("Download Failed", {
-        description: "Something went wrong. Please try again.",
+        description: "Please try again",
       })
-      setError("Download failed. Please try again.")
+      setError("Download failed")
     } finally {
       setIsDownloading(false)
     }

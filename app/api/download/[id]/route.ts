@@ -15,42 +15,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const supabase = getSupabaseAdminClient()
 
-    const { data: asset, error: assetError } = await supabase.from("assets").select("*").eq("id", id).single()
+    const { data: asset } = await supabase.from("assets").select("*").eq("id", id).single()
 
-    if (assetError || !asset) {
-      console.error("Asset error:", assetError)
-      logErrorToHTML(assetError, `Download API - Asset not found: ${id}`)
+    if (!asset) {
+      logErrorToHTML(new Error("Asset not found"), `Download API - Asset: ${id}`)
       return NextResponse.json({ error: "Asset not found" }, { status: 404 })
     }
 
-    // Check if download_link exists
     if (!asset.download_link) {
-      console.error("No download_link for asset:", id)
-      logErrorToHTML(new Error("No download_link"), `Download API - Missing download_link for asset: ${id}`)
+      logErrorToHTML(new Error("No download_link"), `Download API - Asset: ${id}`)
       return NextResponse.json({ error: "Download link not available" }, { status: 400 })
     }
 
-    const { data: user, error: userError } = await supabase
+    const { data: user } = await supabase
       .from("users")
       .select("*")
       .eq("discord_id", session.user.id)
       .single()
 
-    if (userError || !user) {
-      console.error("User error:", userError)
-      logErrorToHTML(userError, `Download API - User not found: ${session.user.id}`)
+    if (!user) {
+      logErrorToHTML(new Error("User not found"), `Download API - User: ${session.user.id}`)
       return NextResponse.json({ error: "User not found" }, { status: 404 })
-    }
-
-    if (asset.coin_price > 0 && user.coins < asset.coin_price) {
-      return NextResponse.json(
-        {
-          error: "Insufficient coins",
-          required: asset.coin_price,
-          available: user.coins,
-        },
-        { status: 400 },
-      )
     }
 
     const { data: existingDownload } = await supabase
@@ -64,8 +49,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({
         success: true,
         downloadUrl: asset.download_link,
-        message: "Already purchased",
+        coinsSpent: 0,
       })
+    }
+
+    if (asset.coin_price > 0 && user.coins < asset.coin_price) {
+      return NextResponse.json(
+        { error: `Need ${asset.coin_price} coins, you have ${user.coins}` },
+        { status: 400 },
+      )
     }
 
     if (asset.coin_price > 0) {
@@ -93,34 +85,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .update({ downloads: asset.downloads + 1 })
       .eq("id", id)
 
-    await supabase.from("activities").insert({
-      user_id: session.user.id,
-      type: "download",
-      action: `downloaded ${asset.title}`,
-      target_id: id,
-    })
-
-    if (asset.author_id !== session.user.id) {
-      await supabase.from("notifications").insert({
-        user_id: asset.author_id,
-        title: "New Download",
-        message: `${user.username} downloaded ${asset.title}`,
-        type: "download",
-        link: `/asset/${id}`,
-      })
-    }
-
     return NextResponse.json({
       success: true,
       downloadUrl: asset.download_link,
       coinsSpent: asset.coin_price,
     })
   } catch (error: any) {
-    logger.error("Download error", error, {
-      assetId: id,
-      endpoint: `/api/download/${id}`,
-    })
-    logErrorToHTML(error, `Download API - Internal error for asset: ${id}`)
+    logger.error("Download error", error, { assetId: id })
+    logErrorToHTML(error, `Download API - Error: ${id}`)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
