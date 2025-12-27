@@ -17,7 +17,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { data: asset, error: assetError } = await supabase.from("assets").select("*").eq("id", id).single()
 
     if (assetError || !asset) {
+      console.error("Asset error:", assetError)
       return NextResponse.json({ error: "Asset not found" }, { status: 404 })
+    }
+
+    // Check if download_link exists
+    if (!asset.download_link) {
+      console.error("No download_link for asset:", id)
+      return NextResponse.json({ error: "Download link not available" }, { status: 400 })
     }
 
     const { data: user, error: userError } = await supabase
@@ -27,6 +34,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .single()
 
     if (userError || !user) {
+      console.error("User error:", userError)
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 

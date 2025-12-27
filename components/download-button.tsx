@@ -131,6 +131,7 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
       window.open(data.downloadUrl, "_blank")
       setShowModal(false)
     } catch (error) {
+      console.error("Download error:", error)
       toast.error("Download Failed", {
         description: "Something went wrong. Please try again.",
       })
