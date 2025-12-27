@@ -20,21 +20,21 @@ import "./globals.css"
 const geist = Geist({
   subsets: ["latin"],
   display: "swap",
-  preload: true,
+  preload: false,
   variable: "--font-geist",
 })
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
-  preload: true,
+  preload: false,
   variable: "--font-geist-mono",
 })
 
 const manrope = Manrope({
   subsets: ["latin"],
   display: "swap",
-  preload: true,
+  preload: false,
   variable: "--font-manrope",
   weight: ["400", "700"],
 })
@@ -130,7 +130,7 @@ export const metadata: Metadata = {
   classification: "FiveM Resources, GTA V Mods, Gaming Tools",
   generator: "Next.js",
   applicationName: SITE_NAME,
-  referrer: "origin-when-cross-origin",
+  referrer: "no-referrer",
   formatDetection: {
     email: false,
     address: false,

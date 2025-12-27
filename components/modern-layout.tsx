@@ -9,15 +9,15 @@ import { SponsorBanner } from './sponsor-banner';
 import { useMemo } from 'react';
 
 export function ModernLayout({ children }: { children: React.ReactNode }) {
-  // Generate snowflakes - reduced from 50 to 20 for better performance
+  // Generate snowflakes - optimized for better performance
   const snowflakes = useMemo(() => {
-    return Array.from({ length: 20 }, (_, i) => ({
+    return Array.from({ length: 15 }, (_, i) => ({
       id: i,
       left: `${Math.random() * 100}%`,
-      animationDuration: `${Math.random() * 10 + 10}s`,
-      animationDelay: `${Math.random() * 10}s`,
-      size: Math.random() * 8 + 4,
-      opacity: Math.random() * 0.6 + 0.2,
+      animationDuration: `${Math.random() * 15 + 15}s`,
+      animationDelay: `${Math.random() * 15}s`,
+      size: Math.random() * 6 + 3,
+      opacity: Math.random() * 0.4 + 0.1,
     }));
   }, []);
 
