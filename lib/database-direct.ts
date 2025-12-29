@@ -260,9 +260,9 @@ export async function getForumCategories() {
   const { data, error } = await supabase
     .from('forum_categories')
     .select('*')
-    .order('order_index', { ascending: true })
+    .order('created_at', { ascending: false })
   if (error) throw error
-  return data
+  return data || []
 }
 
 export async function createForumCategory(category: any) {
@@ -301,11 +301,7 @@ export async function getForumThreads(categoryId?: string) {
   const supabase = createAdminClient()
   let query = supabase
     .from('forum_threads')
-    .select(`
-      *,
-      users(username, avatar),
-      forum_categories(name, slug)
-    `)
+    .select('*')
     .order('created_at', { ascending: false })
   
   if (categoryId) {
@@ -314,7 +310,7 @@ export async function getForumThreads(categoryId?: string) {
   
   const { data, error } = await query
   if (error) throw error
-  return data
+  return data || []
 }
 
 export async function getForumThreadById(id: string) {

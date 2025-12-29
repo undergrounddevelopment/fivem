@@ -8,8 +8,8 @@ import Image from "next/image"
 
 export default async function ForumPage() {
   const [categories, recentThreads] = await Promise.all([
-    getForumCategories(),
-    getForumThreads().then(threads => threads.slice(0, 10))
+    getForumCategories().catch(() => []),
+    getForumThreads().then(threads => threads.slice(0, 10)).catch(() => [])
   ])
 
   return (
@@ -79,24 +79,14 @@ export default async function ForumPage() {
                     <div className="p-3 border rounded-lg hover:bg-secondary/50 transition-colors">
                       <div className="flex items-start gap-3">
                         <div className="relative h-8 w-8 rounded-full overflow-hidden bg-secondary shrink-0">
-                          {thread.users?.avatar ? (
-                            <Image
-                              src={thread.users.avatar}
-                              alt=""
-                              fill
-                              className="object-cover"
-                              unoptimized
-                            />
-                          ) : (
-                            <div className="h-full w-full bg-primary/20" />
-                          )}
+                          <div className="h-full w-full bg-primary/20" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-sm line-clamp-2">{thread.title}</h4>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-muted-foreground">{thread.users?.username}</span>
+                            <span className="text-xs text-muted-foreground">User</span>
                             <Badge variant="outline" className="text-xs">
-                              {thread.forum_categories?.name}
+                              General
                             </Badge>
                           </div>
                         </div>
