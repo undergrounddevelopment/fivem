@@ -19,11 +19,39 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (!asset) {
       logErrorToHTML(new Error("Asset not found"), `Download API - Asset: ${id}`)
+      
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureMessage('Asset not found', {
+          contexts: {
+            download: {
+              assetId: id,
+              userId: session.user.id,
+              action: 'checkAsset'
+            }
+          }
+        });
+      });
+      
       return NextResponse.json({ error: "Asset not found" }, { status: 404 })
     }
 
     if (!asset.download_link) {
       logErrorToHTML(new Error("No download_link"), `Download API - Asset: ${id}`)
+      
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureMessage('Download link not available', {
+          contexts: {
+            download: {
+              assetId: id,
+              userId: session.user.id,
+              action: 'checkDownloadLink'
+            }
+          }
+        });
+      });
+      
       return NextResponse.json({ error: "Download link not available" }, { status: 400 })
     }
 
@@ -35,6 +63,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (!user) {
       logErrorToHTML(new Error("User not found"), `Download API - User: ${session.user.id}`)
+      
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureMessage('User not found', {
+          contexts: {
+            download: {
+              assetId: id,
+              userId: session.user.id,
+              action: 'checkUser'
+            }
+          }
+        });
+      });
+      
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
@@ -54,6 +96,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     if (asset.coin_price > 0 && user.coins < asset.coin_price) {
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureMessage('Insufficient coins for purchase', {
+          contexts: {
+            download: {
+              assetId: id,
+              userId: session.user.id,
+              action: 'checkCoins',
+              requiredCoins: asset.coin_price,
+              availableCoins: user.coins
+            }
+          }
+        });
+      });
+      
       return NextResponse.json(
         { error: `Need ${asset.coin_price} coins, you have ${user.coins}` },
         { status: 400 },
@@ -93,6 +150,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   } catch (error: any) {
     logger.error("Download error", error, { assetId: id })
     logErrorToHTML(error, `Download API - Error: ${id}`)
+    
+    // Capture error ke Sentry
+    import('@sentry/nextjs').then(Sentry => {
+      Sentry.captureException(error, {
+        contexts: {
+          download: {
+            assetId: id,
+            action: 'processDownload'
+          }
+        }
+      });
+    });
+    
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -46,7 +46,6 @@ export default function HomePage() {
           <div className="lg:col-span-2 space-y-8">
             <CategoriesSection />
             <TrendingSection />
-            <LinkvertiseAd />
             <RecentAssets />
           </div>
           <div className="space-y-6">

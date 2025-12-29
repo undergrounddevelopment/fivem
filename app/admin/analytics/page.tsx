@@ -45,8 +45,12 @@ const topAssets = [
 export default function AnalyticsPage() {
   const { isAdmin, isLoading } = useAuth()
   const router = useRouter()
-  const [analytics, setAnalytics] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [analytics, setAnalytics] = useState<{
+    weeklyDownloads?: Array<{ day: string; downloads: number }>;
+    categoryStats?: Array<{ name: string; count: number; percentage: number }>;
+    topAssets?: Array<{ title: string; downloads: number; growth: number }>;
+    overview?: { totalUsers: number; totalDownloads: number; totalPosts: number; newUsersToday: number };
+  } | null>(null)
 
   useEffect(() => {
     if (!isLoading && !isAdmin) {
@@ -76,7 +80,7 @@ export default function AnalyticsPage() {
   }
 
   if (!isAdmin) return null
-  const maxDownloads = Math.max(...(analytics?.weeklyDownloads ?? [{ downloads: 1 }]).map((d: any) => d.downloads || 1))
+  const maxDownloads = Math.max(...(analytics?.weeklyDownloads ?? [{ downloads: 1 }]).map((d) => d.downloads || 1))
 
   return (
     <div>
@@ -166,7 +170,7 @@ export default function AnalyticsPage() {
             </h2>
           </div>
           <div className="flex items-end justify-between h-48 gap-2">
-            {(analytics?.weeklyDownloads ?? []).map((day: any) => (
+            {(analytics?.weeklyDownloads ?? []).map((day) => (
               <div key={day.day} className="flex-1 flex flex-col items-center gap-2">
                 <div
                   className="w-full bg-primary/80 rounded-t-lg transition-all hover:bg-primary"
@@ -187,7 +191,7 @@ export default function AnalyticsPage() {
             </h2>
           </div>
           <div className="space-y-4">
-            {(analytics?.categoryStats ?? []).map((cat: any, i: number) => (
+            {(analytics?.categoryStats ?? []).map((cat, i: number) => (
               <div key={cat.name}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm text-foreground">{cat.name}</span>
@@ -226,7 +230,7 @@ export default function AnalyticsPage() {
               </tr>
             </thead>
             <tbody>
-              {(analytics?.topAssets ?? []).map((asset: any, i: number) => (
+              {(analytics?.topAssets ?? []).map((asset, i: number) => (
                 <tr key={asset.title} className="border-b border-border last:border-0">
                   <td className="py-3 px-4">
                     <span

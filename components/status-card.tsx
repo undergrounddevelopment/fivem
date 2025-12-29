@@ -24,17 +24,15 @@ export function StatusCard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch("/api/stats")
-        if (res.ok) {
-          const data = await res.json()
-          setStats({
-            onlineUsers: data.onlineUsers || 0,
-            totalMembers: data.totalMembers || 0,
-            totalAssets: data.totalAssets || 0,
-            totalDownloads: data.totalDownloads || 0,
-            totalPosts: data.totalPosts || 0,
-          })
-        }
+        const { getStats } = await import('@/lib/actions/general')
+        const data = await getStats()
+        setStats({
+          onlineUsers: data.onlineUsers || 0,
+          totalMembers: data.totalUsers || 0,
+          totalAssets: data.totalAssets || 0,
+          totalDownloads: 0,
+          totalPosts: data.totalPosts || 0,
+        })
       } catch (error) {
         console.error("Failed to fetch stats:", error)
       } finally {
@@ -44,7 +42,6 @@ export function StatusCard() {
 
     fetchStats()
 
-    // Refresh stats every 60 seconds
     const interval = setInterval(fetchStats, 60000)
     return () => clearInterval(interval)
   }, [])

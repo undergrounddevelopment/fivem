@@ -17,7 +17,7 @@ export async function GET() {
     const userIds = [...new Set((activities || []).map((a) => a.user_id).filter(Boolean))]
 
     // Fetch users separately
-    let usersMap: Record<string, any> = {}
+    let usersMap: Record<string, {discord_id: string; username: string; avatar: string}> = {}
     if (userIds.length > 0) {
       const { data: users } = await supabase
         .from("users")
@@ -29,7 +29,7 @@ export async function GET() {
           acc[user.discord_id] = user
           return acc
         },
-        {} as Record<string, any>,
+        {} as Record<string, {discord_id: string; username: string; avatar: string}>,
       )
     }
 

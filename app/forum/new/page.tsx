@@ -43,9 +43,8 @@ export default function NewThreadPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("/api/forum/categories")
-        const data = await res.json()
-        const categoriesArray = Array.isArray(data) ? data : data.categories || []
+        const { getForumCategories } = await import('@/lib/actions/forum')
+        const categoriesArray = await getForumCategories()
         if (categoriesArray.length > 0) {
           setCategories(categoriesArray)
           setCategoryId(categoriesArray[0].id)
@@ -65,45 +64,23 @@ export default function NewThreadPage() {
     setSubmitResult(null)
 
     try {
-      const imageUrls = files.filter((f) => f.type === "image" && !f.error && !f.uploading).map((f) => f.url)
-
-      const res = await fetch("/api/forum/threads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          content,
-          categoryId,
-          images: imageUrls,
-        }),
+      const { createForumThread } = await import('@/lib/actions/forum')
+      const thread = await createForumThread({
+        categoryId,
+        title,
+        content
       })
 
-      const data = await res.json()
+      setSubmitResult({
+        success: true,
+        message: "Your post has been submitted and is awaiting admin approval."
+      })
 
-      if (res.ok) {
-        const isPending = data.status === "pending"
-        setSubmitResult({
-          success: true,
-          message: isPending
-            ? "Your post has been submitted and is awaiting admin approval."
-            : "Your post has been published successfully!",
-        })
-
-        if (!isPending) {
-          setTimeout(() => router.push(`/forum/thread/${data.id}`), 2000)
-        } else {
-          setTimeout(() => router.push("/forum"), 3000)
-        }
-      } else {
-        setSubmitResult({
-          success: false,
-          message: data.error || "Failed to create thread",
-        })
-      }
-    } catch {
+      setTimeout(() => router.push("/forum"), 3000)
+    } catch (error: any) {
       setSubmitResult({
         success: false,
-        message: "An error occurred. Please try again.",
+        message: error.message || "Failed to create thread"
       })
     } finally {
       setIsSubmitting(false)

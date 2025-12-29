@@ -13,6 +13,18 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
+    // Log the error to Sentry
+    import('@sentry/nextjs').then(Sentry => {
+      Sentry.captureException(error, {
+        contexts: {
+          app: {
+            location: 'error.tsx',
+            digest: error.digest
+          }
+        }
+      });
+    });
+
     // Log the error to console in development
     if (process.env.NODE_ENV === 'development') {
       console.error('Application error:', error)

@@ -44,6 +44,20 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     if (error) {
       logger.error("Admin update thread error", error)
+      
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureException(error, {
+          contexts: {
+            admin: {
+              userId: session.user.id,
+              action: 'updateForumThread',
+              threadId: id
+            }
+          }
+        });
+      });
+      
       throw error
     }
 
@@ -58,6 +72,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ success: true, thread })
   } catch (error: any) {
     logger.error("Admin edit thread error", error)
+    
+    // Capture error ke Sentry
+    import('@sentry/nextjs').then(Sentry => {
+      Sentry.captureException(error, {
+        contexts: {
+          admin: {
+            action: 'updateForumThread'
+          }
+        }
+      });
+    });
+    
     return NextResponse.json({ error: "Failed to update thread" }, { status: 500 })
   }
 }
@@ -75,7 +101,24 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     // Soft delete by marking as deleted
     const { error } = await supabase.from("forum_threads").update({ is_deleted: true }).eq("id", id)
 
-    if (error) throw error
+    if (error) {
+      console.error("Admin delete thread error:", error)
+      
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureException(error, {
+          contexts: {
+            admin: {
+              userId: session.user.id,
+              action: 'deleteForumThread',
+              threadId: id
+            }
+          }
+        });
+      });
+      
+      throw error
+    }
 
     // Log activity
     await supabase.from("activities").insert({
@@ -88,6 +131,18 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Admin delete thread error:", error)
+    
+    // Capture error ke Sentry
+    import('@sentry/nextjs').then(Sentry => {
+      Sentry.captureException(error, {
+        contexts: {
+          admin: {
+            action: 'deleteForumThread'
+          }
+        }
+      });
+    });
+    
     return NextResponse.json({ error: "Failed to delete thread" }, { status: 500 })
   }
 }

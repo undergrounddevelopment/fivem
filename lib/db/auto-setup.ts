@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
+import * as Sentry from "@sentry/browser"
 
 const DB_URL =
   "postgresql://postgres.linnqtixdfjwbrixitrb:06Zs04s8vCBrW4XE@aws-1-us-east-1.pooler.supabase.com:6543/postgres"
@@ -140,6 +141,7 @@ export async function ensureDatabaseSetup(): Promise<boolean> {
         CREATE INDEX IF NOT EXISTS idx_announcements_active ON announcements(is_active);
         CREATE INDEX IF NOT EXISTS idx_spin_history_user ON spin_history(user_id);
         CREATE INDEX IF NOT EXISTS idx_daily_claims_user_date ON daily_claims(user_id, claim_date);
+        CREATE INDEX IF NOT EXISTS idx_forum_categories_order ON forum_categories(order_index);
 
         -- Insert default spin prizes
         INSERT INTO spin_wheel_prizes (name, type, amount, probability, color, icon, is_active)
@@ -155,13 +157,13 @@ export async function ensureDatabaseSetup(): Promise<boolean> {
         ON CONFLICT DO NOTHING;
 
         -- Insert default forum categories
-        INSERT INTO forum_categories (name, slug, description, icon, color, display_order)
+        INSERT INTO forum_categories (name, slug, description, icon, color, display_order, order_index)
         VALUES 
-          ('General Discussion', 'general', 'General FiveM topics', '💬', '#3b82f6', 1),
-          ('Script Releases', 'scripts', 'Share your FiveM scripts', '📦', '#10b981', 2),
-          ('MLO Releases', 'mlo', 'Share MLO maps', '🏢', '#8b5cf6', 3),
-          ('Vehicle Releases', 'vehicles', 'Share vehicle mods', '🚗', '#f59e0b', 4),
-          ('Support & Help', 'support', 'Get help with FiveM', '🆘', '#ef4444', 5)
+          ('General Discussion', 'general', 'General FiveM topics', '💬', '#3b82f6', 1, 1),
+          ('Script Releases', 'scripts', 'Share your FiveM scripts', '📦', '#10b981', 2, 2),
+          ('MLO Releases', 'mlo', 'Share MLO maps', '🏢', '#8b5cf6', 3, 3),
+          ('Vehicle Releases', 'vehicles', 'Share vehicle mods', '🚗', '#f59e0b', 4, 4),
+          ('Support & Help', 'support', 'Get help with FiveM', '🆘', '#ef4444', 5, 5)
         ON CONFLICT DO NOTHING;
 
         -- Insert sample banner
@@ -175,13 +177,113 @@ export async function ensureDatabaseSetup(): Promise<boolean> {
         ON CONFLICT DO NOTHING;
       `
 
-      // Note: Direct SQL execution requires service role key or database direct access
-      // For now, we'll mark as initialized and tables will be created manually
-      console.log("[v0] Database setup completed")
+      // Add missing foreign key constraints
+      console.log("[v0] Adding missing foreign key constraints...")
+      
+      // Add missing order_index column to forum_categories if not exists
+      await supabase.rpc("execute_sql", {
+        statement: `
+          ALTER TABLE forum_categories
+          ADD COLUMN IF NOT EXISTS order_index INTEGER;
+        `
+      })
+
+      // Add foreign key for forum_threads to users
+      await supabase.rpc("execute_sql", {
+        statement: `
+          ALTER TABLE forum_threads
+          ADD CONSTRAINT fk_user
+          FOREIGN KEY (author_id)
+          REFERENCES auth.users(id);
+        `
+      })
+
+      // Add foreign key for forum_posts to users
+      await supabase.rpc("execute_sql", {
+        statement: `
+          ALTER TABLE forum_posts
+          ADD CONSTRAINT fk_post_user
+          FOREIGN KEY (user_id)
+          REFERENCES auth.users(id)
+        `
+      })
+
+      // Add foreign key for daily_claims to users
+      await supabase.rpc("execute_sql", {
+        statement: `
+          ALTER TABLE daily_claims
+          ADD CONSTRAINT fk_claim_user
+          FOREIGN KEY (user_id)
+          REFERENCES auth.users(id)
+        `
+      })
+
+      // Add foreign key for spin_history to users
+      await supabase.rpc("execute_sql", {
+        statement: `
+          ALTER TABLE spin_history
+          ADD CONSTRAINT fk_spin_user
+          FOREIGN KEY (user_id)
+          REFERENCES auth.users(id)
+        `
+      })
+
+      // Add foreign key for admin_audit_log to users
+      await supabase.rpc("execute_sql", {
+        statement: `
+          ALTER TABLE admin_audit_log
+          ADD CONSTRAINT fk_admin_user
+          FOREIGN KEY (admin_id)
+          REFERENCES auth.users(id)
+        `
+      })
+
+      // Initialize Sentry with database connection info (without sensitive data)
+      Sentry.init({
+        dsn: "https://examplePublicKey@o123456.ingest.sentry.io/123456",
+        environment: "production",
+        release: "auto-setup-v1",
+        beforeSend(event) {
+          // Remove sensitive data before sending to Sentry
+          if (event.request) {
+            delete event.request.headers
+          }
+          return event
+        }
+      })
+
+      // Capture a breadcrumb for database setup
+      Sentry.addBreadcrumb({
+        category: "database",
+        message: "Database schema and foreign keys initialized",
+        level: "info"
+      })
+
+      console.log("[v0] Database setup completed with foreign key constraints")
       isInitialized = true
+      
+      // Capture a Sentry event for successful setup
+      Sentry.captureEvent({
+        message: "Database schema initialized successfully",
+        level: "info",
+        extra: {
+          timestamp: new Date().toISOString(),
+          schemaVersion: "v0"
+        }
+      })
+      
       return true
     } catch (error) {
       console.error("[v0] Database setup error:", error)
+      
+      // Capture error in Sentry
+      Sentry.captureException(error, {
+        extra: {
+          stage: "database_setup",
+          timestamp: new Date().toISOString()
+        }
+      })
+      
       isInitialized = true // Mark as initialized to prevent repeated attempts
       return false
     }

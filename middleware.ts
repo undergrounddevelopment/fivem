@@ -57,14 +57,13 @@ export async function middleware(request: NextRequest) {
   supabaseResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   supabaseResponse.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
 
-  // CORS for API routes - Restricted
+  // CORS for API routes - Restricted to known domains only
   if (pathname.startsWith('/api/')) {
     const origin = request.headers.get('origin')
     const allowedOrigins = [
       'https://fivemtools.net',
       'https://www.fivemtools.net',
-      'http://localhost:3000',
-      'https://localhost:3000'
+      ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000', 'https://localhost:3000'] : [])
     ]
     
     if (origin && allowedOrigins.includes(origin)) {

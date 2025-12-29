@@ -54,11 +54,9 @@ export function TestimonialsSection() {
   useEffect(() => {
     async function fetchTestimonials() {
       try {
-        const res = await fetch("/api/testimonials")
-        if (res.ok) {
-          const data = await res.json()
-          setTestimonials(data)
-        }
+        const { getTestimonials } = await import('@/lib/actions/general')
+        const data = await getTestimonials()
+        setTestimonials(data)
       } catch (error) {
         console.error("Failed to fetch testimonials:", error)
       } finally {

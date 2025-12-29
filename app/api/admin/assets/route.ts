@@ -38,7 +38,24 @@ export async function GET(request: NextRequest) {
 
     const { data: assets, error } = await query
 
-    if (error) throw error
+    if (error) {
+      console.error("Error fetching assets:", error)
+      
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureException(error, {
+          contexts: {
+            admin: {
+              userId: session.user.id,
+              action: 'fetchAssets',
+              statusParam: status
+            }
+          }
+        });
+      });
+      
+      throw error
+    }
 
     // Fetch all unique author IDs
     const authorIds = [...new Set((assets || []).map((a) => a.author_id).filter(Boolean))]
@@ -81,6 +98,18 @@ export async function GET(request: NextRequest) {
       endpoint: "/api/admin/assets",
       ip: request.headers.get("x-forwarded-for") || "unknown",
     })
+    
+    // Capture error ke Sentry
+    import('@sentry/nextjs').then(Sentry => {
+      Sentry.captureException(error, {
+        contexts: {
+          admin: {
+            action: 'fetchAssets'
+          }
+        }
+      });
+    });
+    
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -102,7 +131,25 @@ export async function PATCH(request: NextRequest) {
 
     const { data: asset, error } = await supabase.from("assets").update({ status }).eq("id", assetId).select().single()
 
-    if (error) throw error
+    if (error) {
+      console.error("Error updating asset:", error)
+      
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureException(error, {
+          contexts: {
+            admin: {
+              userId: session.user.id,
+              action: 'updateAsset',
+              assetId,
+              status
+            }
+          }
+        });
+      });
+      
+      throw error
+    }
 
     await supabase.from("activities").insert({
       user_id: session.user.id,
@@ -117,6 +164,18 @@ export async function PATCH(request: NextRequest) {
       endpoint: "/api/admin/assets",
       ip: request.headers.get("x-forwarded-for") || "unknown",
     })
+    
+    // Capture error ke Sentry
+    import('@sentry/nextjs').then(Sentry => {
+      Sentry.captureException(error, {
+        contexts: {
+          admin: {
+            action: 'updateAsset'
+          }
+        }
+      });
+    });
+    
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

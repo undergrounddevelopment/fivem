@@ -1,7 +1,7 @@
-import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { db } from "@/lib/db"
 
 export async function GET() {
   try {
@@ -10,17 +10,12 @@ export async function GET() {
       return NextResponse.json({ coins: 0, tickets: 0 })
     }
 
-    const supabase = await createClient()
-
-    const { data: user } = await supabase
-      .from("users")
-      .select("coins, spin_tickets")
-      .eq("discord_id", session.user.id)
-      .single()
+    const coins = await db.coins.getUserBalance(session.user.id)
+    const tickets = await db.spinWheel.getTickets(session.user.id)
 
     return NextResponse.json({
-      coins: user?.coins || 0,
-      tickets: user?.spin_tickets || 0,
+      coins: coins || 0,
+      tickets: tickets?.length || 0,
     })
   } catch (error) {
     console.error("Error fetching coins:", error)

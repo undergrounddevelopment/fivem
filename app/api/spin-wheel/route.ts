@@ -42,6 +42,18 @@ export async function GET(request: NextRequest) {
     )
   } catch (error) {
     console.error('Error in spin wheel GET:', error)
+    
+    // Capture error ke Sentry
+    import('@sentry/nextjs').then(Sentry => {
+      Sentry.captureException(error, {
+        contexts: {
+          spinWheel: {
+            action: 'generalGet'
+          }
+        }
+      });
+    });
+    
     return NextResponse.json(
       { success: false, error: 'Failed to fetch data' },
       { status: 500 }

@@ -20,23 +20,17 @@ export function DailyCoinsButton() {
 
     setIsClaiming(true)
     try {
-      const res = await fetch("/api/coins/daily", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      })
+      const { claimDailyCoins } = await import('@/lib/actions/user')
+      const data = await claimDailyCoins()
+      setResult({ success: true, coinsAdded: data.amount })
 
-      const data = await res.json()
-      setResult(data)
-
-      if (data.success) {
-        await refreshSession()
-        setTimeout(() => {
-          setShowModal(false)
-          setResult(null)
-        }, 2000)
-      }
-    } catch (error) {
-      setResult({ error: "Failed to claim coins" })
+      await refreshSession()
+      setTimeout(() => {
+        setShowModal(false)
+        setResult(null)
+      }, 2000)
+    } catch (error: any) {
+      setResult({ error: error.message || "Failed to claim coins" })
     } finally {
       setIsClaiming(false)
     }
@@ -91,7 +85,7 @@ export function DailyCoinsButton() {
                     />
                   </motion.div>
                   <h2 className="text-2xl font-bold text-[var(--text)] mb-2">Daily Coins</h2>
-                  <p className="text-[var(--textDim)]">Claim your free 25 coins every 24 hours!</p>
+                  <p className="text-[var(--textDim)]">Claim your free 100 coins every 24 hours!</p>
                 </div>
 
                 <AnimatePresence mode="wait">
@@ -165,7 +159,7 @@ export function DailyCoinsButton() {
                           ) : (
                             <>
                               <CoinIcon size="sm" className="mr-2 relative z-10" />
-                              <span className="relative z-10">Claim 25 Coins</span>
+                              <span className="relative z-10">Claim 100 Coins</span>
                             </>
                           )}
                         </Button>

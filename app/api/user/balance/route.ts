@@ -4,6 +4,10 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 
+// Simple in-memory cache
+const cache = new Map<string, { coins: number, spin_tickets: number, timestamp: number }>()
+const CACHE_TTL = 3000 // 3 seconds
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
@@ -11,22 +15,32 @@ export async function GET() {
       return NextResponse.json({ coins: 0, spin_tickets: 0 })
     }
 
-    const supabase = await createClient()
     const discordId = session.user.id
 
-    // Get user coins
-    const { data: user } = await supabase
-      .from("users")
-      .select("coins")
-      .eq("discord_id", discordId)
-      .single()
+    // Check cache first
+    const cached = cache.get(discordId)
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return NextResponse.json({ coins: cached.coins, spin_tickets: cached.spin_tickets })
+    }
 
-    // Get tickets from spin_wheel_tickets table
+    // Get coins from coin_transactions (single source of truth)
+    const coins = await db.coins.getUserBalance(discordId)
+
+    // Get tickets from spin_wheel_tickets table only
     const tickets = await db.spinWheel.getTickets(discordId)
 
-    return NextResponse.json({
-      coins: user?.coins || 0,
+    const result = {
+      coins: coins || 0,
       spin_tickets: tickets?.length || 0,
+      timestamp: Date.now()
+    }
+
+    // Update cache
+    cache.set(discordId, result)
+
+    return NextResponse.json({
+      coins: result.coins,
+      spin_tickets: result.spin_tickets
     })
   } catch (error) {
     console.error("Error fetching balance:", error)

@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { getSupabaseAdminClient } from "@/lib/supabase/server"
+import { db } from "@/lib/db"
 import { security } from "@/lib/security"
 
 export async function POST(request: NextRequest) {
@@ -33,63 +33,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 })
     }
 
-    const supabase = getSupabaseAdminClient()
-
-    const { data: targetUser, error: fetchError } = await supabase
-      .from("users")
-      .select("coins, username, is_banned")
-      .eq("discord_id", userId)
-      .single()
-
-    if (fetchError || !targetUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    if (action === "add") {
+      await db.coins.addCoins({ user_id: userId, amount, type: 'admin_adjust', description: reason })
+    } else {
+      await db.coins.deductCoins({ user_id: userId, amount, type: 'admin_adjust', description: reason })
     }
 
-    if (action === "remove" && targetUser.coins < amount) {
-      return NextResponse.json({ error: "Insufficient coins" }, { status: 400 })
-    }
+    const newBalance = await db.coins.getUserBalance(userId)
 
-    const increment = action === "remove" ? -amount : amount
-    const newCoins = targetUser.coins + increment
+    security.logSecurityEvent("Admin adjusted user coins", { adminId: session.user.id, userId, action, amount }, "medium")
 
-    const { data: updatedUser, error: updateError } = await supabase
-      .from("users")
-      .update({ coins: newCoins })
-      .eq("discord_id", userId)
-      .select()
-      .single()
-
-    if (updateError) throw updateError
-
-    // Create transaction record
-    await supabase.from("coin_transactions").insert({
-      user_id: userId,
-      amount: increment,
-      type: "admin_adjust",
-      description: reason || (action === "remove" ? "Admin removed coins" : "Admin added coins"),
-    })
-
-    security.logSecurityEvent(
-      "Admin adjusted user coins",
-      {
-        adminId: session.user.id,
-        targetUserId: userId,
-        targetUsername: targetUser.username,
-        action,
-        amount,
-        previousBalance: targetUser.coins,
-        newBalance: updatedUser.coins,
-        reason,
-      },
-      "medium",
-    )
-
-    return NextResponse.json({
-      success: true,
-      totalCoins: updatedUser.coins,
-      change: increment,
-      action,
-    })
+    return NextResponse.json({ success: true, totalCoins: newBalance, change: action === "add" ? amount : -amount, action })
   } catch (error) {
     console.error("Admin coins error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

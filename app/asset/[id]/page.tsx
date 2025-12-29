@@ -21,7 +21,25 @@ export default function AssetDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
-  const [asset, setAsset] = useState<any>(null)
+  const [asset, setAsset] = useState<{
+    title: string;
+    thumbnail?: string;
+    category: string;
+    framework: string;
+    version?: string;
+    status: string;
+    downloads?: number;
+    views?: number;
+    rating?: string;
+    description?: string;
+    features?: string;
+    installation?: string;
+    changelog?: string;
+    coin_price: number;
+    author?: { id?: string; username?: string; avatar?: string; membership?: string };
+    author_id?: string;
+    tags?: string[];
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"description" | "features" | "installation" | "changelog">("description")
   const [isLiked, setIsLiked] = useState(false)
@@ -263,7 +281,7 @@ export default function AssetDetailPage() {
               ].map(tab => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as "description" | "features" | "installation" | "changelog")}
                   className={`flex items-center gap-2 px-5 py-4 text-sm font-medium transition-all whitespace-nowrap ${
                     activeTab === tab.id
                       ? "text-primary border-b-2 border-primary bg-primary/5"

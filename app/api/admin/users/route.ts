@@ -31,7 +31,26 @@ export async function GET(request: NextRequest) {
 
     const { data: users, count, error } = await query
 
-    if (error) throw error
+    if (error) {
+      console.error("Admin users error:", error)
+      
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureException(error, {
+          contexts: {
+            admin: {
+              userId: session.user.id,
+              action: 'fetchUsers',
+              search,
+              page,
+              limit
+            }
+          }
+        });
+      });
+      
+      throw error
+    }
 
     const formattedUsers = (users || []).map((user) => ({
       id: user.id,
@@ -60,6 +79,18 @@ export async function GET(request: NextRequest) {
       endpoint: "/api/admin/users",
       ip: request.headers.get("x-forwarded-for") || "unknown",
     })
+    
+    // Capture error ke Sentry
+    import('@sentry/nextjs').then(Sentry => {
+      Sentry.captureException(error, {
+        contexts: {
+          admin: {
+            action: 'fetchUsers'
+          }
+        }
+      });
+    });
+    
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

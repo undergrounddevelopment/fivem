@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { getSupabaseAdminClient } from "@/lib/supabase/server"
+import { db } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,43 +12,15 @@ export async function POST(request: NextRequest) {
 
     const { userId, amount, reason } = await request.json()
 
-    const supabase = getSupabaseAdminClient()
-
-    // Get current user coins
-    const { data: currentUser, error: fetchError } = await supabase
-      .from("users")
-      .select("coins")
-      .eq("discord_id", userId)
-      .single()
-
-    if (fetchError || !currentUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    if (amount > 0) {
+      await db.coins.addCoins({ user_id: userId, amount, type: 'admin_adjustment', description: reason })
+    } else {
+      await db.coins.deductCoins({ user_id: userId, amount: Math.abs(amount), type: 'admin_adjustment', description: reason })
     }
 
-    // Update user coins
-    const newCoins = (currentUser.coins || 0) + amount
-    const { data: user, error: updateError } = await supabase
-      .from("users")
-      .update({ coins: newCoins })
-      .eq("discord_id", userId)
-      .select()
-      .single()
+    const newBalance = await db.coins.getUserBalance(userId)
 
-    if (updateError) {
-      console.error("Update coins error:", updateError)
-      return NextResponse.json({ error: "Failed to update coins" }, { status: 500 })
-    }
-
-    // Create transaction record
-    await supabase.from("coin_transactions").insert({
-      user_id: userId,
-      amount,
-      type: "admin_adjustment",
-      description: reason || "Admin adjustment",
-      admin_id: session.user.id,
-    })
-
-    return NextResponse.json({ success: true, user })
+    return NextResponse.json({ success: true, user: { coins: newBalance } })
   } catch (error) {
     console.error("Adjust coins error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

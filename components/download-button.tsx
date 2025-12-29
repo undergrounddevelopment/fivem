@@ -20,17 +20,23 @@ interface DownloadButtonProps {
 }
 
 export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, className }: DownloadButtonProps) {
-  const { user, refreshSession } = useAuth()
+  const { user, refreshSession, isLoading: authIsLoading } = useAuth()
   const [showModal, setShowModal] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
   const [error, setError] = useState("")
   const [isPurchased, setIsPurchased] = useState(false)
   const [isCheckingPurchase, setIsCheckingPurchase] = useState(true)
+  const [checkingError, setCheckingError] = useState<string | null>(null)
 
   const isFree = price === "free" || coinPrice === 0
 
   useEffect(() => {
     const checkPurchase = async () => {
+      // Tambahkan pengecekan apakah user sedang loading
+      if (authIsLoading) {
+        return
+      }
+
       if (!user) {
         setIsCheckingPurchase(false)
         return
@@ -38,19 +44,48 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
 
       try {
         const res = await fetch(`/api/assets/${assetId}/check-purchase`)
+        
+        if (!res.ok) {
+          console.error("Failed to check purchase status:", res.status, res.statusText)
+          setCheckingError(`API error: ${res.status} - ${res.statusText}`)
+          return
+        }
+        
         const data = await res.json()
         setIsPurchased(data.purchased)
       } catch (error) {
-        console.error("Failed to check purchase status")
+        console.error("Failed to check purchase status", error)
+        setCheckingError(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`)
       } finally {
+        // Tetap set checking ke false agar tombol bisa digunakan walaupun ada error
         setIsCheckingPurchase(false)
       }
     }
 
-    checkPurchase()
-  }, [assetId, user])
+    // Gunakan setTimeout untuk mencegah masalah render
+    const timer = setTimeout(() => {
+      checkPurchase()
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [assetId, user, authIsLoading])
 
   const handleDownload = async () => {
+    // Tambahkan pengecekan tambahan untuk isCheckingPurchase
+    if (isCheckingPurchase) {
+      toast.info("Please wait", {
+        description: "We're still loading your purchase status. Please wait a moment.",
+      })
+      return
+    }
+
+    if (checkingError) {
+      toast.error("Purchase Check Error", {
+        description: `There was an issue checking your purchase status: ${checkingError}. Please refresh the page or try again later.`,
+      })
+      return
+    }
+
     if (!user) {
       toast.error("Login Required", {
         description: "You must be logged in to download assets. Click the Login button to continue.",
@@ -87,18 +122,38 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
   }
 
   const processDownload = async () => {
+    if (!user) {
+      toast.error("Authentication Error", {
+        description: "You must be logged in to download assets. Please log in first.",
+      })
+      return
+    }
+
     setIsDownloading(true)
     setError("")
 
     try {
       const res = await fetch(`/api/download/${assetId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          // Tambahkan authorization header jika diperlukan
+        },
+        body: JSON.stringify({ userId: user.id }),
       })
 
       const data = await res.json()
 
       if (!res.ok) {
+        if (data.error === "Insufficient coins") {
+          toast.error("Insufficient Coins", {
+            description: `You need ${data.required} coins but only have ${data.available} coins`,
+            duration: 5000,
+          })
+          setShowModal(false)
+          return
+        }
+        
         toast.error("Download Failed", {
           description: data.error || "Download failed",
           duration: 5000,
@@ -108,35 +163,52 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
       }
 
       if (data.downloadUrl) {
-        if (data.coinsSpent > 0) {
+        if ((data.coinsSpent || 0) > 0) {
           await refreshSession()
           toast.success("Purchase Successful!", {
-            description: `Spent ${data.coinsSpent} coins`,
+            description: `You spent ${data.coinsSpent} coins. Download starting...`,
           })
           setIsPurchased(true)
+        } else if (data.message === "Already purchased") {
+          toast.info("Re-downloading", {
+            description: "You already own this asset. Download starting...",
+          })
         } else {
-          toast.success("Download Starting")
+          toast.success("Download Starting", {
+            description: "Your download will begin shortly",
+          })
         }
-        window.open(data.downloadUrl, "_blank")
+        
+        // Buka URL download di tab baru
+        const link = document.createElement('a');
+        link.href = data.downloadUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
         setShowModal(false)
       } else {
-        throw new Error("No download URL")
+        throw new Error("No download URL received from server")
       }
     } catch (error) {
+      console.error("Download error:", error)
       toast.error("Download Failed", {
-        description: "Please try again",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
       })
-      setError("Download failed")
+      setError(error instanceof Error ? error.message : "An unexpected error occurred")
     } finally {
       setIsDownloading(false)
     }
   }
 
-  if (isCheckingPurchase) {
+  // Tampilkan loading state saat auth sedang loading
+  if (authIsLoading || isCheckingPurchase) {
     return (
       <Button disabled className={cn("w-full rounded-xl h-12 text-base glass", className)}>
         <Loader2 className="h-5 w-5 animate-spin mr-2" />
-        Checking...
+        Loading...
       </Button>
     )
   }
@@ -148,7 +220,7 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
         <Button
           onClick={handleDownload}
-          disabled={isDownloading}
+          disabled={isDownloading || isCheckingPurchase} // Tambahkan isCheckingPurchase ke disabled
           className={cn(
             "w-full gap-2 rounded-xl h-12 text-base transition-all relative overflow-hidden group",
             isPurchased

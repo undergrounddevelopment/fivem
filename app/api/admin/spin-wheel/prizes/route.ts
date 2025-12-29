@@ -32,6 +32,18 @@ export async function GET() {
 
     if (error) {
       console.error('[API] Database error:', error)
+      
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureException(error, {
+          contexts: {
+            spinWheel: {
+              action: 'fetchPrizes'
+            }
+          }
+        });
+      });
+      
       throw error
     }
 
@@ -39,6 +51,18 @@ export async function GET() {
     return NextResponse.json({ prizes: prizes || [] })
   } catch (error) {
     console.error("Error fetching prizes:", error)
+    
+    // Capture error ke Sentry
+    import('@sentry/nextjs').then(Sentry => {
+      Sentry.captureException(error, {
+        contexts: {
+          spinWheel: {
+            action: 'fetchPrizes'
+          }
+        }
+      });
+    });
+    
     return NextResponse.json({ error: "Failed to fetch prizes" }, { status: 500 })
   }
 }
@@ -69,11 +93,38 @@ export async function POST(request: Request) {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error("Error creating prize:", error)
+      
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureException(error, {
+          contexts: {
+            spinWheel: {
+              action: 'createPrize'
+            }
+          }
+        });
+      });
+      
+      throw error
+    }
 
     return NextResponse.json({ prize: data })
   } catch (error) {
     console.error("Error creating prize:", error)
+    
+    // Capture error ke Sentry
+    import('@sentry/nextjs').then(Sentry => {
+      Sentry.captureException(error, {
+        contexts: {
+          spinWheel: {
+            action: 'createPrize'
+          }
+        }
+      });
+    });
+    
     return NextResponse.json({ error: "Failed to create prize" }, { status: 500 })
   }
 }
@@ -113,11 +164,39 @@ export async function PUT(request: Request) {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error("Error updating prize:", error)
+      
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureException(error, {
+          contexts: {
+            spinWheel: {
+              action: 'updatePrize',
+              prizeId: id
+            }
+          }
+        });
+      });
+      
+      throw error
+    }
 
     return NextResponse.json({ prize: data })
   } catch (error) {
     console.error("Error updating prize:", error)
+    
+    // Capture error ke Sentry
+    import('@sentry/nextjs').then(Sentry => {
+      Sentry.captureException(error, {
+        contexts: {
+          spinWheel: {
+            action: 'updatePrize'
+          }
+        }
+      });
+    });
+    
     return NextResponse.json({ error: "Failed to update prize" }, { status: 500 })
   }
 }
@@ -150,12 +229,37 @@ export async function DELETE(request: Request) {
 
     if (error) {
       console.error("Error deleting prize:", error)
+      
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureException(error, {
+          contexts: {
+            spinWheel: {
+              action: 'deletePrize',
+              prizeId: id
+            }
+          }
+        });
+      });
+      
       throw error
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Error deleting prize:", error)
+    
+    // Capture error ke Sentry
+    import('@sentry/nextjs').then(Sentry => {
+      Sentry.captureException(error, {
+        contexts: {
+          spinWheel: {
+            action: 'deletePrize'
+          }
+        }
+      });
+    });
+    
     return NextResponse.json({ error: "Failed to delete prize" }, { status: 500 })
   }
 }

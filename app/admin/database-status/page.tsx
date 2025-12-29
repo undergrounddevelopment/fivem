@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, XCircle, RefreshCw, Database } from "lucide-react"
 
 export default function DatabaseStatusPage() {
-  const [status, setStatus] = useState<any>(null)
+  const [status, setStatus] = useState<{config?: {url: string; hasAnonKey: boolean; hasServiceKey: boolean}; tables?: Record<string, {exists: boolean; count: number; error?: string}>} | null>(null)
   const [loading, setLoading] = useState(true)
   const [setupRunning, setSetupRunning] = useState(false)
 
@@ -97,7 +97,7 @@ export default function DatabaseStatusPage() {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(status.tables || {}).map(([tableName, tableInfo]: [string, any]) => (
+            {Object.entries(status.tables || {}).map(([tableName, tableInfo]) => (
               <Card key={tableName}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">

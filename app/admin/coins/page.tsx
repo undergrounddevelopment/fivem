@@ -23,9 +23,9 @@ interface Transaction {
 export default function AdminCoinsPage() {
   const { user, isAdmin } = useAuth()
   const router = useRouter()
-  const [users, setUsers] = useState<any[]>([])
+  const [users, setUsers] = useState<Array<{id: string; username: string; avatar: string | null; coins: number; membership: string}>>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [selectedUser, setSelectedUser] = useState<{id: string; username: string; avatar: string | null; coins: number; membership: string} | null>(null)
   const [amount, setAmount] = useState("")
   const [reason, setReason] = useState("")
   const [transactions, setTransactions] = useState<Transaction[]>([])

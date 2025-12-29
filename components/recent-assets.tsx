@@ -14,11 +14,9 @@ export function RecentAssets() {
   useEffect(() => {
     async function fetchRecent() {
       try {
-        const res = await fetch("/api/assets?limit=4")
-        if (res.ok) {
-          const data = await res.json()
-          setAssets(data.items || [])
-        }
+        const { getAssets } = await import('@/lib/actions/general')
+        const data = await getAssets()
+        setAssets(data.slice(0, 4) || [])
       } catch (error) {
         console.error("Failed to fetch recent:", error)
       } finally {

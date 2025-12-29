@@ -70,20 +70,18 @@ export function Sidebar() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch("/api/stats")
-      if (res.ok) {
-        const data = await res.json()
-        setStats({
-          totalMembers: data.totalMembers || data.users || 0,
-          totalAssets: data.totalAssets || data.assets || 0,
-          totalDownloads: data.totalDownloads || data.downloads || 0,
-          totalPosts: data.totalPosts || data.posts || 0,
-          totalThreads: data.totalThreads || 0,
-          onlineUsers: data.onlineUsers || 1,
-        })
-      }
+      const { getStats } = await import('@/lib/actions/general')
+      const data = await getStats()
+      setStats({
+        totalMembers: data.totalUsers || 0,
+        totalAssets: data.totalAssets || 0,
+        totalDownloads: 0,
+        totalPosts: data.totalPosts || 0,
+        totalThreads: data.totalThreads || 0,
+        onlineUsers: data.onlineUsers || 1,
+      })
     } catch (error) {
-      // Silently fail - stats will show cached data
+      // Silently fail
     }
   }, [setStats])
 

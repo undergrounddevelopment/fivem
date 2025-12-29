@@ -14,12 +14,10 @@ export function TrendingSection() {
   useEffect(() => {
     async function fetchTrending() {
       try {
-        const res = await fetch("/api/assets?limit=4")
-        if (res.ok) {
-          const data = await res.json()
-          const sorted = (data.items || []).sort((a: Asset, b: Asset) => b.downloads - a.downloads)
-          setAssets(sorted.slice(0, 4))
-        }
+        const { getAssets } = await import('@/lib/actions/general')
+        const data = await getAssets()
+        const sorted = (data || []).sort((a: Asset, b: Asset) => (b.downloads || 0) - (a.downloads || 0))
+        setAssets(sorted.slice(0, 4))
       } catch (error) {
         console.error("Failed to fetch trending:", error)
       } finally {

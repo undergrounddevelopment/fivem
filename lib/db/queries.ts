@@ -1,4 +1,17 @@
 import sql from './postgres'
+import { createClient } from '@supabase/supabase-js'
+import { SUPABASE_CONFIG } from '../supabase/config'
+
+const supabase = createClient(
+  SUPABASE_CONFIG.url,
+  SUPABASE_CONFIG.serviceRoleKey,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
+)
 
 // ============================================
 // FORUM QUERIES
@@ -218,83 +231,48 @@ export const spinWheelQueries = {
   },
 
   getTickets: async (userId: string) => {
-    // First check spin_wheel_tickets table
-    const tableTickets = await sql`
+    // Only from spin_wheel_tickets table (no legacy)
+    const result = await sql`
       SELECT * FROM spin_wheel_tickets 
       WHERE user_id = ${userId} 
       AND is_used = false
       AND (expires_at IS NULL OR expires_at > NOW())
       ORDER BY created_at ASC
     `
-    
-    // Also check users.spin_tickets field (legacy) - try both discord_id and id
-    const userTickets = await sql`
-      SELECT spin_tickets FROM users 
-      WHERE discord_id = ${userId} OR id::text = ${userId}
-    `
-    const legacyCount = userTickets[0]?.spin_tickets || 0
-    
-    console.log('[getTickets] userId:', userId, 'tableTickets:', tableTickets?.length, 'legacyCount:', legacyCount)
-    
-    // Return combined count as array-like structure
-    const totalCount = (tableTickets?.length || 0) + legacyCount
-    
-    // Return array with length representing total tickets
-    return Array.from({ length: totalCount }, (_, i) => ({ 
-      id: i < (tableTickets?.length || 0) ? tableTickets[i]?.id : `legacy_${i}`,
-      source: i < (tableTickets?.length || 0) ? 'table' : 'legacy'
-    }))
+    return result
   },
 
   useTicket: async (userId: string) => {
-    // First try to use ticket from spin_wheel_tickets table
-    const tableTickets = await sql`
-      SELECT id FROM spin_wheel_tickets 
-      WHERE user_id = ${userId} 
-      AND is_used = false
-      AND (expires_at IS NULL OR expires_at > NOW())
-      ORDER BY created_at ASC
-      LIMIT 1
+    // Use ticket from spin_wheel_tickets table only
+    const result = await sql`
+      UPDATE spin_wheel_tickets 
+      SET is_used = true, used_at = NOW()
+      WHERE id = (
+        SELECT id FROM spin_wheel_tickets
+        WHERE user_id = ${userId}
+        AND is_used = false
+        AND (expires_at IS NULL OR expires_at > NOW())
+        ORDER BY created_at ASC
+        LIMIT 1
+      )
+      RETURNING *
     `
     
-    if (tableTickets && tableTickets.length > 0) {
-      // Mark the ticket as used
-      await sql`
-        UPDATE spin_wheel_tickets 
-        SET is_used = true, used_at = NOW()
-        WHERE id = ${tableTickets[0].id}
-      `
+    if (result.length > 0) {
+      console.log('[useTicket] Used ticket:', result[0].id)
       return { success: true }
     }
     
-    // Fallback: check users.spin_tickets (legacy field) - try both discord_id and id
-    const userTickets = await sql`
-      SELECT id, discord_id, spin_tickets FROM users 
-      WHERE discord_id = ${userId} OR id::text = ${userId}
-    `
-    const legacyCount = userTickets[0]?.spin_tickets || 0
-    const matchedDiscordId = userTickets[0]?.discord_id
-    
-    console.log('[useTicket] userId:', userId, 'legacyCount:', legacyCount, 'matchedDiscordId:', matchedDiscordId)
-    
-    if (legacyCount > 0 && matchedDiscordId) {
-      // Decrement legacy tickets using the actual discord_id found
-      await sql`
-        UPDATE users SET spin_tickets = spin_tickets - 1 
-        WHERE discord_id = ${matchedDiscordId} AND spin_tickets > 0
-      `
-      return { success: true }
-    }
-    
-    return { success: false, error: "No tickets available" }
+    return { success: false }
   },
 
   addTicket: async (userId: string, ticketType: string) => {
-    return await sql`
+    const result = await sql`
       INSERT INTO spin_wheel_tickets (user_id, ticket_type)
       VALUES (${userId}, ${ticketType})
       RETURNING *
     `
+    return result[0]
   },
 }
 

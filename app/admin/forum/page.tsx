@@ -43,15 +43,15 @@ export default function AdminForumPage() {
       if (!res.ok) throw new Error("Failed to fetch pending threads")
       const data = await res.json()
 
-      const normalizedThreads = (data.threads || []).map((thread: any) => ({
+      const normalizedThreads = (data.threads || []).map((thread: PendingThread) => ({
         ...thread,
         author: thread.author || { username: "Unknown", avatar: "", membership: "free" },
         category: thread.category || null,
       }))
 
       setThreads(normalizedThreads)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
       setThreads([])
     } finally {
       setIsLoading(false)

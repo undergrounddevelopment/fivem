@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { createAdminClient } from "@/lib/supabase/server"
 
-async function verifyAdmin(session: any, supabase: any) {
+async function verifyAdmin(session: {user: {id: string}}, supabase: {from: (table: string) => any}) {
   const { data: user } = await supabase
     .from("users")
     .select("is_admin, membership, role")

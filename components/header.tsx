@@ -29,11 +29,9 @@ export function Header() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await fetch("/api/notifications")
-        if (res.ok) {
-          const data = await res.json()
-          setNotifications(data)
-        }
+        const { getNotifications } = await import('@/lib/actions/general')
+        const data = await getNotifications()
+        setNotifications(data)
       } catch (error) {
         console.error("Failed to fetch notifications:", error)
       }
@@ -50,11 +48,11 @@ export function Header() {
     const fetchUserData = async () => {
       if (!user) return
       try {
-        const res = await fetch("/api/user/coins")
-        if (res.ok) {
-          const data = await res.json()
+        const { getUserBalance } = await import('@/lib/actions/user')
+        const data = await getUserBalance()
+        if (data) {
           setUserCoins(data.coins || 0)
-          setUserTickets(data.tickets || 0)
+          setUserTickets(data.spin_tickets || 0)
         }
       } catch (error) {
         console.error("Failed to fetch user data:", error)
@@ -63,7 +61,7 @@ export function Header() {
 
     if (user) {
       fetchUserData()
-      const interval = setInterval(fetchUserData, 10000)
+      const interval = setInterval(fetchUserData, 30000)
       return () => clearInterval(interval)
     }
   }, [user])

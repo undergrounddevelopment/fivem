@@ -1,102 +1,153 @@
-"use client"
-
-import { SpinWheelManager } from "@/components/admin/spin-wheel-manager"
-import { useEffect, useState } from "react"
-import { Loader2, History, Trophy } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { getSpinWheelPrizes, getSpinHistory } from '@/lib/database-direct'
+import { validateAdminRole } from '@/lib/security'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { formatDistanceToNow } from "date-fns"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ArrowLeft, Plus, Edit, Trash2, Zap, Gift, TrendingUp } from "lucide-react"
+import Link from "next/link"
 
-interface SpinLog {
-  id: string
-  user_id: string
-  prize_name: string
-  coins_won: number
-  created_at: string
-  user: {
-    username: string
-    avatar: string
-  }
-}
-
-export default function AdminSpinWheelPage() {
-  const [mounted, setMounted] = useState(false)
-  const [recentSpins, setRecentSpins] = useState<SpinLog[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    setMounted(true)
-    fetchRecentSpins()
-  }, [])
-
-  const fetchRecentSpins = async () => {
-    try {
-      const res = await fetch('/api/admin/spin-wheel/logs')
-      const data = await res.json()
-      setRecentSpins(data.logs || [])
-    } catch (error) {
-      console.error('Failed to fetch spin logs:', error)
-    } finally {
-      setLoading(false)
-    }
+export default async function AdminSpinWheelPage() {
+  const session = await getServerSession(authOptions)
+  
+  if (!validateAdminRole(session)) {
+    return <div>Access Denied</div>
   }
 
-  if (!mounted) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
+  const [prizes, history] = await Promise.all([
+    getSpinWheelPrizes(),
+    getSpinHistory().then(h => h.slice(0, 10))
+  ])
 
   return (
-    <div className="space-y-6">
-      <SpinWheelManager />
-      
-      {/* Recent Spins Activity Log */}
-      <Card className="bg-card/50 border-border">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <History className="h-5 w-5 text-primary" />
-            <h3 className="font-bold text-lg">Recent Spin Activity</h3>
-            <Badge variant="secondary" className="ml-auto">{recentSpins.length} spins</Badge>
-          </div>
-          
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-          ) : recentSpins.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No spin activity yet</p>
-          ) : (
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {recentSpins.map((spin) => (
-                <div key={spin.id} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
-                  <img
-                    src={spin.user?.avatar || '/placeholder.svg'}
-                    alt={spin.user?.username}
-                    className="h-10 w-10 rounded-full"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">
-                      <span className="text-foreground">{spin.user?.username || 'Unknown'}</span>
-                      <span className="text-muted-foreground"> won </span>
-                      <span className="text-primary font-bold">{spin.prize_name}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(spin.created_at), { addSuffix: true })}
+    <div>
+      <Link href="/admin" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6">
+        <ArrowLeft className="h-4 w-4" />
+        Back to Admin
+      </Link>
+
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+            <Zap className="h-6 w-6 text-primary" />
+            Spin Wheel Management
+          </h1>
+          <p className="text-muted-foreground">Manage prizes and spin wheel settings.</p>
+        </div>
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add Prize
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Prizes */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Gift className="h-5 w-5" />
+              Prizes ({prizes.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {prizes.slice(0, 5).map((prize) => (
+                <div key={prize.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{prize.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {prize.type} • {prize.probability}% chance
                     </p>
                   </div>
-                  <div className="flex items-center gap-1 text-yellow-500 font-bold">
-                    <Trophy className="h-4 w-4" />
-                    +{spin.coins_won}
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{prize.value}</Badge>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Edit className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* Recent Spins */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Recent Spins
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {history.map((spin) => (
+                <div key={spin.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{spin.users?.username}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(spin.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <Badge variant="outline">{spin.spin_wheel_prizes?.name}</Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Prizes Table */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-border bg-secondary/30">
+              <th className="text-left py-4 px-4 text-sm font-medium text-muted-foreground">Prize</th>
+              <th className="text-left py-4 px-4 text-sm font-medium text-muted-foreground">Type</th>
+              <th className="text-left py-4 px-4 text-sm font-medium text-muted-foreground">Value</th>
+              <th className="text-left py-4 px-4 text-sm font-medium text-muted-foreground">Probability</th>
+              <th className="text-left py-4 px-4 text-sm font-medium text-muted-foreground">Status</th>
+              <th className="text-left py-4 px-4 text-sm font-medium text-muted-foreground">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {prizes.map((prize) => (
+              <tr key={prize.id} className="border-b border-border last:border-0 hover:bg-secondary/20">
+                <td className="py-4 px-4">
+                  <span className="font-medium text-foreground">{prize.name}</span>
+                </td>
+                <td className="py-4 px-4">
+                  <Badge variant="outline" className="capitalize">{prize.type}</Badge>
+                </td>
+                <td className="py-4 px-4">
+                  <span className="font-medium">{prize.value}</span>
+                </td>
+                <td className="py-4 px-4">
+                  <span className="text-muted-foreground">{prize.probability}%</span>
+                </td>
+                <td className="py-4 px-4">
+                  <Badge className={prize.is_active ? "bg-success/20 text-success" : "bg-secondary text-muted-foreground"}>
+                    {prize.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
+                </td>
+                <td className="py-4 px-4">
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

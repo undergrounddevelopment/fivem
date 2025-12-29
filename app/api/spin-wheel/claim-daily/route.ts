@@ -17,9 +17,13 @@ export async function POST() {
     // Get today's date at midnight UTC
     const today = new Date()
     today.setUTCHours(0, 0, 0, 0)
+    
+    // Get tomorrow's date for expiration
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
 
     // Check if already claimed today
-    const { data: existingClaim } = await supabase
+    const { data: existingClaim, error: claimCheckError } = await supabase
       .from("daily_claims")
       .select("*")
       .eq("user_id", discordId)
@@ -27,33 +31,83 @@ export async function POST() {
       .gte("claimed_at", today.toISOString())
       .single()
 
-    if (existingClaim) {
+    if (existingClaim && !claimCheckError) {
       return NextResponse.json({ error: "Already claimed today" }, { status: 400 })
     }
 
-    // Get yesterday's claim for streak
+    // Get yesterday's claim for streak calculation
     const yesterday = new Date(today)
     yesterday.setDate(yesterday.getDate() - 1)
 
-    const { data: yesterdayClaim } = await supabase
+    const { data: yesterdayClaim, error: yesterdayError } = await supabase
       .from("daily_claims")
-      .select("streak")
+      .select("streak, claimed_at")
       .eq("user_id", discordId)
       .eq("claim_type", "spin_ticket")
       .gte("claimed_at", yesterday.toISOString())
       .lt("claimed_at", today.toISOString())
       .single()
 
-    const newStreak = (yesterdayClaim?.streak || 0) + 1
+    // Calculate new streak
+    // If user claimed yesterday, increment streak; otherwise start from 1
+    let newStreak = 1
+    if (yesterdayClaim && !yesterdayError) {
+      newStreak = yesterdayClaim.streak + 1
+    } else {
+      // If there was an error but we can't verify they didn't claim yesterday,
+      // we'll be conservative and reset the streak
+      // But if the error is "not found", they simply didn't claim yesterday
+      if (yesterdayError && yesterdayError.code !== 'PGRST116') {
+        console.error("Error checking yesterday's claim:", yesterdayError)
+        
+        // Capture error ke Sentry
+        import('@sentry/nextjs').then(Sentry => {
+          Sentry.captureException(yesterdayError, {
+            contexts: {
+              spinWheel: {
+                userId: discordId,
+                action: 'checkYesterdayClaim'
+              }
+            }
+          });
+        });
+        
+        return NextResponse.json({ error: "Error verifying claim streak" }, { status: 500 })
+      }
+    }
 
     // Calculate bonus tickets based on streak
     let bonusTickets = 1 // Base ticket
     if (newStreak >= 7) bonusTickets = 3
     else if (newStreak >= 3) bonusTickets = 2
 
-    // Add tickets to spin_wheel_tickets table (not users.spin_tickets)
+    // Add tickets to spin_wheel_tickets table with expiration
     for (let i = 0; i < bonusTickets; i++) {
-      await db.spinWheel.addTicket(discordId, 'daily')
+      const { error: ticketError } = await supabase
+        .from("spin_wheel_tickets")
+        .insert([{
+          user_id: discordId,
+          ticket_type: 'daily',
+          expires_at: tomorrow.toISOString(), // Ticket expires at midnight tomorrow
+        }])
+      
+      if (ticketError) {
+        console.error("Error adding ticket:", ticketError)
+        
+        // Capture error ke Sentry
+        import('@sentry/nextjs').then(Sentry => {
+          Sentry.captureException(ticketError, {
+            contexts: {
+              spinWheel: {
+                userId: discordId,
+                action: 'addTicket'
+              }
+            }
+          });
+        });
+        
+        return NextResponse.json({ error: "Failed to add daily ticket" }, { status: 500 })
+      }
     }
 
     // Get updated ticket count
@@ -61,22 +115,54 @@ export async function POST() {
     const newTickets = tickets.length
 
     // Record the claim
-    await supabase.from("daily_claims").insert({
+    const { error: recordError } = await supabase.from("daily_claims").insert({
       user_id: discordId,
       claim_type: "spin_ticket",
       streak: newStreak,
       claimed_at: new Date().toISOString(),
     })
 
+    if (recordError) {
+      console.error("Error recording claim:", recordError)
+      
+      // Capture error ke Sentry
+      import('@sentry/nextjs').then(Sentry => {
+        Sentry.captureException(recordError, {
+          contexts: {
+            spinWheel: {
+              userId: discordId,
+              action: 'recordClaim'
+            }
+          }
+        });
+      });
+      
+      return NextResponse.json({ error: "Failed to record daily claim" }, { status: 500 })
+    }
+
     return NextResponse.json({
       success: true,
       newTickets,
       newStreak,
       bonusTickets,
-      message: bonusTickets > 1 ? `Streak bonus! You received ${bonusTickets} tickets!` : "Daily ticket claimed!",
+      message: bonusTickets > 1 
+        ? `Streak bonus! You received ${bonusTickets} tickets! (Day ${newStreak} streak)` 
+        : "Daily ticket claimed! (Day 1)",
     })
   } catch (error) {
     console.error("Error claiming daily:", error)
+    
+    // Capture error ke Sentry
+    import('@sentry/nextjs').then(Sentry => {
+      Sentry.captureException(error, {
+        contexts: {
+          spinWheel: {
+            action: 'claimDaily'
+          }
+        }
+      });
+    });
+    
     return NextResponse.json({ error: "Failed to claim daily ticket" }, { status: 500 })
   }
 }
