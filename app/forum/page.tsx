@@ -2,9 +2,8 @@ import { getForumCategories, getForumThreads } from '@/lib/database-direct'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { MessageSquare, Users, Plus, Pin, Clock } from "lucide-react"
+import { MessageSquare, Users, Plus, Clock } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
 
 export default async function ForumPage() {
   const [categories, recentThreads] = await Promise.all([
