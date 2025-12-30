@@ -20,6 +20,14 @@ export function useAuth() {
   const { data: session, status, update } = useSession()
   const [forceAdminCheck, setForceAdminCheck] = useState(false)
 
+  // Auto-refresh session every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      update()
+    }, 5 * 60 * 1000) // 5 minutes
+    return () => clearInterval(interval)
+  }, [update])
+
   // Debug logging in development
   useEffect(() => {
     if (process.env.NODE_ENV === "development" && session?.user) {
@@ -27,6 +35,7 @@ export function useAuth() {
         id: session.user.id,
         isAdmin: session.user.isAdmin,
         membership: session.user.membership,
+        coins: session.user.coins,
       })
     }
   }, [session])

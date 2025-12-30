@@ -3,15 +3,30 @@
 import { motion } from "framer-motion"
 import { Users, Download, Star, TrendingUp } from "lucide-react"
 import { ModernCard } from "./modern-card"
-
-const stats = [
-  { icon: Users, label: "Active Users", value: "50K+", trend: "up" as const },
-  { icon: Download, label: "Downloads", value: "1M+", trend: "up" as const },
-  { icon: Star, label: "Resources", value: "5K+", trend: "up" as const },
-  { icon: TrendingUp, label: "Growth", value: "+25%", trend: "up" as const },
-]
+import { useEffect, useState } from "react"
 
 export function ModernStats() {
+  const [stats, setStats] = useState([
+    { icon: Users, label: "Active Users", value: "0", trend: "up" as const },
+    { icon: Download, label: "Downloads", value: "0", trend: "up" as const },
+    { icon: Star, label: "Resources", value: "0", trend: "up" as const },
+    { icon: TrendingUp, label: "Growth", value: "0%", trend: "up" as const },
+  ])
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then(res => res.json())
+      .then(data => {
+        setStats([
+          { icon: Users, label: "Active Users", value: data.totalUsers?.toString() || "0", trend: "up" as const },
+          { icon: Download, label: "Downloads", value: data.totalDownloads?.toString() || "0", trend: "up" as const },
+          { icon: Star, label: "Resources", value: data.totalAssets?.toString() || "0", trend: "up" as const },
+          { icon: TrendingUp, label: "Growth", value: "+25%", trend: "up" as const },
+        ])
+      })
+      .catch(() => {})
+  }, [])
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, i) => (

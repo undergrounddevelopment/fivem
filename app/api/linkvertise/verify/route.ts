@@ -1,18 +1,35 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyLinkvertiseHash } from '@/lib/linkvertise';
+import { NextRequest, NextResponse } from 'next/server'
+import { verifyAntiBypass } from '@/lib/linkvertise-service'
 
 export async function POST(req: NextRequest) {
-  const { hash } = await req.json();
+  try {
+    const { hash } = await req.json()
 
-  if (!hash) {
-    return NextResponse.json({ verified: false, error: 'Hash required' }, { status: 400 });
+    if (!hash || typeof hash !== 'string' || hash.length !== 64) {
+      return NextResponse.json({ verified: false, error: 'Invalid hash' }, { status: 400 })
+    }
+
+    const verified = await verifyAntiBypass(hash)
+
+    return NextResponse.json({
+      verified,
+      message: verified ? 'Hash verified successfully' : 'Hash verification failed',
+      timestamp: new Date().toISOString()
+    })
+  } catch (error) {
+    console.error('Verify error:', error)
+    return NextResponse.json({ verified: false, error: 'Verification failed' }, { status: 500 })
   }
+}
 
-  const result = await verifyLinkvertiseHash(hash);
-
-  return NextResponse.json({
-    verified: result.verified,
-    message: result.message,
-    timestamp: result.timestamp
-  });
+export async function GET(req: NextRequest) {
+  const hash = req.nextUrl.searchParams.get('hash')
+  
+  if (!hash || hash.length !== 64) {
+    return NextResponse.json({ verified: false, error: 'Invalid hash' }, { status: 400 })
+  }
+  
+  const verified = await verifyAntiBypass(hash)
+  
+  return NextResponse.json({ verified })
 }

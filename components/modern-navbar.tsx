@@ -4,11 +4,15 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Bell, User, Coins, Ticket, Menu, X, Sparkles, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth-provider"
+import { useUserUpdates } from "@/components/use-user-updates"
+import { useSupabaseRealtime } from "@/components/use-supabase-realtime"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 
 export function ModernNavbar() {
   const { user, login } = useAuth()
+  useUserUpdates() // Event-based updates
+  useSupabaseRealtime() // Supabase realtime updates
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [isMounted, setIsMounted] = useState(false)

@@ -1,59 +1,32 @@
-import { NextResponse } from "next/server"
-import { getSupabaseAdminClient } from "@/lib/supabase/server"
+import { NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase/server'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const supabase = getSupabaseAdminClient()
-
-    const { data: activities, error } = await supabase
-      .from("activities")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(20)
-
-    if (error) throw error
-
-    // Get unique user IDs
-    const userIds = [...new Set((activities || []).map((a) => a.user_id).filter(Boolean))]
-
-    // Fetch users separately
-    let usersMap: Record<string, {discord_id: string; username: string; avatar: string}> = {}
-    if (userIds.length > 0) {
-      const { data: users } = await supabase
-        .from("users")
-        .select("discord_id, username, avatar")
-        .in("discord_id", userIds)
-
-      usersMap = (users || []).reduce(
-        (acc, user) => {
-          acc[user.discord_id] = user
-          return acc
-        },
-        {} as Record<string, {discord_id: string; username: string; avatar: string}>,
-      )
-    }
-
-    const formattedActivities = (activities || []).map((activity) => {
-      const user = usersMap[activity.user_id]
-      return {
-        id: activity.id,
-        userId: activity.user_id,
-        type: activity.type,
-        action: activity.action,
-        targetId: activity.target_id,
-        createdAt: activity.created_at,
-        user: user
-          ? {
-              username: user.username,
-              avatar: user.avatar,
-            }
-          : null,
+    const supabase = createAdminClient()
+    
+    const { data: downloads } = await supabase
+      .from('downloads')
+      .select('*, users(username, avatar), assets(title)')
+      .order('created_at', { ascending: false })
+      .limit(10)
+    
+    const activities = (downloads || []).map(d => ({
+      id: d.id,
+      type: 'download',
+      action: `downloaded ${d.assets?.title || 'an asset'}`,
+      createdAt: d.created_at,
+      user: {
+        username: d.users?.username || 'Anonymous',
+        avatar: d.users?.avatar || null
       }
-    })
-
-    return NextResponse.json(formattedActivities)
+    }))
+    
+    return NextResponse.json(activities)
   } catch (error) {
-    console.error("Activity error:", error)
+    console.error('Activity error:', error)
     return NextResponse.json([])
   }
 }

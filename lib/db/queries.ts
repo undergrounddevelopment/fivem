@@ -1,4 +1,3 @@
-import sql from './postgres'
 import { createClient } from '@supabase/supabase-js'
 import { SUPABASE_CONFIG } from '../supabase/config'
 
@@ -14,128 +13,216 @@ const supabase = createClient(
 )
 
 // ============================================
+// USER QUERIES
+// ============================================
+
+export const userQueries = {
+  getById: async (id: string) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  getByDiscordId: async (discordId: string) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('discord_id', discordId)
+      .single()
+    
+    if (error && error.code !== 'PGRST116') throw error
+    return data
+  },
+
+  create: async (userData: {
+    discord_id: string
+    username: string
+    email?: string
+    avatar?: string
+  }) => {
+    const { data, error } = await supabase
+      .from('users')
+      .insert([{
+        discord_id: userData.discord_id,
+        username: userData.username,
+        email: userData.email,
+        avatar: userData.avatar,
+        membership: 'free',
+        coins: 100,
+        reputation: 0
+      }])
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  update: async (id: string, updates: any) => {
+    const { data, error } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  updateCoins: async (userId: string, amount: number) => {
+    const { data, error } = await supabase.rpc('update_user_coins', {
+      user_id: userId,
+      coin_amount: amount
+    })
+    
+    if (error) throw error
+    return data
+  },
+}
+
+// ============================================
 // FORUM QUERIES
 // ============================================
 
 export const forumQueries = {
-  // Categories
   getCategories: async () => {
-    return await sql`
-      SELECT * FROM forum_categories 
-      WHERE is_active = true 
-      ORDER BY sort_order ASC
-    `
+    const { data, error } = await supabase
+      .from('forum_categories')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+    
+    if (error) throw error
+    return data || []
   },
 
   getCategoryById: async (id: string) => {
-    return await sql`
-      SELECT * FROM forum_categories WHERE id = ${id}
-    `
+    const { data, error } = await supabase
+      .from('forum_categories')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data
   },
 
-  // Threads
   getThreads: async (categoryId?: string, limit = 20, offset = 0) => {
+    let query = supabase
+      .from('forum_threads')
+      .select(`
+        *,
+        users!forum_threads_author_id_fkey (
+          id,
+          username,
+          avatar,
+          membership
+        )
+      `)
+      .eq('status', 'approved')
+      .eq('is_deleted', false)
+    
     if (categoryId) {
-      return await sql`
-        SELECT 
-          t.*,
-          u.id as user_id,
-          u.username as author_username,
-          u.avatar as author_avatar,
-          u.membership as author_membership
-        FROM forum_threads t
-        LEFT JOIN users u ON t.author_id::text = u.id::text
-        WHERE t.category_id = ${categoryId} 
-        AND t.status = 'approved' 
-        AND t.is_deleted = false
-        ORDER BY t.is_pinned DESC, t.created_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `
+      query = query.eq('category_id', categoryId)
     }
-    return await sql`
-      SELECT 
-        t.*,
-        u.id as user_id,
-        u.username as author_username,
-        u.avatar as author_avatar,
-        u.membership as author_membership
-      FROM forum_threads t
-      LEFT JOIN users u ON t.author_id::text = u.id::text
-      WHERE t.status = 'approved' 
-      AND t.is_deleted = false
-      ORDER BY t.is_pinned DESC, t.created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `
+    
+    const { data, error } = await query
+      .order('is_pinned', { ascending: false })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+    
+    if (error) throw error
+    return data || []
   },
 
   getThreadById: async (id: string) => {
-    return await sql`
-      SELECT * FROM forum_threads WHERE id = ${id}
-    `
+    const { data, error } = await supabase
+      .from('forum_threads')
+      .select(`
+        *,
+        users!forum_threads_author_id_fkey (
+          id,
+          username,
+          avatar,
+          membership
+        )
+      `)
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data
   },
 
-  createThread: async (data: {
+  createThread: async (threadData: {
     title: string
     content: string
     category_id: string
     author_id: string
     images?: string[]
   }) => {
-    return await sql`
-      INSERT INTO forum_threads (title, content, category_id, author_id, images)
-      VALUES (${data.title}, ${data.content}, ${data.category_id}, ${data.author_id}, ${data.images || []})
-      RETURNING *
-    `
-  },
-
-  updateThread: async (id: string, data: Partial<{
-    title: string
-    content: string
-    status: string
-    is_pinned: boolean
-    is_locked: boolean
-  }>) => {
-    const title = data.title ?? null
-    const content = data.content ?? null
-    const status = data.status ?? null
-    const is_pinned = data.is_pinned ?? null
-    const is_locked = data.is_locked ?? null
+    const { data, error } = await supabase
+      .from('forum_threads')
+      .insert([threadData])
+      .select()
+      .single()
     
-    return await sql`
-      UPDATE forum_threads 
-      SET 
-        title = COALESCE(${title}, title),
-        content = COALESCE(${content}, content),
-        status = COALESCE(${status}, status),
-        is_pinned = COALESCE(${is_pinned}, is_pinned),
-        is_locked = COALESCE(${is_locked}, is_locked),
-        updated_at = NOW()
-      WHERE id = ${id}
-      RETURNING *
-    `
+    if (error) throw error
+    return data
   },
 
-  // Replies
+  updateThread: async (id: string, updates: any) => {
+    const { data, error } = await supabase
+      .from('forum_threads')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
   getReplies: async (threadId: string, limit = 50, offset = 0) => {
-    return await sql`
-      SELECT * FROM forum_replies 
-      WHERE thread_id = ${threadId} 
-      AND is_deleted = false
-      ORDER BY created_at ASC
-      LIMIT ${limit} OFFSET ${offset}
-    `
+    const { data, error } = await supabase
+      .from('forum_replies')
+      .select(`
+        *,
+        users!forum_replies_author_id_fkey (
+          id,
+          username,
+          avatar,
+          membership
+        )
+      `)
+      .eq('thread_id', threadId)
+      .eq('is_deleted', false)
+      .order('created_at', { ascending: true })
+      .range(offset, offset + limit - 1)
+    
+    if (error) throw error
+    return data || []
   },
 
-  createReply: async (data: {
+  createReply: async (replyData: {
     thread_id: string
     author_id: string
     content: string
   }) => {
-    return await sql`
-      INSERT INTO forum_replies (thread_id, author_id, content)
-      VALUES (${data.thread_id}, ${data.author_id}, ${data.content})
-      RETURNING *
-    `
+    const { data, error } = await supabase
+      .from('forum_replies')
+      .insert([replyData])
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
   },
 }
 
@@ -145,50 +232,98 @@ export const forumQueries = {
 
 export const coinsQueries = {
   getUserBalance: async (userId: string) => {
-    const result = await sql`SELECT get_user_balance(${userId}) as balance`
-    return result[0]?.balance || 0
+    const { data, error } = await supabase
+      .from('users')
+      .select('coins')
+      .eq('id', userId)
+      .single()
+    
+    if (error) throw error
+    return data?.coins || 0
   },
 
   getTransactions: async (userId: string, limit = 50, offset = 0) => {
-    return await sql`
-      SELECT * FROM coin_transactions 
-      WHERE user_id = ${userId}
-      ORDER BY created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `
+    const { data, error } = await supabase
+      .from('coin_transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+    
+    if (error) throw error
+    return data || []
   },
 
-  addCoins: async (data: {
+  addCoins: async (transactionData: {
     user_id: string
     amount: number
     type: string
     description?: string
     reference_id?: string
   }) => {
-    const result = await sql`
-      SELECT add_coins(
-        ${data.user_id}, 
-        ${data.amount}, 
-        ${data.type}, 
-        ${data.description || null}, 
-        ${data.reference_id || null}
-      ) as result
-    `
-    return result[0]?.result
+    // Insert transaction
+    const { data: transaction, error: txError } = await supabase
+      .from('coin_transactions')
+      .insert([transactionData])
+      .select()
+      .single()
+    
+    if (txError) throw txError
+
+    // Update user coins
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('coins')
+      .eq('id', transactionData.user_id)
+      .single()
+    
+    if (userError) throw userError
+
+    const newBalance = (user.coins || 0) + transactionData.amount
+    
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ coins: newBalance })
+      .eq('id', transactionData.user_id)
+    
+    if (updateError) throw updateError
+    
+    return transaction
   },
 
   canClaimDaily: async (userId: string, claimType: string) => {
-    const result = await sql`
-      SELECT can_claim_daily(${userId}, ${claimType}) as can_claim
-    `
-    return result[0]?.can_claim || false
+    const { data, error } = await supabase
+      .from('coin_transactions')
+      .select('created_at')
+      .eq('user_id', userId)
+      .eq('type', claimType)
+      .order('created_at', { ascending: false })
+      .limit(1)
+    
+    if (error) throw error
+    
+    if (!data || data.length === 0) return true
+    
+    const lastClaim = new Date(data[0].created_at)
+    const now = new Date()
+    const hoursSince = (now.getTime() - lastClaim.getTime()) / (1000 * 60 * 60)
+    
+    return hoursSince >= 24
   },
 
   claimDailyReward: async (userId: string, claimType: string, amount = 100) => {
-    const result = await sql`
-      SELECT claim_daily_reward(${userId}, ${claimType}, ${amount}) as result
-    `
-    return result[0]?.result
+    const canClaim = await coinsQueries.canClaimDaily(userId, claimType)
+    
+    if (!canClaim) {
+      throw new Error('Daily reward already claimed')
+    }
+    
+    return await coinsQueries.addCoins({
+      user_id: userId,
+      amount,
+      type: claimType,
+      description: 'Daily reward'
+    })
   },
 }
 
@@ -198,23 +333,29 @@ export const coinsQueries = {
 
 export const spinWheelQueries = {
   getPrizes: async () => {
-    return await sql`
-      SELECT * FROM spin_wheel_prizes 
-      WHERE is_active = true 
-      ORDER BY sort_order ASC
-    `
+    const { data, error } = await supabase
+      .from('spin_wheel_prizes')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+    
+    if (error) throw error
+    return data || []
   },
 
   getHistory: async (userId: string, limit = 50, offset = 0) => {
-    return await sql`
-      SELECT * FROM spin_wheel_history 
-      WHERE user_id = ${userId}
-      ORDER BY created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `
+    const { data, error } = await supabase
+      .from('spin_wheel_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+    
+    if (error) throw error
+    return data || []
   },
 
-  recordSpin: async (data: {
+  recordSpin: async (spinData: {
     user_id: string
     prize_id: string
     prize_name: string
@@ -222,57 +363,56 @@ export const spinWheelQueries = {
     prize_value: number
     was_forced?: boolean
   }) => {
-    return await sql`
-      INSERT INTO spin_wheel_history 
-      (user_id, prize_id, prize_name, prize_type, prize_value, was_forced)
-      VALUES (${data.user_id}, ${data.prize_id}, ${data.prize_name}, ${data.prize_type}, ${data.prize_value}, ${data.was_forced || false})
-      RETURNING *
-    `
+    const { data, error } = await supabase
+      .from('spin_wheel_history')
+      .insert([spinData])
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
   },
 
   getTickets: async (userId: string) => {
-    // Only from spin_wheel_tickets table (no legacy)
-    const result = await sql`
-      SELECT * FROM spin_wheel_tickets 
-      WHERE user_id = ${userId} 
-      AND is_used = false
-      AND (expires_at IS NULL OR expires_at > NOW())
-      ORDER BY created_at ASC
-    `
-    return result
+    const { data, error } = await supabase
+      .from('spin_wheel_tickets')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_used', false)
+      .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
+      .order('created_at', { ascending: true })
+    
+    if (error) throw error
+    return data || []
   },
 
   useTicket: async (userId: string) => {
-    // Use ticket from spin_wheel_tickets table only
-    const result = await sql`
-      UPDATE spin_wheel_tickets 
-      SET is_used = true, used_at = NOW()
-      WHERE id = (
-        SELECT id FROM spin_wheel_tickets
-        WHERE user_id = ${userId}
-        AND is_used = false
-        AND (expires_at IS NULL OR expires_at > NOW())
-        ORDER BY created_at ASC
-        LIMIT 1
-      )
-      RETURNING *
-    `
+    // Get first available ticket
+    const tickets = await spinWheelQueries.getTickets(userId)
     
-    if (result.length > 0) {
-      console.log('[useTicket] Used ticket:', result[0].id)
-      return { success: true }
+    if (tickets.length === 0) {
+      return { success: false }
     }
     
-    return { success: false }
+    const { error } = await supabase
+      .from('spin_wheel_tickets')
+      .update({ is_used: true, used_at: new Date().toISOString() })
+      .eq('id', tickets[0].id)
+    
+    if (error) throw error
+    
+    return { success: true }
   },
 
   addTicket: async (userId: string, ticketType: string) => {
-    const result = await sql`
-      INSERT INTO spin_wheel_tickets (user_id, ticket_type)
-      VALUES (${userId}, ${ticketType})
-      RETURNING *
-    `
-    return result[0]
+    const { data, error } = await supabase
+      .from('spin_wheel_tickets')
+      .insert([{ user_id: userId, ticket_type: ticketType }])
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
   },
 }
 
@@ -282,61 +422,85 @@ export const spinWheelQueries = {
 
 export const adminQueries = {
   isAdmin: async (userId: string) => {
-    const result = await sql`
-      SELECT EXISTS (
-        SELECT 1 FROM users 
-        WHERE discord_id = ${userId} 
-        AND (is_admin = true OR membership = 'admin')
-      ) as is_admin
-    `
-    return result[0]?.is_admin || false
+    const { data, error } = await supabase
+      .from('users')
+      .select('is_admin, membership')
+      .eq('discord_id', userId)
+      .single()
+    
+    if (error && error.code !== 'PGRST116') throw error
+    
+    return data?.is_admin === true || data?.membership === 'admin'
   },
 
   getPendingThreads: async (limit = 50, offset = 0) => {
-    return await sql`
-      SELECT * FROM forum_threads 
-      WHERE status = 'pending'
-      ORDER BY created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `
+    const { data, error } = await supabase
+      .from('forum_threads')
+      .select(`
+        *,
+        users!forum_threads_author_id_fkey (
+          id,
+          username,
+          avatar,
+          membership
+        )
+      `)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+    
+    if (error) throw error
+    return data || []
   },
 
   approveThread: async (threadId: string, adminId: string) => {
-    return await sql`
-      UPDATE forum_threads 
-      SET status = 'approved', 
-          approved_by = ${adminId}, 
-          approved_at = NOW(),
-          updated_at = NOW()
-      WHERE id = ${threadId}
-      RETURNING *
-    `
+    const { data, error } = await supabase
+      .from('forum_threads')
+      .update({
+        status: 'approved',
+        approved_by: adminId,
+        approved_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', threadId)
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
   },
 
   rejectThread: async (threadId: string, reason: string) => {
-    return await sql`
-      UPDATE forum_threads 
-      SET status = 'rejected', 
-          rejection_reason = ${reason},
-          updated_at = NOW()
-      WHERE id = ${threadId}
-      RETURNING *
-    `
+    const { data, error } = await supabase
+      .from('forum_threads')
+      .update({
+        status: 'rejected',
+        rejection_reason: reason,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', threadId)
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
   },
 
   getStats: async () => {
     const [threads, replies, users, coins] = await Promise.all([
-      sql`SELECT COUNT(*) as count FROM forum_threads WHERE status = 'approved'`,
-      sql`SELECT COUNT(*) as count FROM forum_replies WHERE is_deleted = false`,
-      sql`SELECT COUNT(*) as count FROM users`,
-      sql`SELECT SUM(amount) as total FROM coin_transactions WHERE amount > 0`,
+      supabase.from('forum_threads').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+      supabase.from('forum_replies').select('*', { count: 'exact', head: true }).eq('is_deleted', false),
+      supabase.from('users').select('*', { count: 'exact', head: true }),
+      supabase.from('coin_transactions').select('amount').gt('amount', 0),
     ])
 
+    const totalCoins = coins.data?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0
+
     return {
-      threads: threads[0]?.count || 0,
-      replies: replies[0]?.count || 0,
-      users: users[0]?.count || 0,
-      totalCoins: coins[0]?.total || 0,
+      threads: threads.count || 0,
+      replies: replies.count || 0,
+      users: users.count || 0,
+      totalCoins,
     }
   },
 }
@@ -355,59 +519,89 @@ export const assetsQueries = {
   }) => {
     const { category, framework, search, limit = 100, offset = 0 } = filters || {}
     
-    let query = sql`
-      SELECT a.*, u.username as author_name, u.avatar as author_avatar, u.membership
-      FROM assets a
-      LEFT JOIN users u ON a.author_id = u.discord_id
-      WHERE a.status IN ('active', 'approved', 'published')
-    `
+    let query = supabase
+      .from('assets')
+      .select('*')
+      .in('status', ['active', 'approved', 'published'])
     
     if (category && category !== 'all') {
-      query = sql`${query} AND a.category = ${category}`
+      query = query.eq('category', category)
     }
     
     if (framework && framework !== 'all') {
-      query = sql`${query} AND a.framework = ${framework}`
+      query = query.eq('framework', framework)
     }
     
     if (search) {
-      query = sql`${query} AND (a.title ILIKE ${'%' + search + '%'} OR a.description ILIKE ${'%' + search + '%'})`
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
     }
     
-    query = sql`${query} ORDER BY a.created_at DESC LIMIT ${limit} OFFSET ${offset}`
+    const { data, error } = await query
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
     
-    return await query
+    if (error) throw error
+    return data || []
   },
 
   getCount: async (filters?: { category?: string; framework?: string; search?: string }) => {
     const { category, framework, search } = filters || {}
     
-    let query = sql`SELECT COUNT(*) as count FROM assets WHERE status IN ('active', 'approved', 'published')`
+    let query = supabase
+      .from('assets')
+      .select('*', { count: 'exact', head: true })
+      .in('status', ['active', 'approved', 'published'])
     
     if (category && category !== 'all') {
-      query = sql`${query} AND category = ${category}`
+      query = query.eq('category', category)
     }
     
     if (framework && framework !== 'all') {
-      query = sql`${query} AND framework = ${framework}`
+      query = query.eq('framework', framework)
     }
     
     if (search) {
-      query = sql`${query} AND (title ILIKE ${'%' + search + '%'} OR description ILIKE ${'%' + search + '%'})`
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
     }
     
-    const result = await query
-    return parseInt(result[0]?.count || '0')
+    const { count, error } = await query
+    if (error) throw error
+    return count || 0
   },
 
   getById: async (id: string) => {
-    const result = await sql`
-      SELECT a.*, u.discord_id as author_id, u.username as author_name, u.avatar as author_avatar, u.membership
-      FROM assets a
-      LEFT JOIN users u ON a.author_id = u.discord_id
-      WHERE a.id = ${id}
-    `
-    return result[0] || null
+    const { data, error } = await supabase
+      .from('assets')
+      .select(`
+        *,
+        users!assets_author_id_fkey (
+          id,
+          discord_id,
+          username,
+          avatar,
+          membership
+        )
+      `)
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    
+    // Format response
+    if (data) {
+      const user = Array.isArray(data.users) ? data.users[0] : data.users
+      return {
+        ...data,
+        author: user ? {
+          id: user.id,
+          username: user.username,
+          avatar: user.avatar,
+          membership: user.membership
+        } : null
+      }
+    }
+    
+    return data
   },
 
   create: async (data: {
@@ -423,72 +617,76 @@ export const assetsQueries = {
     tags?: string[]
     author_id: string
   }) => {
-    return await sql`
-      INSERT INTO assets (title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, tags, author_id)
-      VALUES (${data.title}, ${data.description}, ${data.category}, ${data.framework || 'standalone'}, ${data.version || '1.0.0'}, ${data.coin_price || 0}, ${data.thumbnail || null}, ${data.download_link || null}, ${data.file_size || null}, ${data.tags || []}, ${data.author_id})
-      RETURNING *
-    `
+    const { data: result, error } = await supabase
+      .from('assets')
+      .insert([{
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        framework: data.framework || 'standalone',
+        version: data.version || '1.0.0',
+        coin_price: data.coin_price || 0,
+        thumbnail: data.thumbnail || null,
+        download_link: data.download_link || null,
+        file_size: data.file_size || null,
+        tags: data.tags || [],
+        author_id: data.author_id
+      }])
+      .select()
+    
+    if (error) throw error
+    return result
   },
 
   update: async (id: string, data: any) => {
-    const title = data.title ?? null
-    const description = data.description ?? null
-    const category = data.category ?? null
-    const framework = data.framework ?? null
-    const version = data.version ?? null
-    const coin_price = data.coin_price ?? null
-    const thumbnail = data.thumbnail ?? null
-    const download_link = data.download_link ?? null
-    const file_size = data.file_size ?? null
-    const status = data.status ?? null
+    const { data: result, error } = await supabase
+      .from('assets')
+      .update(data)
+      .eq('id', id)
+      .select()
     
-    return await sql`
-      UPDATE assets 
-      SET 
-        title = COALESCE(${title}, title),
-        description = COALESCE(${description}, description),
-        category = COALESCE(${category}, category),
-        framework = COALESCE(${framework}, framework),
-        version = COALESCE(${version}, version),
-        coin_price = COALESCE(${coin_price}, coin_price),
-        thumbnail = COALESCE(${thumbnail}, thumbnail),
-        download_link = COALESCE(${download_link}, download_link),
-        file_size = COALESCE(${file_size}, file_size),
-        status = COALESCE(${status}, status),
-        updated_at = NOW()
-      WHERE id = ${id}
-      RETURNING *
-    `
+    if (error) throw error
+    return result
   },
 
   incrementViews: async (id: string) => {
-    return await sql`UPDATE assets SET downloads = downloads + 1 WHERE id = ${id}`
+    const { error } = await supabase.rpc('increment_asset_views', { asset_id: id })
+    if (error) console.error('Increment views error:', error)
   },
 
   incrementDownloads: async (id: string) => {
-    return await sql`UPDATE assets SET downloads = downloads + 1 WHERE id = ${id}`
+    const { error } = await supabase.rpc('increment_asset_downloads', { asset_id: id })
+    if (error) console.error('Increment downloads error:', error)
   },
 
   getRecent: async (limit = 6) => {
-    return await sql`
-      SELECT a.*, u.username as author_name
-      FROM assets a
-      LEFT JOIN users u ON a.author_id = u.discord_id
-      WHERE a.status = 'active'
-      ORDER BY a.created_at DESC
-      LIMIT ${limit}
-    `
+    const { data, error } = await supabase
+      .from('assets')
+      .select(`
+        *,
+        users!assets_author_id_fkey (username)
+      `)
+      .in('status', ['active', 'approved', 'published'])
+      .order('created_at', { ascending: false })
+      .limit(limit)
+    
+    if (error) throw error
+    return data || []
   },
 
   getTrending: async (limit = 6) => {
-    return await sql`
-      SELECT a.*, u.username as author_name
-      FROM assets a
-      LEFT JOIN users u ON a.author_id = u.discord_id
-      WHERE a.status = 'active'
-      ORDER BY a.downloads DESC
-      LIMIT ${limit}
-    `
+    const { data, error } = await supabase
+      .from('assets')
+      .select(`
+        *,
+        users!assets_author_id_fkey (username)
+      `)
+      .in('status', ['active', 'approved', 'published'])
+      .order('downloads', { ascending: false })
+      .limit(limit)
+    
+    if (error) throw error
+    return data || []
   },
 }
 
@@ -497,6 +695,7 @@ export const assetsQueries = {
 // ============================================
 
 export default {
+  user: userQueries,
   forum: forumQueries,
   coins: coinsQueries,
   spinWheel: spinWheelQueries,

@@ -188,13 +188,20 @@ export async function ensureDatabaseSetup(): Promise<boolean> {
         `
       })
 
-      // Add foreign key for forum_threads to users
+      // Fix author_id column type and add proper foreign key
       await supabase.rpc("execute_sql", {
         statement: `
           ALTER TABLE forum_threads
-          ADD CONSTRAINT fk_user
+          ALTER COLUMN author_id TYPE TEXT USING author_id::TEXT;
+        `
+      })
+
+      await supabase.rpc("execute_sql", {
+        statement: `
+          ALTER TABLE forum_threads
+          ADD CONSTRAINT fk_author
           FOREIGN KEY (author_id)
-          REFERENCES auth.users(id);
+          REFERENCES users(discord_id);
         `
       })
 

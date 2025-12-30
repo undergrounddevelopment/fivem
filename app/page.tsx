@@ -12,33 +12,11 @@ export const metadata: Metadata = {
   title: "FiveM Tools V7 - Free Scripts, MLO, Vehicles, Decrypt CFX, Upvotes Bot",
   description:
     "Download Free FiveM Scripts, MLO Maps, Vehicles, EUP Clothing. CFX V7 Decrypt Tool, FiveM Upvotes Bot, Leak Scripts. QBCore, ESX, QBox Framework. #1 FiveM Resource Hub.",
-  keywords: [
-    "fivem tools",
-    "fivem scripts free",
-    "fivem mlo free",
-    "fivem vehicles",
-    "fivem decrypt",
-    "cfx decrypt",
-    "fivem upvotes",
-    "fivem leak",
-    "qbcore scripts",
-    "esx scripts",
-    "fivem resources",
-    "fivem download",
-    "gta v fivem",
-    "fivem roleplay",
-    "fivem server",
-  ],
-  openGraph: {
-    title: "FiveM Tools V7 - #1 Free FiveM Resource Hub",
-    description: "Free FiveM Scripts, MLO, Vehicles, EUP, Decrypt CFX V7, Upvotes. QBCore, ESX, QBox Resources.",
-  },
 }
 
 export default function HomePage() {
   return (
     <div className="relative">
-      {/* Hero Section with Modern Design */}
       <ModernHero />
       
       <div className="container mx-auto px-4 py-12">
