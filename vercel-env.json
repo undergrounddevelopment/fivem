@@ -1,0 +1,43 @@
+{
+  "env": {
+    "NEXTAUTH_SECRET": "fivemtools_nextauth_secret_2025_production",
+    "NEXTAUTH_URL": "https://www.fivemtools.net",
+    "DISCORD_CLIENT_ID": "1445650115447754933",
+    "DISCORD_CLIENT_SECRET": "lVH1OJEVut2DdAfGyT9oC159aJ87Y1uW",
+    "ADMIN_DISCORD_ID": "1047719075322810378",
+    "NEXT_PUBLIC_SUPABASE_URL": "https://linnqtixdfjwbrixitrb.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxpbm5xdGl4ZGZqd2JyaXhpdHJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyMTI4NTIsImV4cCI6MjA4MDc4ODg1Mn0.7Mm9XtHZzWC4K4iHuPBCxIWoUJAVqqsD4ph0mwUbFrU",
+    "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxpbm5xdGl4ZGZqd2JyaXhpdHJiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTIxMjg1MiwiZXhwIjoyMDgwNzg4ODUyfQ.Rri9zq0S-Y4nRpwkuiHp1GsZJXAsL-6-xpqJ1fAP3KE",
+    "DATABASE_URL": "postgresql://postgres.linnqtixdfjwbrixitrb:SDDp6eOm6Zd3DJYF@aws-1-us-east-1.pooler.supabase.com:6543/postgres",
+    "POSTGRES_URL": "postgresql://postgres.linnqtixdfjwbrixitrb:06Zs04s8vCBrW4XE@aws-1-us-east-1.pooler.supabase.com:6543/postgres",
+    "NEXT_PUBLIC_SITE_URL": "https://www.fivemtools.net",
+    "NEXT_PUBLIC_APP_URL": "https://www.fivemtools.net",
+    "LINKVERTISE_USER_ID": "1461354",
+    "LINKVERTISE_AUTH_TOKEN": "0e4fe4bd2f9dd70412858a5f154e50ada772176b13fb61d5aa0dceb7405c2d29",
+    "NEXT_PUBLIC_LINKVERTISE_ENABLED": "true",
+    "CRON_SECRET": "fivemtools_cron_secret_2025"
+  },
+  "build": {
+    "env": {
+      "NEXTAUTH_SECRET": "fivemtools_nextauth_secret_2025_production",
+      "NEXTAUTH_URL": "https://www.fivemtools.net",
+      "DISCORD_CLIENT_ID": "1445650115447754933",
+      "DISCORD_CLIENT_SECRET": "lVH1OJEVut2DdAfGyT9oC159aJ87Y1uW",
+      "ADMIN_DISCORD_ID": "1047719075322810378",
+      "NEXT_PUBLIC_SUPABASE_URL": "https://linnqtixdfjwbrixitrb.supabase.co",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxpbm5xdGl4ZGZqd2JyaXhpdHJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyMTI4NTIsImV4cCI6MjA4MDc4ODg1Mn0.7Mm9XtHZzWC4K4iHuPBCxIWoUJAVqqsD4ph0mwUbFrU",
+      "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxpbm5xdGl4ZGZqd2JyaXhpdHJiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTIxMjg1MiwiZXhwIjoyMDgwNzg4ODUyfQ.Rri9zq0S-Y4nRpwkuiHp1GsZJXAsL-6-xpqJ1fAP3KE"
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Credentials", "value": "true" },
+        { "key": "Access-Control-Allow-Origin", "value": "https://www.fivemtools.net" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
+        { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version" }
+      ]
+    }
+  ]
+}
