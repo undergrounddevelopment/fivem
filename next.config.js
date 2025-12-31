@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const { withSentryConfig } = require("@sentry/nextjs");
+const path = require("path");
 
 const nextConfig = {
   typescript: {
@@ -8,10 +9,16 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  outputFileTracingRoot: path.join(__dirname),
+  webpack: (config, { dev }) => {
+    if (!dev) {
+      config.cache = { type: "memory" };
+    }
+    return config;
+  },
   experimental: {
     scrollRestoration: true,
   },
-  swcMinify: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },

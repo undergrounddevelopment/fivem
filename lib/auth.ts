@@ -1,12 +1,15 @@
-import { CONFIG } from "@/lib/config"
 import { sanitizeInput } from "@/lib/sanitize"
 import type { NextAuthOptions } from "next-auth"
 import DiscordProvider from "next-auth/providers/discord"
+import { createAdminClient } from "@/lib/supabase/server"
+import { SUPABASE_CONFIG } from "@/lib/supabase/config"
 
 declare module "next-auth" {
   interface Session {
     user: {
       id: string
+      userId?: string
+      discordId?: string
       name?: string | null
       email?: string | null
       image?: string | null
@@ -16,6 +19,7 @@ declare module "next-auth" {
     }
   }
   interface JWT {
+    userId?: string
     discordId?: string
     coins?: number
     membership?: string
@@ -24,29 +28,14 @@ declare module "next-auth" {
   }
 }
 
-async function getAdminSupabase() {
-  const { createClient } = await import("@supabase/supabase-js")
-  
-  if (!CONFIG.supabase.url || !CONFIG.supabase.serviceKey) {
-    throw new Error("Missing Supabase configuration")
-  }
-
-  return createClient(CONFIG.supabase.url, CONFIG.supabase.serviceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  })
-}
-
 function getProviders() {
-  const providers = []
+  const providers: any[] = []
 
-  if (CONFIG.discord.clientId && CONFIG.discord.clientSecret) {
+  if (process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET) {
     providers.push(
       DiscordProvider({
-        clientId: CONFIG.discord.clientId,
-        clientSecret: CONFIG.discord.clientSecret,
+        clientId: process.env.DISCORD_CLIENT_ID,
+        clientSecret: process.env.DISCORD_CLIENT_SECRET,
         authorization: { params: { scope: "identify email" } },
       }),
     )
@@ -57,7 +46,7 @@ function getProviders() {
 
 export const authOptions: NextAuthOptions = {
   providers: getProviders(),
-  secret: CONFIG.auth.secret,
+  secret: process.env.NEXTAUTH_SECRET!,
   debug: process.env.NODE_ENV === 'development',
   logger: {
     error: (code, metadata) => {
@@ -76,13 +65,14 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, account, profile, trigger }) {
+
       // Only sync with database on sign in, not on every token refresh
       if (account?.provider === "discord" && profile) {
         const discordId = sanitizeInput((profile as any).id)
-        const isAdminUser = discordId === CONFIG.auth.adminDiscordId
+        const isAdminUser = discordId === process.env.ADMIN_DISCORD_ID
 
         try {
-          const supabase = await getAdminSupabase()
+          const supabase = createAdminClient()
           const avatarUrl = (profile as any).avatar
             ? `https://cdn.discordapp.com/avatars/${discordId}/${sanitizeInput((profile as any).avatar)}.png`
             : null
@@ -119,7 +109,7 @@ export const authOptions: NextAuthOptions = {
                 username: sanitizeInput((profile as any).username),
                 email: token.email,
                 avatar: avatarUrl,
-                coins: isAdminUser ? CONFIG.features.adminCoins : CONFIG.features.newUserCoins,
+                coins: isAdminUser ? 999999 : 100,
                 is_admin: isAdminUser,
                 membership: isAdminUser ? "admin" : "free",
               })
@@ -130,6 +120,7 @@ export const authOptions: NextAuthOptions = {
             dbUser = newUser
           }
 
+          token.userId = dbUser.id
           token.discordId = dbUser.discord_id
           token.coins = dbUser.coins
           token.membership = dbUser.membership
@@ -137,7 +128,7 @@ export const authOptions: NextAuthOptions = {
           token.sub = dbUser.discord_id
           token.lastSync = Date.now()
         } catch (dbError: any) {
-          console.error("[NextAuth] Database error:", dbError)
+                    console.error("[NextAuth] Database error:", dbError)
           // Set defaults even on error
           token.discordId = discordId
           token.coins = 100
@@ -148,7 +139,7 @@ export const authOptions: NextAuthOptions = {
       } else if (token.discordId && trigger === "update") {
         // Only refresh from DB when explicitly triggered (manual refresh)
         try {
-          const supabase = await getAdminSupabase()
+          const supabase = createAdminClient()
           const { data: dbUser } = await supabase
             .from("users")
             .select("coins, membership, is_admin")
@@ -172,6 +163,8 @@ export const authOptions: NextAuthOptions = {
       // Use token data directly - no database call needed
       if (token.discordId) {
         session.user.id = token.discordId as string
+        session.user.userId = token.userId as string | undefined
+        session.user.discordId = token.discordId as string
         session.user.coins = token.coins as number
         session.user.membership = token.membership as string
         session.user.isAdmin = token.isAdmin as boolean

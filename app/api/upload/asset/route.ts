@@ -49,6 +49,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 })
     }
 
+    const validFrameworks = ["standalone", "esx", "qbcore", "qbox"]
+    const normalizedFramework = framework && validFrameworks.includes(framework) ? framework : "standalone"
+
     if (!fileUrl) {
       return NextResponse.json({ error: "Download link is required" }, { status: 400 })
     }
@@ -69,40 +72,65 @@ export async function POST(request: NextRequest) {
       return text.trim().slice(0, maxLen)
     }
 
-    const { data: asset, error } = await supabase
-      .from("assets")
-      .insert({
-        title: sanitize(title, 200),
-        description: sanitize(description),
-        features: sanitize(features),
-        installation: sanitize(installation),
-        changelog: sanitize(changelog),
-        category,
-        framework: framework || "standalone",
-        coin_price: Math.max(0, Math.min(10000, Number(coinPrice) || 0)),
-        download_link: fileUrl,
-        thumbnail: thumbnailUrl || `/placeholder.svg?height=400&width=600&query=${encodeURIComponent(title)}`,
-        tags: Array.isArray(tags) ? tags.slice(0, 20).map((t: string) => String(t).trim().slice(0, 50)) : [],
-        file_size: fileSize || "Unknown",
-        author_id: session.user.id,
-        version: version || "1.0.0",
-        status: assetStatus,
-        virus_scan_status: "pending",
-        youtube_link: youtubeLink || null,
-        github_link: githubLink || null,
-        docs_link: docsLink || null,
-        rating: 5.0,
-        rating_count: 0,
-        downloads: 0,
-        is_verified: false,
-        is_featured: false,
-      })
-      .select("*")
-      .single()
+    const safeTags = Array.isArray(tags) ? tags.slice(0, 20).map((t: string) => String(t).trim().slice(0, 50)) : []
+    const safeCoinPrice = Math.max(0, Math.min(10000, Number(coinPrice) || 0))
+    const safeThumbnail = thumbnailUrl || `/placeholder.svg?height=400&width=600&query=${encodeURIComponent(title)}`
+
+    const baseInsert: any = {
+      title: sanitize(title, 200),
+      description: sanitize(description),
+      category,
+      framework: normalizedFramework,
+      coin_price: safeCoinPrice,
+      download_link: fileUrl,
+      thumbnail: safeThumbnail,
+      tags: safeTags,
+      file_size: fileSize || "Unknown",
+      author_id: session.user.id,
+      version: version || "1.0.0",
+      status: assetStatus,
+      virus_scan_status: "pending",
+      downloads: 0,
+      is_verified: false,
+      is_featured: false,
+    }
+
+    const extendedInsert: any = {
+      ...baseInsert,
+      features: sanitize(features),
+      installation: sanitize(installation),
+      changelog: sanitize(changelog),
+      youtube_link: youtubeLink || null,
+      github_link: githubLink || null,
+      docs_link: docsLink || null,
+      rating: 5.0,
+      rating_count: 0,
+    }
+
+    const runInsert = async (payload: any) => {
+      return await supabase.from("assets").insert(payload).select("*").single()
+    }
+
+    const first = await runInsert(extendedInsert)
+    let asset = first.data
+    let error = first.error
 
     if (error) {
+      const shouldFallback =
+        error.code === "PGRST204" ||
+        String(error.message || "").toLowerCase().includes("column") ||
+        String((error as any).details || "").toLowerCase().includes("column")
+
+      if (shouldFallback) {
+        const second = await runInsert(baseInsert)
+        asset = second.data
+        error = second.error
+      }
+    }
+
+    if (error || !asset) {
       logger.error("Asset insert failed", error)
-      return NextResponse.json({ error: "Failed to save asset: " + error.message }, { status: 500 })
+      return NextResponse.json({ error: "Failed to save asset: " + (error?.message || "Unknown error") }, { status: 500 })
     }
 
     // Log activity
@@ -121,16 +149,24 @@ export async function POST(request: NextRequest) {
         clothing: "Clothing",
       }
 
-      await supabase.from("public_notifications").insert({
-        title: `New ${categoryLabels[category] || "Asset"} Available!`,
-        message: `${user?.username || "A user"} just uploaded "${title}" - ${Number(coinPrice) === 0 ? "FREE" : `${coinPrice} Coins`}`,
-        type: "new_asset",
-        link: `/asset/${asset.id}`,
-        asset_id: asset.id,
-        created_by: session.user.id,
-        is_active: true,
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Expires in 24 hours
-      })
+      try {
+        const { error: publicNotifError } = await supabase.from("public_notifications").insert({
+          title: `New ${categoryLabels[category] || "Asset"} Available!`,
+          message: `${user?.username || "A user"} just uploaded "${title}" - ${Number(coinPrice) === 0 ? "FREE" : `${coinPrice} Coins`}`,
+          type: "new_asset",
+          link: `/asset/${asset.id}`,
+          asset_id: asset.id,
+          created_by: session.user.id,
+          is_active: true,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Expires in 24 hours
+        })
+
+        if (publicNotifError) {
+          logger.warn("Public notification insert failed", publicNotifError)
+        }
+      } catch (e) {
+        logger.warn("Public notification insert threw", e as any)
+      }
     }
 
     security.logSecurityEvent(

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { MessageSquare, Users, Plus, Clock, TrendingUp, Pin } from "lucide-react"
+import { ForumRankBadge } from "@/components/forum-rank-badge"
 import Link from "next/link"
 import Image from "next/image"
 import { formatDistanceToNow } from 'date-fns'
@@ -14,6 +15,7 @@ interface User {
   username: string
   avatar?: string
   role?: string
+  level?: number
 }
 
 interface Category {
@@ -155,9 +157,12 @@ export default async function ForumPage() {
                               {thread.content}
                             </p>
                             <div className="flex items-center gap-3 mt-2">
-                              <span className="text-xs text-muted-foreground">
-                                {thread.users?.username || 'Anonymous'}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">
+                                  {thread.users?.username || 'Anonymous'}
+                                </span>
+                                {thread.users?.level && <ForumRankBadge level={thread.users.level} />}
+                              </div>
                               <Badge variant="outline" className="text-xs">
                                 {thread.forum_categories?.name || 'General'}
                               </Badge>
@@ -213,9 +218,12 @@ export default async function ForumPage() {
                               {thread.content}
                             </p>
                             <div className="flex items-center gap-3 mt-2">
-                              <span className="text-xs text-muted-foreground">
-                                {thread.users?.username || 'Anonymous'}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">
+                                  {thread.users?.username || 'Anonymous'}
+                                </span>
+                                {thread.users?.level && <ForumRankBadge level={thread.users.level} />}
+                              </div>
                               <Badge variant="outline" className="text-xs">
                                 {thread.forum_categories?.name || 'General'}
                               </Badge>

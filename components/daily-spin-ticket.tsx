@@ -18,15 +18,17 @@ interface TicketStatus {
   nextClaimAt: string | null
 }
 
-export function DailySpinTicket({ 
-  open, 
-  onOpenChange,
-  onClaimSuccess
-}: { 
-  open: boolean
-  onOpenChange: (open: boolean) => void
+interface DailySpinTicketProps {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   onClaimSuccess?: (newTicketCount: number) => void
-}) {
+}
+
+export function DailySpinTicket({
+  open = false,
+  onOpenChange = () => {},
+  onClaimSuccess,
+}: DailySpinTicketProps = {}) {
   const { user } = useAuth()
   const [status, setStatus] = useState<TicketStatus | null>(null)
   const [claiming, setClaiming] = useState(false)

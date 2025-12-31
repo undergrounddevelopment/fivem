@@ -22,7 +22,7 @@ console.log('🔍 Validating environment variables...\n')
 // Read .env file
 const envPath = path.join(__dirname, '.env')
 if (!fs.existsSync(envPath)) {
-  console.error('❌ .env file not found!')
+  console.error('❌ .env file not found! Ensure you have configured DATABASE_URL or POSTGRES_URL alongside other required keys.')
   process.exit(1)
 }
 

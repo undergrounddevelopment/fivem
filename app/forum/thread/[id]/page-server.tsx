@@ -6,10 +6,12 @@ import {
   ArrowLeft, MessageSquare, Eye, Pin, Lock, Clock, 
   ThumbsUp, Crown, Shield, Send 
 } from "lucide-react"
+import { ForumRankBadge } from "@/components/forum-rank-badge"
 import Link from "next/link"
 import Image from "next/image"
 import { formatDistanceToNow } from 'date-fns'
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
 
@@ -107,21 +109,14 @@ export default async function ThreadDetailPage({ params }: PageProps) {
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-lg">
-                      {thread.users?.username || 'Anonymous'}
-                    </span>
-                    {thread.users?.role === 'admin' && (
-                      <Badge variant="destructive" className="text-xs gap-1">
-                        <Shield className="h-3 w-3" />
-                        Admin
-                      </Badge>
-                    )}
-                    {thread.users?.role === 'vip' && (
-                      <Badge className="text-xs gap-1">
-                        <Crown className="h-3 w-3" />
-                        VIP
-                      </Badge>
-                    )}
+                    <span className="font-bold text-lg">{thread.users?.username || 'User'}</span>
+                    {thread.users?.level && <ForumRankBadge level={thread.users.level} />}
+                    <Badge 
+                      className="text-xs capitalize"
+                      variant={thread.users?.role === 'admin' ? 'destructive' : 'secondary'}
+                    >
+                      {thread.users?.role || 'Member'}
+                    </Badge>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="h-3 w-3" />
@@ -180,19 +175,18 @@ export default async function ThreadDetailPage({ params }: PageProps) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold">
-                              {post.users?.username || 'Anonymous'}
-                            </span>
-                            {post.users?.role === 'admin' && (
-                              <Badge variant="destructive" className="text-xs">Admin</Badge>
-                            )}
-                            {post.users?.role === 'vip' && (
-                              <Badge className="text-xs">VIP</Badge>
-                            )}
-                            <span className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                            </span>
+                            <span className="font-semibold">{post.users?.username || 'User'}</span>
+                            {post.users?.level && <ForumRankBadge level={post.users.level} />}
+                            <Badge 
+                              className="text-xs capitalize"
+                              variant={post.users?.role === 'admin' ? 'destructive' : 'secondary'}
+                            >
+                              {post.users?.role || 'Member'}
+                            </Badge>
                           </div>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                          </span>
                         </div>
                         <p className="text-foreground leading-relaxed mb-3">
                           {post.content}

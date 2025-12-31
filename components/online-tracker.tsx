@@ -12,8 +12,7 @@ export function OnlineTracker() {
     // Send heartbeat immediately on mount
     const sendHeartbeat = async () => {
       try {
-        const { updateUserHeartbeat } = await import('@/lib/actions/general')
-        await updateUserHeartbeat()
+        await fetch("/api/users/heartbeat", { method: "POST" })
       } catch (error) {
         // Silently fail
       }

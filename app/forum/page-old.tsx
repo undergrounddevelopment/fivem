@@ -104,28 +104,27 @@ export default function ForumPage() {
     const fetchThreads = async () => {
       setIsLoading(true)
       try {
-        const { getForumThreads } = await import('@/lib/actions/forum')
-        const data = await getForumThreads(undefined, ITEMS_PER_PAGE)
-        if (data) {
-          setThreads(
-            data.map((t: any) => ({
-              id: t.id,
-              title: t.title,
-              category: t.category_id,
-              author: {
-                username: t.username || "Unknown",
-                avatar: t.avatar || "/placeholder.svg",
-                membership: t.membership || "free",
-              },
-              replies: t.reply_count || 0,
-              likes: 0,
-              views: 0,
-              isPinned: t.pinned || false,
-              status: "approved",
-              createdAt: t.created_at,
-            })),
-          )
-        }
+        const res = await fetch('/api/forum/threads', { cache: 'no-store' })
+        const json = await res.json()
+        const list = Array.isArray(json?.threads) ? json.threads : []
+        setThreads(
+          list.slice(0, ITEMS_PER_PAGE).map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            category: t.category_id,
+            author: {
+              username: t.users?.username || t.username || "Unknown",
+              avatar: t.users?.avatar || t.avatar || "/placeholder.svg",
+              membership: t.users?.membership || t.membership || "free",
+            },
+            replies: t.replies_count || t.reply_count || 0,
+            likes: t.likes || 0,
+            views: t.views || 0,
+            isPinned: t.is_pinned || t.pinned || false,
+            status: t.status || "approved",
+            createdAt: t.created_at,
+          })),
+        )
       } catch (error) {
         console.error("Failed to fetch threads:", error)
       } finally {
@@ -138,10 +137,13 @@ export default function ForumPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const { getForumCategories } = await import('@/lib/actions/forum')
-        const categories = await getForumCategories()
-        if (categories && categories.length > 0) {
-          setCategoriesWithCounts(categories)
+        const res = await fetch('/api/forum/categories', { cache: 'no-store' })
+        if (res.ok) {
+          const categories = await res.json()
+          if (Array.isArray(categories) && categories.length > 0) {
+            setCategoriesWithCounts(categories)
+            return
+          }
         } else {
           setCategoriesWithCounts(
             FORUM_CATEGORIES.map((cat, i) => ({
@@ -167,11 +169,10 @@ export default function ForumPage() {
   useEffect(() => {
     const fetchOnlineUsers = async () => {
       try {
-        const { getOnlineUsers } = await import('@/lib/actions/forum')
-        const users = await getOnlineUsers()
-        if (users) {
-          setOnlineUsers(users)
-        }
+        const res = await fetch('/api/forum/online-users', { cache: 'no-store' })
+        if (!res.ok) return
+        const users = await res.json()
+        if (Array.isArray(users)) setOnlineUsers(users)
       } catch (error) {
         console.error("Failed to fetch online users:", error)
       }
@@ -185,11 +186,10 @@ export default function ForumPage() {
   useEffect(() => {
     const fetchTopContributors = async () => {
       try {
-        const { getTopContributors } = await import('@/lib/actions/forum')
-        const contributors = await getTopContributors()
-        if (contributors) {
-          setTopContributors(contributors)
-        }
+        const res = await fetch('/api/forum/top-contributors', { cache: 'no-store' })
+        if (!res.ok) return
+        const contributors = await res.json()
+        if (Array.isArray(contributors)) setTopContributors(contributors)
       } catch (error) {
         console.error("Failed to fetch top contributors:", error)
       }

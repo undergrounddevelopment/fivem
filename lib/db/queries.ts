@@ -1,16 +1,24 @@
-import { createClient } from '@supabase/supabase-js'
-import { SUPABASE_CONFIG } from '../supabase/config'
+import { createAdminClient } from '../supabase/server'
 
-const supabase = createClient(
-  SUPABASE_CONFIG.url,
-  SUPABASE_CONFIG.serviceRoleKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+const supabase = createAdminClient()
+
+async function getUsersByDiscordIds(discordIds: string[]) {
+  const ids = Array.from(new Set(discordIds.filter(Boolean)))
+  if (ids.length === 0) return new Map<string, any>()
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, discord_id, username, avatar, membership')
+    .in('discord_id', ids)
+
+  if (error) throw error
+
+  const map = new Map<string, any>()
+  for (const u of data || []) {
+    map.set(u.discord_id, u)
   }
-)
+  return map
+}
 
 // ============================================
 // USER QUERIES
@@ -116,15 +124,7 @@ export const forumQueries = {
   getThreads: async (categoryId?: string, limit = 20, offset = 0) => {
     let query = supabase
       .from('forum_threads')
-      .select(`
-        *,
-        users!forum_threads_author_id_fkey (
-          id,
-          username,
-          avatar,
-          membership
-        )
-      `)
+      .select('*')
       .eq('status', 'approved')
       .eq('is_deleted', false)
     
@@ -138,26 +138,31 @@ export const forumQueries = {
       .range(offset, offset + limit - 1)
     
     if (error) throw error
-    return data || []
+
+    const threads = data || []
+    const usersByDiscordId = await getUsersByDiscordIds(threads.map((t: any) => t.author_id))
+
+    return threads.map((t: any) => ({
+      ...t,
+      users: usersByDiscordId.get(t.author_id) || null,
+    }))
   },
 
   getThreadById: async (id: string) => {
     const { data, error } = await supabase
       .from('forum_threads')
-      .select(`
-        *,
-        users!forum_threads_author_id_fkey (
-          id,
-          username,
-          avatar,
-          membership
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .single()
     
     if (error) throw error
-    return data
+
+    if (!data) return data
+    const usersByDiscordId = await getUsersByDiscordIds([data.author_id])
+    return {
+      ...data,
+      users: usersByDiscordId.get(data.author_id) || null,
+    }
   },
 
   createThread: async (threadData: {
@@ -192,22 +197,21 @@ export const forumQueries = {
   getReplies: async (threadId: string, limit = 50, offset = 0) => {
     const { data, error } = await supabase
       .from('forum_replies')
-      .select(`
-        *,
-        users!forum_replies_author_id_fkey (
-          id,
-          username,
-          avatar,
-          membership
-        )
-      `)
+      .select('*')
       .eq('thread_id', threadId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: true })
       .range(offset, offset + limit - 1)
     
     if (error) throw error
-    return data || []
+
+    const replies = data || []
+    const usersByDiscordId = await getUsersByDiscordIds(replies.map((r: any) => r.author_id))
+
+    return replies.map((r: any) => ({
+      ...r,
+      users: usersByDiscordId.get(r.author_id) || null,
+    }))
   },
 
   createReply: async (replyData: {
@@ -235,7 +239,7 @@ export const coinsQueries = {
     const { data, error } = await supabase
       .from('users')
       .select('coins')
-      .eq('id', userId)
+      .eq('discord_id', userId)
       .single()
     
     if (error) throw error
@@ -274,7 +278,7 @@ export const coinsQueries = {
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('coins')
-      .eq('id', transactionData.user_id)
+      .eq('discord_id', transactionData.user_id)
       .single()
     
     if (userError) throw userError
@@ -284,7 +288,7 @@ export const coinsQueries = {
     const { error: updateError } = await supabase
       .from('users')
       .update({ coins: newBalance })
-      .eq('id', transactionData.user_id)
+      .eq('discord_id', transactionData.user_id)
     
     if (updateError) throw updateError
     
@@ -436,21 +440,20 @@ export const adminQueries = {
   getPendingThreads: async (limit = 50, offset = 0) => {
     const { data, error } = await supabase
       .from('forum_threads')
-      .select(`
-        *,
-        users!forum_threads_author_id_fkey (
-          id,
-          username,
-          avatar,
-          membership
-        )
-      `)
+      .select('*')
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
     
     if (error) throw error
-    return data || []
+
+    const threads = data || []
+    const usersByDiscordId = await getUsersByDiscordIds(threads.map((t: any) => t.author_id))
+
+    return threads.map((t: any) => ({
+      ...t,
+      users: usersByDiscordId.get(t.author_id) || null,
+    }))
   },
 
   approveThread: async (threadId: string, adminId: string) => {
@@ -541,7 +544,25 @@ export const assetsQueries = {
       .range(offset, offset + limit - 1)
     
     if (error) throw error
-    return data || []
+
+    const assets = data || []
+    const usersByDiscordId = await getUsersByDiscordIds(assets.map((a: any) => a.author_id))
+
+    return assets.map((asset: any) => {
+      const user = usersByDiscordId.get(asset.author_id)
+      return {
+        ...asset,
+        users: user
+          ? {
+              id: user.id,
+              discord_id: user.discord_id,
+              username: user.username,
+              avatar: user.avatar,
+              membership: user.membership,
+            }
+          : undefined,
+      }
+    })
   },
 
   getCount: async (filters?: { category?: string; framework?: string; search?: string }) => {
@@ -572,36 +593,37 @@ export const assetsQueries = {
   getById: async (id: string) => {
     const { data, error } = await supabase
       .from('assets')
-      .select(`
-        *,
-        users!assets_author_id_fkey (
-          id,
-          discord_id,
-          username,
-          avatar,
-          membership
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .single()
     
     if (error) throw error
     
-    // Format response
-    if (data) {
-      const user = Array.isArray(data.users) ? data.users[0] : data.users
-      return {
-        ...data,
-        author: user ? {
-          id: user.id,
-          username: user.username,
-          avatar: user.avatar,
-          membership: user.membership
-        } : null
-      }
+    if (!data) return data
+
+    const usersByDiscordId = await getUsersByDiscordIds([data.author_id])
+    const user = usersByDiscordId.get(data.author_id)
+
+    return {
+      ...data,
+      users: user
+        ? {
+            id: user.id,
+            discord_id: user.discord_id,
+            username: user.username,
+            avatar: user.avatar,
+            membership: user.membership,
+          }
+        : undefined,
+      author: user
+        ? {
+            id: user.id,
+            username: user.username,
+            avatar: user.avatar,
+            membership: user.membership,
+          }
+        : null,
     }
-    
-    return data
   },
 
   create: async (data: {
@@ -662,31 +684,61 @@ export const assetsQueries = {
   getRecent: async (limit = 6) => {
     const { data, error } = await supabase
       .from('assets')
-      .select(`
-        *,
-        users!assets_author_id_fkey (username)
-      `)
+      .select('*')
       .in('status', ['active', 'approved', 'published'])
       .order('created_at', { ascending: false })
       .limit(limit)
     
     if (error) throw error
-    return data || []
+
+    const assets = data || []
+    const usersByDiscordId = await getUsersByDiscordIds(assets.map((a: any) => a.author_id))
+
+    return assets.map((asset: any) => {
+      const user = usersByDiscordId.get(asset.author_id)
+      return {
+        ...asset,
+        users: user
+          ? {
+              id: user.id,
+              discord_id: user.discord_id,
+              username: user.username,
+              avatar: user.avatar,
+              membership: user.membership,
+            }
+          : undefined,
+      }
+    })
   },
 
   getTrending: async (limit = 6) => {
     const { data, error } = await supabase
       .from('assets')
-      .select(`
-        *,
-        users!assets_author_id_fkey (username)
-      `)
+      .select('*')
       .in('status', ['active', 'approved', 'published'])
       .order('downloads', { ascending: false })
       .limit(limit)
     
     if (error) throw error
-    return data || []
+
+    const assets = data || []
+    const usersByDiscordId = await getUsersByDiscordIds(assets.map((a: any) => a.author_id))
+
+    return assets.map((asset: any) => {
+      const user = usersByDiscordId.get(asset.author_id)
+      return {
+        ...asset,
+        users: user
+          ? {
+              id: user.id,
+              discord_id: user.discord_id,
+              username: user.username,
+              avatar: user.avatar,
+              membership: user.membership,
+            }
+          : undefined,
+      }
+    })
   },
 }
 

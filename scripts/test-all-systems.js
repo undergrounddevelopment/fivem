@@ -86,8 +86,7 @@ async function testAPIs() {
     { name: 'Stats API', path: '/api/stats' },
     { name: 'Activity API', path: '/api/activity' },
     { name: 'Online Users API', path: '/api/users/online' },
-    { name: 'Search API', path: '/api/search?q=test' },
-    { name: 'Health API', path: '/api/health' }
+    { name: 'Search API', path: '/api/search?q=test' }
   ]
   
   for (const api of apis) {

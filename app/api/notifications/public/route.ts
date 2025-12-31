@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function GET() {
   try {
@@ -23,6 +25,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.isAdmin !== true) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const supabase = await createAdminClient()
     const body = await request.json()
     const { title, message, type, link, asset_id, expires_at, created_by } = body

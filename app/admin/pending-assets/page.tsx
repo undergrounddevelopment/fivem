@@ -14,17 +14,17 @@ import { FileText, Check, X, Eye, Loader2, RefreshCw, Calendar, Tag, AlertCircle
 interface Asset {
   id: string
   title: string
-  description: string
-  features: string
-  installation: string
-  changelog: string
+  description: string | null
+  features?: string
+  installation?: string
+  changelog?: string
   type: string
   framework: string
   image_url: string
   download_url: string
   status: string
   created_at: string
-  user: { username: string; avatar: string }
+  user: { username: string; avatar: string | null }
 }
 
 export default function PendingAssetsPage() {
@@ -79,9 +79,9 @@ export default function PendingAssetsPage() {
 
   const typeCounts = {
     all: assets.length,
-    script: assets.filter(a => a.type === "script").length,
+    scripts: assets.filter(a => a.type === "scripts" || a.type === "script").length,
     mlo: assets.filter(a => a.type === "mlo").length,
-    vehicle: assets.filter(a => a.type === "vehicle").length,
+    vehicles: assets.filter(a => a.type === "vehicles" || a.type === "vehicle").length,
     clothing: assets.filter(a => a.type === "clothing").length
   }
 
@@ -101,9 +101,9 @@ export default function PendingAssetsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid grid-cols-5 w-full max-w-2xl">
           <TabsTrigger value="all">All ({typeCounts.all})</TabsTrigger>
-          <TabsTrigger value="script">Scripts ({typeCounts.script})</TabsTrigger>
+          <TabsTrigger value="scripts">Scripts ({typeCounts.scripts})</TabsTrigger>
           <TabsTrigger value="mlo">MLO ({typeCounts.mlo})</TabsTrigger>
-          <TabsTrigger value="vehicle">Vehicles ({typeCounts.vehicle})</TabsTrigger>
+          <TabsTrigger value="vehicles">Vehicles ({typeCounts.vehicles})</TabsTrigger>
           <TabsTrigger value="clothing">Clothing ({typeCounts.clothing})</TabsTrigger>
         </TabsList>
 
@@ -172,7 +172,7 @@ export default function PendingAssetsPage() {
                 <div><p className="text-sm text-muted-foreground">Type</p><Badge className="capitalize">{selectedAsset.type}</Badge></div>
                 <div><p className="text-sm text-muted-foreground">Framework</p><Badge variant="outline">{selectedAsset.framework}</Badge></div>
               </div>
-              <div><h3 className="font-bold mb-2">Description</h3><FormattedText content={selectedAsset.description} /></div>
+              <div><h3 className="font-bold mb-2">Description</h3><FormattedText content={selectedAsset.description || ""} /></div>
               {selectedAsset.features && <div><h3 className="font-bold mb-2">Features</h3><FormattedText content={selectedAsset.features} /></div>}
               {selectedAsset.installation && <div><h3 className="font-bold mb-2">Installation</h3><FormattedText content={selectedAsset.installation} /></div>}
               {selectedAsset.changelog && <div><h3 className="font-bold mb-2">Changelog</h3><FormattedText content={selectedAsset.changelog} /></div>}

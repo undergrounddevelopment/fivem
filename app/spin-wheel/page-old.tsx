@@ -135,27 +135,52 @@ export default function SpinWheelPage() {
   const fetchData = useCallback(async (isInitial = false) => {
     try {
       if (isInitial) setInitialLoading(true)
-      
-      const { getSpinPrizes, getSpinWinners, getUserBalance, getSpinHistory, getDailySpinStatus } = await import('@/lib/actions/spin')
-      
-      const prizesData = await getSpinPrizes()
-      setPrizes(prizesData || [])
 
-      const winnersData = await getSpinWinners()
-      setWinners(winnersData || [])
+      const [prizesRes, winnersRes] = await Promise.all([
+        fetch("/api/spin-wheel/prizes", { cache: "no-store" }),
+        fetch("/api/spin-wheel/winners", { cache: "no-store" }),
+      ])
+
+      if (prizesRes.ok) {
+        const prizesJson = await prizesRes.json()
+        setPrizes((prizesJson?.prizes || []).map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          coins: typeof p.coins === "number" ? p.coins : Number(p.coins ?? p.value ?? 0),
+          color: p.color || "#6B7280",
+          probability: typeof p.probability === "number" ? p.probability : Number(p.probability ?? 0),
+          rarity: p.rarity,
+          image_url: p.image_url,
+        })))
+      }
+
+      if (winnersRes.ok) {
+        const winnersJson = await winnersRes.json()
+        setWinners(winnersJson?.winners || [])
+      }
 
       if (user) {
-        const userData = await getUserBalance()
-        if (userData) {
-          setUserCoins(userData.coins || 0)
-          setUserTickets(userData.spin_tickets || 0)
+        const [balanceRes, historyRes, dailyRes] = await Promise.all([
+          fetch("/api/user/balance", { cache: "no-store" }),
+          fetch("/api/spin-wheel/history", { cache: "no-store" }),
+          fetch("/api/spin-wheel/daily-status", { cache: "no-store" }),
+        ])
+
+        if (balanceRes.ok) {
+          const balanceJson = await balanceRes.json()
+          setUserCoins(balanceJson?.coins || 0)
+          setUserTickets(balanceJson?.spin_tickets || 0)
         }
 
-        const historyData = await getSpinHistory()
-        setHistory(historyData || [])
+        if (historyRes.ok) {
+          const historyJson = await historyRes.json()
+          setHistory(historyJson?.history || [])
+        }
 
-        const dailyData = await getDailySpinStatus()
-        setCanClaimDaily(dailyData.canClaim || false)
+        if (dailyRes.ok) {
+          const dailyJson = await dailyRes.json()
+          setCanClaimDaily(Boolean(dailyJson?.canClaim))
+        }
       }
     } catch (error) {
       console.error("Error fetching data:", error)
@@ -179,8 +204,12 @@ export default function SpinWheelPage() {
     setClaiming(true)
 
     try {
-      const { claimDailySpinTicket } = await import('@/lib/actions/spin')
-      const data = await claimDailySpinTicket()
+      const res = await fetch("/api/spin-wheel/claim-daily", { method: "POST" })
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to claim daily ticket")
+      }
       
       setUserTickets(data.newTickets)
       setCanClaimDaily(false)
@@ -212,8 +241,12 @@ export default function SpinWheelPage() {
     setShowResult(false);
 
     try {
-      const { spinWheel } = await import('@/lib/actions/spin')
-      const data = await spinWheel()
+      const res = await fetch("/api/spin-wheel/spin", { method: "POST" })
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Spin failed")
+      }
 
       // Update user balance and tickets
       setUserCoins(data.newBalance);
@@ -285,7 +318,7 @@ export default function SpinWheelPage() {
       });
       
       toast.error("Spin Failed", {
-        description: "An unexpected error occurred",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
       setSpinning(false);
     }

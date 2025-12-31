@@ -12,9 +12,14 @@ export async function GET() {
 
     const supabase = await createAdminClient()
 
-    const { data: userData } = await supabase.from("users").select("role").eq("discord_id", session.user.id).single()
+    const { data: user } = await supabase
+      .from("users")
+      .select("is_admin, membership")
+      .eq("discord_id", (session.user as any).discord_id || session.user.id)
+      .single()
 
-    if (!userData?.role || !["admin", "owner", "vip"].includes(userData.role)) {
+    const isAdmin = user?.is_admin === true || user?.membership === "admin"
+    if (!isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

@@ -7,6 +7,7 @@ import { ModernStats } from "@/components/modern-stats"
 import { ModernFeatures } from "@/components/modern-features"
 import { ModernHero } from "@/components/modern-hero"
 import { CategoriesSection } from "@/components/categories-section"
+import { Testimonials } from "@/components/testimonials"
 
 export const metadata: Metadata = {
   title: "FiveM Tools V7 - Free Scripts, MLO, Vehicles, Decrypt CFX, Upvotes Bot",
@@ -34,6 +35,7 @@ export default function HomePage() {
         <div className="mt-12 space-y-8">
           <ModernStats />
           <LinkvertiseAd />
+          <Testimonials />
           <ModernFeatures />
         </div>
       </div>

@@ -21,22 +21,28 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error
 
-    const formatted = await Promise.all(
-      (assets || []).map(async (asset) => {
-        let author = null
-        if (asset.author_id) {
-          const { data: authorData } = await supabase
-            .from("users")
-            .select("username, avatar, membership, is_banned")
-            .eq("discord_id", asset.author_id)
-            .single()
-          author = authorData
-        }
+    const rows = (assets || []) as any[]
+    const authorIds = Array.from(new Set(rows.map((a) => a.author_id).filter(Boolean)))
 
-        // Skip if author is banned
+    const { data: authors, error: authorsError } = authorIds.length
+      ? await supabase
+          .from("users")
+          .select("discord_id, username, avatar, membership, is_banned")
+          .in("discord_id", authorIds)
+      : { data: [], error: null }
+
+    if (authorsError) throw authorsError
+
+    const authorsByDiscordId = new Map<string, any>()
+    for (const a of authors || []) authorsByDiscordId.set(a.discord_id, a)
+
+    const formatted = rows
+      .map((asset) => {
+        const author = asset.author_id ? authorsByDiscordId.get(asset.author_id) : null
         if (author?.is_banned) return null
 
-        const rating = Math.min(5.0, 3.5 + (asset.downloads / 100) * 0.5)
+        const computedRating = Math.min(5.0, 3.5 + ((asset.downloads || 0) / 100) * 0.5)
+
         return {
           id: asset.id,
           title: asset.title,
@@ -49,21 +55,29 @@ export async function GET(request: NextRequest) {
           image: asset.thumbnail,
           thumbnail: asset.thumbnail,
           downloads: asset.downloads,
-          tags: asset.tags,
+          views: asset.views,
+          tags: asset.tags || [],
           author: author?.username || "Unknown",
-          authorAvatar: author?.avatar,
-          rating: Math.round(rating * 10) / 10,
+          authorId: asset.author_id,
+          authorData: author
+            ? {
+                username: author.username,
+                avatar: author.avatar,
+                membership: author.membership,
+              }
+            : { username: "Unknown", avatar: null },
+          rating: Math.round(computedRating * 10) / 10,
           isVerified: asset.is_verified || asset.virus_scan_status === "clean",
-          isFeatured: asset.is_featured || asset.downloads > 1000,
+          isFeatured: asset.is_featured || (asset.downloads || 0) > 1000,
           createdAt: asset.created_at,
+          updatedAt: asset.updated_at,
         }
-      }),
-    )
+      })
+      .filter(Boolean)
 
-    // Filter out null values (banned authors)
-    return NextResponse.json(formatted.filter(Boolean))
+    return NextResponse.json({ items: formatted })
   } catch (error) {
     console.error("Recent API error:", error)
-    return NextResponse.json([])
+    return NextResponse.json({ items: [] })
   }
 }

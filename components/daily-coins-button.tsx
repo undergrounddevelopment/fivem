@@ -20,9 +20,14 @@ export function DailyCoinsButton() {
 
     setIsClaiming(true)
     try {
-      const { claimDailyCoins } = await import('@/lib/actions/user')
-      const data = await claimDailyCoins()
-      setResult({ success: true, coinsAdded: data.amount })
+      const res = await fetch("/api/coins", { method: "POST" })
+      const data = await res.json()
+
+      if (!res.ok || data?.success === false) {
+        throw new Error(data?.error || "Failed to claim coins")
+      }
+
+      setResult({ success: true, coinsAdded: data.amount, newBalance: data.newBalance })
 
       await refreshSession()
       setTimeout(() => {

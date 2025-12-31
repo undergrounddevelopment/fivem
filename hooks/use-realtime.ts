@@ -49,8 +49,9 @@ export function useRealtimeNotifications(userId: string | undefined) {
     try {
       const res = await fetch("/api/notifications")
       const data = await res.json()
-      setNotifications(Array.isArray(data) ? data : [])
-      setUnreadCount(Array.isArray(data) ? data.filter((n: any) => !n.read).length : 0)
+      const rows = Array.isArray(data?.notifications) ? data.notifications : []
+      setNotifications(rows)
+      setUnreadCount(rows.filter((n: any) => !n.is_read).length)
     } catch (error) {
       console.error("Failed to fetch notifications:", error)
     } finally {
@@ -106,10 +107,10 @@ export function useRealtimeNotifications(userId: string | undefined) {
       })
 
       if (notificationId) {
-        setNotifications((prev) => prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)))
+        setNotifications((prev) => prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n)))
         setUnreadCount((prev) => Math.max(0, prev - 1))
       } else {
-        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+        setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
         setUnreadCount(0)
       }
     } catch (error) {

@@ -9,7 +9,7 @@ describe('ModernFeatures Component', () => {
     expect(screen.getByText('Scripts')).toBeInTheDocument()
     expect(screen.getByText('MLO Maps')).toBeInTheDocument()
     expect(screen.getByText('Vehicles')).toBeInTheDocument()
-    expect(screen.getByText('Clothing')).toBeInTheDocument()
+    expect(screen.getByText('EUP')).toBeInTheDocument()
   })
 
   it('displays correct descriptions', () => {

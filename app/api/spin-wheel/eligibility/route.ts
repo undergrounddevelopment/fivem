@@ -1,65 +1,70 @@
-import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { createAdminClient } from "@/lib/supabase/server"
+import { db } from "@/lib/db"
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json({ eligible: false, reason: "not_logged_in" })
-    }
-
-    const supabase = await createClient()
-    const userId = session.user.id
-
-    // Check bonus spins
-    const { data: eligibility } = await supabase
-      .from("spin_wheel_eligible_users")
-      .select("*")
-      .eq("user_id", userId)
-      .single()
-
-    // Check if has bonus spins that haven't expired
-    if (eligibility && eligibility.spins_remaining > 0) {
-      if (!eligibility.expires_at || new Date(eligibility.expires_at) > new Date()) {
-        return NextResponse.json({
-          eligible: true,
-          spinsRemaining: eligibility.spins_remaining,
-          reason: eligibility.reason,
-          isBonus: true,
-        })
-      }
-    }
-
-    // Check daily spin
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    const { data: todaySpins } = await supabase
-      .from("spin_history")
-      .select("id")
-      .eq("user_id", userId)
-      .gte("created_at", today.toISOString())
-
-    if (!todaySpins || todaySpins.length === 0) {
       return NextResponse.json({
-        eligible: true,
-        spinsRemaining: 1,
-        reason: "daily_spin",
-        isBonus: false,
+        eligible: false,
+        spinsRemaining: 0,
+        reason: "not_logged_in",
+        canClaimDaily: false,
+        nextClaimAt: null,
       })
     }
 
-    // Calculate next spin time
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
+    const userId = session.user.id
+    const supabase = createAdminClient()
+
+    // Current system: eligibility is ticket-based
+    const tickets = await db.spinWheel.getTickets(userId)
+    const spinsRemaining = tickets.length
+
+    // Daily claim availability (used by UI to show claim CTA)
+    const todayDateStr = new Date().toISOString().slice(0, 10)
+    const tomorrowUtc = new Date(
+      Date.UTC(
+        new Date().getUTCFullYear(),
+        new Date().getUTCMonth(),
+        new Date().getUTCDate() + 1,
+        0,
+        0,
+        0,
+        0,
+      ),
+    )
+
+    const { data: todayClaim } = await supabase
+      .from("daily_claims")
+      .select("id")
+      .eq("user_id", userId)
+      .in("claim_type", ["spin", "spin_ticket"])
+      .eq("claim_date", todayDateStr)
+      .maybeSingle()
+
+    const canClaimDaily = !todayClaim
+
+    if (spinsRemaining > 0) {
+      return NextResponse.json({
+        eligible: true,
+        spinsRemaining,
+        reason: "has_ticket",
+        isBonus: false,
+        canClaimDaily,
+        nextClaimAt: canClaimDaily ? null : tomorrowUtc.toISOString(),
+      })
+    }
 
     return NextResponse.json({
       eligible: false,
       spinsRemaining: 0,
-      reason: "daily_limit_reached",
-      nextSpinAt: tomorrow.toISOString(),
+      reason: "no_tickets",
+      canClaimDaily,
+      nextClaimAt: canClaimDaily ? null : tomorrowUtc.toISOString(),
     })
   } catch (error) {
     console.error("Error checking eligibility:", error)

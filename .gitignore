@@ -3,6 +3,7 @@ node_modules/
 .env
 .env.local
 .env.production
+.env.vercel
 .vercel
 *.log
 .DS_Store
@@ -15,3 +16,4 @@ coverage/
 *.swp
 *.swo
 .turbo
+.env*.local

@@ -33,11 +33,12 @@ export async function POST(request: Request) {
     const supabase = await createAdminClient()
     const { data: user } = await supabase
       .from("users")
-      .select("role")
+      .select("is_admin, membership")
       .eq("discord_id", (session.user as any).discord_id || session.user.id)
       .single()
 
-    if (!user || user.role !== "admin") {
+    const isAdmin = user?.is_admin === true || user?.membership === "admin"
+    if (!isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -76,11 +77,12 @@ export async function PUT(request: Request) {
     const supabase = await createAdminClient()
     const { data: user } = await supabase
       .from("users")
-      .select("role")
+      .select("is_admin, membership")
       .eq("discord_id", (session.user as any).discord_id || session.user.id)
       .single()
 
-    if (!user || user.role !== "admin") {
+    const isAdmin = user?.is_admin === true || user?.membership === "admin"
+    if (!isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -116,11 +118,12 @@ export async function DELETE(request: Request) {
     const supabase = await createAdminClient()
     const { data: user } = await supabase
       .from("users")
-      .select("role")
+      .select("is_admin, membership")
       .eq("discord_id", (session.user as any).discord_id || session.user.id)
       .single()
 
-    if (!user || user.role !== "admin") {
+    const isAdmin = user?.is_admin === true || user?.membership === "admin"
+    if (!isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

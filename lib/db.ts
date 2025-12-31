@@ -1,6 +1,5 @@
 // Export postgres queries as db
 export { default as db } from './db/queries'
-export { default as sql } from './db/postgres'
 export * from './db/types'
 
 // Legacy Supabase support

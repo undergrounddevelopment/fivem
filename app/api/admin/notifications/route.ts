@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.isAdmin !== true) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const supabase = await createAdminClient()
     const { data: notifications, error } = await supabase
       .from("public_notifications")
@@ -21,6 +28,11 @@ export async function GET() {
 
 export async function DELETE(request: Request) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.isAdmin !== true) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const supabase = await createAdminClient()
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")

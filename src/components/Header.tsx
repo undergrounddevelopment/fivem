@@ -1,4 +1,5 @@
-vercel --prodimport React from 'react';
+import React from 'react'
+import Link from 'next/link'
 
 const Header: React.FC = () => {
   return (
@@ -6,9 +7,9 @@ const Header: React.FC = () => {
       <div className="container">
         <nav className="navbar">
           <ul className="nav-links">
-            <li><a href="/">Home</a></li>
-            <li><a href="/market">Market</a></li>
-            <li><a href="/forum">Forum</a></li>
+            <li><Link href="/">Home</Link></li>
+            <li><Link href="/market">Market</Link></li>
+            <li><Link href="/forum">Forum</Link></li>
           </ul>
         </nav>
       </div>

@@ -90,10 +90,11 @@ export async function POST(request: NextRequest) {
     // Create notification for receiver
     await supabase.from("notifications").insert({
       user_id: receiverId,
-      type: "message",
+      type: "system",
       title: "New Message",
       message: `${session.user.name} sent you a message`,
-      read: false, // Fix is_read column name to match database schema
+      link: `/messages?userId=${encodeURIComponent(senderId)}`,
+      is_read: false,
     })
 
     return NextResponse.json({

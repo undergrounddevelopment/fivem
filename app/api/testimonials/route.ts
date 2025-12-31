@@ -14,12 +14,11 @@ export async function GET(request: NextRequest) {
     if (session?.user?.id) {
       const { data: userData } = await supabase
         .from("users")
-        .select("is_admin, role, membership")
+        .select("is_admin, membership")
         .eq("discord_id", session.user.id)
         .single()
 
-      isAdmin =
-        userData?.is_admin || ["admin", "owner"].includes(userData?.role || "") || userData?.membership === "admin"
+      isAdmin = userData?.is_admin === true || userData?.membership === "admin"
     }
 
     const query = supabase.from("testimonials").select("*").order("created_at", { ascending: false })
@@ -71,17 +70,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify admin
-    const { data: userData } = await supabase
+    const { data: user } = await supabase
       .from("users")
-      .select("id, is_admin, role, membership")
-      .eq("discord_id", session.user.id)
+      .select("is_admin, membership")
+      .eq("discord_id", (session.user as any).discord_id || session.user.id)
       .single()
 
-    const isAdmin =
-      userData?.is_admin || ["admin", "owner"].includes(userData?.role || "") || userData?.membership === "admin"
-
+    const isAdmin = user?.is_admin === true || user?.membership === "admin"
     if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const data = await request.json()
@@ -123,17 +120,15 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verify admin
-    const { data: userData } = await supabase
+    const { data: user } = await supabase
       .from("users")
-      .select("id, is_admin, role, membership")
-      .eq("discord_id", session.user.id)
+      .select("is_admin, membership")
+      .eq("discord_id", (session.user as any).discord_id || session.user.id)
       .single()
 
-    const isAdmin =
-      userData?.is_admin || ["admin", "owner"].includes(userData?.role || "") || userData?.membership === "admin"
-
+    const isAdmin = user?.is_admin === true || user?.membership === "admin"
     if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const data = await request.json()
@@ -188,17 +183,15 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Verify admin
-    const { data: userData } = await supabase
+    const { data: user } = await supabase
       .from("users")
-      .select("id, is_admin, role, membership")
-      .eq("discord_id", session.user.id)
+      .select("is_admin, membership")
+      .eq("discord_id", (session.user as any).discord_id || session.user.id)
       .single()
 
-    const isAdmin =
-      userData?.is_admin || ["admin", "owner"].includes(userData?.role || "") || userData?.membership === "admin"
-
+    const isAdmin = user?.is_admin === true || user?.membership === "admin"
     if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)

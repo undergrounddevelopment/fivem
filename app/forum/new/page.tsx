@@ -43,9 +43,10 @@ export default function NewThreadPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const { getForumCategories } = await import('@/lib/actions/forum')
-        const categoriesArray = await getForumCategories()
-        if (categoriesArray.length > 0) {
+        const res = await fetch('/api/forum/categories', { cache: 'no-store' })
+        if (!res.ok) return
+        const categoriesArray = await res.json()
+        if (Array.isArray(categoriesArray) && categoriesArray.length > 0) {
           setCategories(categoriesArray)
           setCategoryId(categoriesArray[0].id)
         }
@@ -64,12 +65,22 @@ export default function NewThreadPage() {
     setSubmitResult(null)
 
     try {
-      const { createForumThread } = await import('@/lib/actions/forum')
-      const thread = await createForumThread({
-        categoryId,
-        title,
-        content
+      const res = await fetch('/api/forum/threads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          categoryId,
+          title,
+          content,
+          images: files.map((f) => f.url).filter(Boolean),
+        }),
       })
+
+      const payload = await res.json()
+
+      if (!res.ok) {
+        throw new Error(payload?.error || 'Failed to create thread')
+      }
 
       setSubmitResult({
         success: true,

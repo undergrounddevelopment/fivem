@@ -27,22 +27,16 @@ export async function GET() {
 
     console.log("[v0] Checking database for discord_id:", discordId)
 
-    const { data: user, error } = await supabase
+    const { data: user } = await supabase
       .from("users")
-      .select("is_admin, role, membership")
-      .eq("discord_id", discordId)
+      .select("is_admin, membership")
+      .eq("discord_id", (session.user as any).discord_id || session.user.id)
       .single()
 
-    console.log("[v0] Database user:", user)
-    console.log("[v0] Database error:", error)
-
-    if (error) {
-      console.error("[v0] Database query error:", error)
-      return NextResponse.json({ isAdmin: false })
+    const isAdmin = user?.is_admin === true || user?.membership === "admin"
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
-
-    // Check multiple admin indicators
-    const isAdmin = user?.is_admin === true || user?.role === "admin" || user?.membership === "admin"
 
     console.log("[v0] Final isAdmin:", isAdmin)
 

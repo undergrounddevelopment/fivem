@@ -67,7 +67,7 @@ export default async function AdminUsersPage() {
                 <td className="py-4 px-4">
                   <Badge
                     className={
-                      user.membership === "admin" || user.membership === "premium"
+                      user.membership === "admin" || user.membership === "vip"
                         ? "bg-primary/20 text-primary"
                         : "bg-secondary text-muted-foreground"
                     }

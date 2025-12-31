@@ -152,9 +152,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       supabase.from("notifications").insert({
         user_id: thread.author_id,
         type: "reply",
-        title: "New Reply",
-        message: `${author?.username || 'Someone'} replied to your thread: ${thread.title}`,
+        title: "New reply",
+        message: `Someone replied to your thread: ${thread.title}`,
         link: `/forum/thread/${id}`,
+        is_read: false,
       })
     }
 

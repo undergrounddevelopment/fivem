@@ -25,7 +25,7 @@ Sentry.init({
     }
     
     if (event.request?.query_string) {
-      event.request.query_string = event.request.query_string
+      event.request.query_string = String(event.request.query_string)
         .replace(/token=[^&]*/g, 'token=[REDACTED]')
         .replace(/key=[^&]*/g, 'key=[REDACTED]')
     }

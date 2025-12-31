@@ -1,4 +1,4 @@
-const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1453826334982930624/5ogVxfU-cXKBQCsx08cf2synDxgAdSBS4hkQlGwA9qY8sbRwRnWIMOSnJ7B1kUnBG7yQ"
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL
 
 export async function sendDiscordNotification(asset: {
   title: string
@@ -9,6 +9,8 @@ export async function sendDiscordNotification(asset: {
   id: string
 }) {
   try {
+    if (!DISCORD_WEBHOOK_URL) return
+
     const embed = {
       title: `🆕 New ${asset.category.toUpperCase()} Posted!`,
       description: asset.description?.substring(0, 200) || "No description",

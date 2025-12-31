@@ -115,6 +115,23 @@ export interface SpinWheelSettings {
 }
 
 // USER TYPES (from existing schema)
+export interface Asset {
+  id: string
+  title: string
+  description: string | null
+  category: string
+  framework: string | null
+  thumbnail: string | null
+  coin_price: number
+  downloads: number
+  rating: number
+  status: 'pending' | 'active' | 'rejected' | 'archived' | string
+  author_id: string
+  users?: { id?: string; discord_id?: string; username: string; avatar: string | null; membership?: string }
+  created_at: Date
+  updated_at: Date
+}
+
 export interface User {
   discord_id: string
   username: string

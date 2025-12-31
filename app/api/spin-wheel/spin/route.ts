@@ -5,8 +5,6 @@ import { db } from "@/lib/db"
 import { getSupabaseAdminClient } from "@/lib/supabase/server"
 import * as Sentry from "@sentry/nextjs"
 
-// Rate limiting map (in-memory, resets on server restart)
-const spinCooldowns = new Map<string, number>()
 const SPIN_COOLDOWN_MS = 5000 // 5 seconds between spins to prevent abuse
 
 export async function POST() {
@@ -24,18 +22,30 @@ export async function POST() {
     // ============================================
     // STEP 2: RATE LIMITING (prevent spam)
     // ============================================
-    const lastSpin = spinCooldowns.get(userId) || 0
-    const now = Date.now()
-    if (now - lastSpin < SPIN_COOLDOWN_MS) {
-      return NextResponse.json({ error: "Please wait before spinning again" }, { status: 429 })
+    const supabase = getSupabaseAdminClient()
+    const { data: lastSpinRow, error: lastSpinError } = await supabase
+      .from("spin_wheel_history")
+      .select("created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (lastSpinError) {
+      console.error("[SPIN] Error checking last spin:", lastSpinError)
     }
-    spinCooldowns.set(userId, now)
+
+    const now = Date.now()
+    if (lastSpinRow?.created_at) {
+      const last = new Date(lastSpinRow.created_at).getTime()
+      if (now - last < SPIN_COOLDOWN_MS) {
+        return NextResponse.json({ error: "Please wait before spinning again" }, { status: 429 })
+      }
+    }
 
     // ============================================
     // STEP 3: ATOMIC TICKET DEDUCTION
     // ============================================
-    const supabase = getSupabaseAdminClient()
-    
     // Use ticket from spin_wheel_tickets table ONLY (atomic update)
     const { data: tableTicket, error: tableError } = await supabase
       .from("spin_wheel_tickets")
@@ -48,7 +58,6 @@ export async function POST() {
       .single()
 
     if (!tableTicket || tableError) {
-      spinCooldowns.delete(userId)
       Sentry.captureMessage('No tickets available', {
         contexts: { spinWheel: { userId, action: 'ticketCheck' } }
       })

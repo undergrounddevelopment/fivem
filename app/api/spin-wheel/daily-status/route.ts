@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
@@ -17,84 +17,83 @@ export async function GET() {
       })
     }
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const discordId = session.user.id
 
-    // Get today's date at midnight UTC
-    const today = new Date()
-    today.setUTCHours(0, 0, 0, 0)
-    
-    // Get tomorrow's date for next claim time
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
+    const todayDateStr = new Date().toISOString().slice(0, 10)
+    const tomorrowUtc = new Date(Date.UTC(
+      new Date().getUTCFullYear(),
+      new Date().getUTCMonth(),
+      new Date().getUTCDate() + 1,
+      0,
+      0,
+      0,
+      0,
+    ))
+    const yesterdayDate = new Date(Date.UTC(
+      new Date().getUTCFullYear(),
+      new Date().getUTCMonth(),
+      new Date().getUTCDate() - 1,
+      0,
+      0,
+      0,
+      0,
+    ))
+    const yesterdayDateStr = yesterdayDate.toISOString().slice(0, 10)
 
-    // Check if user already claimed today
-    const { data: todayClaim, error: todayClaimError } = await supabase
+    const { data: todayClaim } = await supabase
       .from("daily_claims")
-      .select("*")
+      .select("id, claim_date, claimed_at")
       .eq("user_id", discordId)
-      .eq("claim_type", "spin_ticket")
-      .gte("claimed_at", today.toISOString())
-      .single()
+      .in("claim_type", ["spin", "spin_ticket"])
+      .eq("claim_date", todayDateStr)
+      .maybeSingle()
 
-    if (todayClaim && !todayClaimError) {
-      // Get current ticket count
-      const tickets = await db.spinWheel.getTickets(discordId)
-      
-      return NextResponse.json({
-        canClaim: false,
-        claimedToday: true,
-        currentStreak: todayClaim.streak || 0,
-        lastClaim: todayClaim.claimed_at,
-        totalTickets: tickets.length,
-        nextClaimAt: tomorrow.toISOString(), // Next claim available at midnight tomorrow
-      })
+    const { data: recentClaims } = await supabase
+      .from("daily_claims")
+      .select("claim_date")
+      .eq("user_id", discordId)
+      .in("claim_type", ["spin", "spin_ticket"])
+      .order("claim_date", { ascending: false })
+      .limit(30)
+
+    const claimDates = new Set((recentClaims || []).map((c: any) => c.claim_date))
+    const subtractOneDay = (dateStr: string) => {
+      const d = new Date(dateStr + "T00:00:00.000Z")
+      d.setUTCDate(d.getUTCDate() - 1)
+      return d.toISOString().slice(0, 10)
     }
 
-    // Get yesterday's claim for streak calculation
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-
-    const { data: yesterdayClaim, error: yesterdayError } = await supabase
-      .from("daily_claims")
-      .select("streak, claimed_at")
-      .eq("user_id", discordId)
-      .eq("claim_type", "spin_ticket")
-      .gte("claimed_at", yesterday.toISOString())
-      .lt("claimed_at", today.toISOString())
-      .single()
-
+    const streakStart = todayClaim ? todayDateStr : yesterdayDateStr
     let currentStreak = 0
-    if (yesterdayClaim && !yesterdayError) {
-      currentStreak = yesterdayClaim.streak
-    } 
-    // If there was an error but it's not "not found", log it
-    else if (yesterdayError && yesterdayError.code !== 'PGRST116') {
-      console.error("Error checking yesterday's claim:", yesterdayError)
-      
-      // Capture error ke Sentry
-      import('@sentry/nextjs').then(Sentry => {
-        Sentry.captureException(yesterdayError, {
-          contexts: {
-            spinWheel: {
-              userId: discordId,
-              action: 'checkYesterdayClaim'
-            }
-          }
-        });
-      });
+    let cursor = streakStart
+    while (claimDates.has(cursor)) {
+      currentStreak += 1
+      cursor = subtractOneDay(cursor)
+      if (currentStreak > 365) break
     }
 
     // Get current ticket count
     const tickets = await db.spinWheel.getTickets(discordId)
 
+    if (todayClaim) {
+      return NextResponse.json({
+        canClaim: false,
+        claimedToday: true,
+        currentStreak,
+        lastClaim: todayClaim.claimed_at,
+        totalTickets: tickets.length,
+        nextClaimAt: tomorrowUtc.toISOString(),
+      })
+    }
+
     return NextResponse.json({
       canClaim: true,
       claimedToday: false,
-      currentStreak: currentStreak,
+      currentStreak,
       nextStreak: currentStreak + 1,
       totalTickets: tickets.length,
-      nextClaimAt: tomorrow.toISOString(), // Next claim available at midnight tomorrow
+      nextClaimAt: tomorrowUtc.toISOString(),
     })
   } catch (error) {
     console.error("Error checking daily status:", error)

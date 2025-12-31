@@ -64,8 +64,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     if (action === "setMembership") {
-      const membership = String(body.membership || "free")
-      const validMemberships = ["free", "premium", "vip", "admin"]
+      const requestedMembership = String(body.membership || "free")
+      const membership = requestedMembership === "premium" ? "vip" : requestedMembership
+      const validMemberships = ["free", "vip", "admin"]
 
       if (!validMemberships.includes(membership)) {
         return NextResponse.json({ error: "Invalid membership type" }, { status: 400 })

@@ -12,48 +12,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/components/auth-provider"
-import { useNotificationStore } from "@/lib/store"
 import { GlobalSearch } from "@/components/global-search"
 import { LanguageSelector } from "@/components/language-selector"
+import { NotificationBell } from "@/components/notification-bell"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 
 export function Header() {
   const router = useRouter()
   const { user, isLoading, login, logout } = useAuth()
-  const { notifications, unreadCount, setNotifications } = useNotificationStore()
-
+  
   const [userCoins, setUserCoins] = useState(0)
   const [userTickets, setUserTickets] = useState(0)
-
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const { getNotifications } = await import('@/lib/actions/general')
-        const data = await getNotifications()
-        setNotifications(data)
-      } catch (error) {
-        console.error("Failed to fetch notifications:", error)
-      }
-    }
-
-    if (user) {
-      fetchNotifications()
-      const interval = setInterval(fetchNotifications, 30000)
-      return () => clearInterval(interval)
-    }
-  }, [user, setNotifications])
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user) return
       try {
-        const { getUserBalance } = await import('@/lib/actions/user')
-        const data = await getUserBalance()
-        if (data) {
-          setUserCoins(data.coins || 0)
-          setUserTickets(data.spin_tickets || 0)
-        }
+        const res = await fetch("/api/user/balance", { cache: "no-store" })
+        if (!res.ok) return
+        const data = await res.json()
+        setUserCoins(data?.coins || 0)
+        setUserTickets(data?.spin_tickets || 0)
       } catch (error) {
         console.error("Failed to fetch user data:", error)
       }
@@ -78,6 +58,7 @@ export function Header() {
 
       <div className="flex items-center gap-2 ml-6">
         <LanguageSelector />
+        <NotificationBell />
 
         {user && (
           <>
@@ -122,65 +103,6 @@ export function Header() {
               </Button>
             </motion.div>
           </>
-        )}
-
-        {user && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="ghost" size="icon" className="relative text-[var(--textDim)] hover:text-[var(--text)] glass-hover">
-                  <Bell className="h-5 w-5" />
-                  <AnimatePresence>
-                    {unreadCount > 0 && (
-                      <motion.span 
-                        className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                        style={{ background: "var(--primary)" }}
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                      >
-                        {unreadCount}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </Button>
-              </motion.div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 glass border-white/10">
-              <div className="p-3 border-b border-border">
-                <h3 className="font-semibold text-foreground">Notifications</h3>
-                <p className="text-xs text-muted-foreground">
-                  {unreadCount > 0 ? `You have ${unreadCount} unread messages` : "No new notifications"}
-                </p>
-              </div>
-              <div className="max-h-80 overflow-y-auto scrollbar-thin">
-                {notifications.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-muted-foreground">No notifications yet</div>
-                ) : (
-                  notifications.slice(0, 5).map((notif, i) => (
-                    <motion.div
-                      key={notif.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                    >
-                      <DropdownMenuItem className="p-3 cursor-pointer">
-                        <div className="flex gap-3">
-                          <div className="h-10 w-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(236, 72, 153, 0.2)" }}>
-                            <Sparkles className="h-5 w-5 text-[var(--primary)]" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{notif.title}</p>
-                            <p className="text-xs text-muted-foreground">{notif.message}</p>
-                          </div>
-                        </div>
-                      </DropdownMenuItem>
-                    </motion.div>
-                  ))
-                )}
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
         )}
 
         {isLoading ? (

@@ -13,6 +13,7 @@ import { ModernParticles } from "@/components/modern-particles"
 import { HolidayBanner } from "@/components/holiday-banner"
 import { SeasonalWrapper } from "@/components/seasonal-wrapper"
 import { LanguageProvider } from "@/components/language-provider"
+
 import { SITE_NAME, SITE_DESCRIPTION, SITE_URL, SITE_LOGO, SEO_KEYWORDS } from "@/lib/constants"
 import Script from "next/script"
 import "./globals.css"

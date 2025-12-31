@@ -11,12 +11,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { notificationId } = await request.json()
+    let notificationId: string | undefined
+    try {
+      const body = await request.json()
+      notificationId = body?.notificationId
+    } catch {
+      notificationId = undefined
+    }
 
     const supabase = getSupabaseAdminClient()
 
     if (notificationId) {
-      await supabase.from("notifications").update({ is_read: true }).eq("id", notificationId)
+      await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("id", notificationId)
+        .eq("user_id", session.user.id)
     } else {
       await supabase.from("notifications").update({ is_read: true }).eq("user_id", session.user.id).eq("is_read", false)
     }

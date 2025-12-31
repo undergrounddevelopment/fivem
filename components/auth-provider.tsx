@@ -43,7 +43,7 @@ export function useAuth() {
   const user = session?.user
     ? {
         id: session.user.id || "",
-        discordId: session.user.id || "",
+        discordId: session.user.discordId || session.user.id || "",
         username: session.user.name || "",
         email: session.user.email || "",
         avatar: session.user.image || "",

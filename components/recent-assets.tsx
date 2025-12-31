@@ -14,7 +14,7 @@ export function RecentAssets() {
   useEffect(() => {
     fetch('/api/assets/recent')
       .then(res => res.json())
-      .then(data => setAssets(data.slice(0, 4) || []))
+      .then(data => setAssets(data.items || []))
       .catch(() => setAssets([]))
       .finally(() => setIsLoading(false))
   }, [])

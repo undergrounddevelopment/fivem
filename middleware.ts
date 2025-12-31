@@ -5,6 +5,13 @@ import { updateSession } from '@/lib/supabase/middleware'
 const languages = ['en', 'id', 'es', 'pt', 'de', 'fr', 'ru', 'zh', 'ja', 'ko', 'tr', 'ar']
 
 export async function middleware(request: NextRequest) {
+  const host = request.headers.get('host')
+  if (host === 'fivemtools.net') {
+    const url = request.nextUrl.clone()
+    url.hostname = 'www.fivemtools.net'
+    return NextResponse.redirect(url, 308)
+  }
+
   const pathname = request.nextUrl.pathname
 
   // Skip middleware for static files and API routes that don't need auth
@@ -104,7 +111,7 @@ export async function middleware(request: NextRequest) {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://*.supabase.co https://api.discord.com https://www.google-analytics.com https://*.vercel-insights.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.discord.com https://gateway.discord.gg wss://gateway.discord.gg https://www.google-analytics.com https://*.vercel-insights.com",
     "frame-src 'self' https://www.googletagmanager.com",
     "object-src 'none'",
     "base-uri 'self'",

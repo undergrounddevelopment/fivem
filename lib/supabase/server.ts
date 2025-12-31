@@ -2,22 +2,35 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { SUPABASE_CONFIG } from "./config"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
+import type { Database } from "./database.types"
 
 function getSupabaseUrl(): string {
-  return process.env.NEXT_PUBLIC_SUPABASE_URL || SUPABASE_CONFIG.url
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || SUPABASE_CONFIG.url
+  if (!url) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL")
+  }
+  return url
 }
 
 function getSupabaseAnonKey(): string {
-  return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || SUPABASE_CONFIG.anonKey
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || SUPABASE_CONFIG.anonKey
+  if (!key) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_ANON_KEY")
+  }
+  return key
 }
 
 function getSupabaseServiceRoleKey(): string {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_CONFIG.serviceRoleKey
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_CONFIG.serviceRoleKey
+  if (!key) {
+    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY")
+  }
+  return key
 }
 
 export async function createClient() {
   const cookieStore = await cookies()
-  return createServerClient(getSupabaseUrl(), getSupabaseAnonKey(), {
+  return createServerClient<Database>(getSupabaseUrl(), getSupabaseAnonKey(), {
     cookies: {
       getAll() {
         return cookieStore.getAll()
@@ -34,7 +47,7 @@ export async function createClient() {
 }
 
 export function createAdminClient() {
-  return createSupabaseClient(getSupabaseUrl(), getSupabaseServiceRoleKey(), {
+  return createSupabaseClient<Database>(getSupabaseUrl(), getSupabaseServiceRoleKey(), {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

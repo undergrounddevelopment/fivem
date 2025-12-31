@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import type { Asset } from '@/lib/db/types'
 import { Badge } from "@/components/ui/badge"
 import { 
   Package, 
@@ -29,12 +30,12 @@ export default async function DashboardPage() {
     redirect('/')
   }
 
-  let allAssets = []
-  let userAssets = []
+  let allAssets: Asset[] = []
+  let userAssets: Asset[] = []
   
   try {
     allAssets = await getAssets()
-    userAssets = allAssets.filter(asset => asset.user_id === session.user.id)
+    userAssets = allAssets.filter(asset => asset.author_id === session.user.id)
   } catch (error) {
     console.error('Failed to load assets:', error)
     allAssets = []

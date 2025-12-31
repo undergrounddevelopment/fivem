@@ -10,9 +10,14 @@ async function verifyAdmin() {
   }
 
   const supabase = await createAdminClient()
-  const { data: userData } = await supabase.from("users").select("id, role").eq("discord_id", session.user.id).single()
+  const { data: userData } = await supabase
+    .from("users")
+    .select("discord_id, is_admin, membership")
+    .eq("discord_id", session.user.id)
+    .single()
 
-  if (!userData?.role || !["admin", "owner", "vip"].includes(userData.role)) {
+  const isAdmin = userData?.is_admin === true || userData?.membership === "admin"
+  if (!isAdmin) {
     return { error: "Forbidden", status: 403 }
   }
 
@@ -75,20 +80,19 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, coins, color, probability, is_active, sort_order, image_url, rarity, description } = body
+    const { name, type, value, coins, color, probability, icon, is_active, sort_order } = body
 
     const { data, error } = await auth.supabase
       .from("spin_wheel_prizes")
       .insert({
         name,
-        coins: Number(coins) || 0,
+        type: type || "coins",
+        value: Number(value ?? coins) || 0,
         color: color || "#3b82f6",
         probability: Number(probability) || 10,
+        icon: icon || "gift",
         is_active: is_active !== false,
         sort_order: Number(sort_order) || 0,
-        image_url: image_url || null,
-        rarity: rarity || "common",
-        description: description || null,
       })
       .select()
       .single()
@@ -148,14 +152,14 @@ export async function PUT(request: Request) {
     }
 
     if (updates.name !== undefined) updateData.name = updates.name
-    if (updates.coins !== undefined) updateData.coins = Number(updates.coins)
+    if (updates.type !== undefined) updateData.type = updates.type
+    if (updates.value !== undefined) updateData.value = Number(updates.value)
+    if (updates.coins !== undefined && updates.value === undefined) updateData.value = Number(updates.coins)
     if (updates.color !== undefined) updateData.color = updates.color
     if (updates.probability !== undefined) updateData.probability = Number(updates.probability)
+    if (updates.icon !== undefined) updateData.icon = updates.icon
     if (updates.is_active !== undefined) updateData.is_active = updates.is_active
     if (updates.sort_order !== undefined) updateData.sort_order = Number(updates.sort_order)
-    if (updates.image_url !== undefined) updateData.image_url = updates.image_url || null
-    if (updates.rarity !== undefined) updateData.rarity = updates.rarity || "common"
-    if (updates.description !== undefined) updateData.description = updates.description || null
 
     const { data, error } = await auth.supabase
       .from("spin_wheel_prizes")
