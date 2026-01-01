@@ -21,13 +21,19 @@ export async function GET() {
 
     const supabase = createAdminClient()
 
-    const { data: user } = await supabase
+    const { data: user, error } = await supabase
       .from("users")
-      .select("is_admin, membership")
-      .eq("discord_id", (session.user as any).discord_id || session.user.id)
+      .select("id, discord_id, is_admin, role, membership")
+      .eq("discord_id", session.user.id)
       .single()
 
-    const isAdmin = user?.is_admin === true || user?.membership === "admin"
+    if (error || !user) {
+      security.logSecurityEvent("Admin check - user not found", { userId: session.user.id, error: error?.message }, "medium")
+      return NextResponse.json({ error: "User not found", isAdmin: false }, { status: 404 })
+    }
+
+    const isAdmin = user.is_admin === true || ["admin", "owner"].includes(user.role || "") || user.membership === "admin"
+
     if (!isAdmin) {
       security.logSecurityEvent("Non-admin attempted admin access", { userId: session.user.id }, "high")
       return NextResponse.json({ error: "Not authorized", isAdmin: false }, { status: 403 })
@@ -37,6 +43,7 @@ export async function GET() {
 
     return NextResponse.json({
       isAdmin: true,
+      role: user.role || "admin",
       membership: user.membership,
     })
   } catch (error) {

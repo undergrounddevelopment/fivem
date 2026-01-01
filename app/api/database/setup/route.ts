@@ -15,13 +15,12 @@ export async function POST() {
     // Check if user is admin
     const { data: user } = await supabase
       .from("users")
-      .select("is_admin, membership")
+      .select("role")
       .eq("discord_id", (session.user as any).discord_id || session.user.id)
       .single()
 
-    const isAdmin = user?.is_admin === true || user?.membership === "admin"
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    if (!user || user.role !== "admin") {
+      return NextResponse.json({ error: "Forbidden - Admin only" }, { status: 403 })
     }
 
     // Verify all essential tables exist

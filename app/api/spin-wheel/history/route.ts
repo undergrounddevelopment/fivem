@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
@@ -10,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ history: [] })
     }
 
-    const supabase = createAdminClient()
+    const supabase = await createClient()
 
     // Menggunakan nama tabel yang benar sesuai dengan skema database
     const { data: history, error } = await supabase

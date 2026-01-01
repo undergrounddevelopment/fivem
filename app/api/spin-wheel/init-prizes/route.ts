@@ -23,13 +23,13 @@ export async function POST() {
     }
 
     const defaultPrizes = [
-      { name: "Nothing", type: "nothing", value: 0, probability: 30.00, color: "#6B7280", icon: "x", sort_order: 1, is_active: true },
-      { name: "10 Coins", type: "coins", value: 10, probability: 25.00, color: "#3B82F6", icon: "coins", sort_order: 2, is_active: true },
-      { name: "25 Coins", type: "coins", value: 25, probability: 20.00, color: "#10B981", icon: "coins", sort_order: 3, is_active: true },
-      { name: "50 Coins", type: "coins", value: 50, probability: 15.00, color: "#F59E0B", icon: "coins", sort_order: 4, is_active: true },
-      { name: "100 Coins", type: "coins", value: 100, probability: 7.00, color: "#EF4444", icon: "coins", sort_order: 5, is_active: true },
-      { name: "Extra Spin", type: "ticket", value: 1, probability: 2.50, color: "#8B5CF6", icon: "ticket", sort_order: 6, is_active: true },
-      { name: "Jackpot 500", type: "coins", value: 500, probability: 0.50, color: "#EC4899", icon: "star", sort_order: 7, is_active: true }
+      { name: "Nothing", type: "nothing", coins: 0, probability: 30.00, color: "#6B7280", rarity: "common", sort_order: 1, is_active: true },
+      { name: "10 Coins", type: "coins", coins: 10, probability: 25.00, color: "#3B82F6", rarity: "common", sort_order: 2, is_active: true },
+      { name: "25 Coins", type: "coins", coins: 25, probability: 20.00, color: "#10B981", rarity: "uncommon", sort_order: 3, is_active: true },
+      { name: "50 Coins", type: "coins", coins: 50, probability: 15.00, color: "#F59E0B", rarity: "rare", sort_order: 4, is_active: true },
+      { name: "100 Coins", type: "coins", coins: 100, probability: 7.00, color: "#EF4444", rarity: "epic", sort_order: 5, is_active: true },
+      { name: "250 Coins", type: "coins", coins: 250, probability: 2.00, color: "#8B5CF6", rarity: "epic", sort_order: 6, is_active: true },
+      { name: "Jackpot 500", type: "coins", coins: 500, probability: 0.50, color: "#EC4899", rarity: "legendary", sort_order: 7, is_active: true }
     ]
 
     const { data, error } = await supabase

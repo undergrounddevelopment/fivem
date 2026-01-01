@@ -1,18 +1,13 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+const SUPABASE_URL = "https://linnqtixdfjwbrixitrb.supabase.co"
+const SUPABASE_SERVICE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxpbm5xdGl4ZGZqd2JyaXhpdHJiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNDUzMTA2NywiZXhwIjoyMDUwMTA3MDY3fQ.TdLBWCXn4z1VKMvh9Cd7oGv3sVyEk9eJXZp8Y33EiVA"
 
 export async function POST() {
   try {
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-      return NextResponse.json(
-        { success: false, error: "Missing Supabase environment variables" },
-        { status: 500 },
-      )
-    }
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
     // Check if tables exist
@@ -35,7 +30,7 @@ Please run the following SQL in Supabase SQL Editor:
 2. Run the SQL script at: scripts/010-admin-features-complete.sql
 
 Or use the Supabase CLI:
-supabase db push --db-url "<YOUR_DATABASE_URL_FROM_SUPABASE>"
+supabase db push --db-url "postgresql://postgres.linnqtixdfjwbrixitrb:06Zs04s8vCBrW4XE@aws-1-us-east-1.pooler.supabase.com:6543/postgres"
     `
 
     return NextResponse.json({

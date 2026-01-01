@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Send, MessageCircle } from "lucide-react"
-import { ForumRankBadge } from "./forum-rank-badge"
 
 interface Message {
   id: string
@@ -18,7 +17,6 @@ interface Message {
     username: string
     avatar: string | null
     membership: string
-    level: number
   }
   thread: {
     title: string
@@ -124,7 +122,6 @@ export function ChatSystem({ threadId }: { threadId?: string }) {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="font-semibold text-sm text-[var(--text)]">{message.author.username}</span>
-                  {message.author.level && <ForumRankBadge level={message.author.level} />}
                   <Badge className="text-xs px-2 py-0.5" style={{ background: 'var(--primaryBg)', color: 'var(--primary)', border: '1px solid var(--primary)' }}>
                     {message.author.membership}
                   </Badge>

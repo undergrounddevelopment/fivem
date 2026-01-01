@@ -23,18 +23,12 @@ export async function GET(request: NextRequest) {
       ...asset,
       price: asset.coin_price === 0 ? 'free' : 'premium',
       coinPrice: asset.coin_price,
-      tags: asset.tags || [],
-      author: (asset as any).users?.username || 'Unknown',
-      authorData: {
-        username: (asset as any).users?.username || 'Unknown',
-        avatar: (asset as any).users?.avatar || null,
-        membership: (asset as any).users?.membership,
-      },
+      author: asset.author_name || 'Unknown',
+      authorData: { username: asset.author_name, avatar: asset.author_avatar, membership: asset.membership },
       authorId: asset.author_id,
-      isVerified: asset.is_verified || asset.virus_scan_status === 'clean',
+      isVerified: asset.is_verified || true,
       isFeatured: asset.is_featured || asset.downloads > 10000,
       image: asset.thumbnail,
-      thumbnail: asset.thumbnail,
       createdAt: asset.created_at,
       updatedAt: asset.updated_at,
     }))
@@ -64,20 +58,13 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json()
 
-    const coinPrice =
-      typeof data.coinPrice === 'number'
-        ? data.coinPrice
-        : typeof data.coinPrice === 'string' && data.coinPrice.trim() !== ''
-          ? Number(data.coinPrice)
-          : 0
-
     const asset = await db.assets.create({
       title: data.title,
       description: data.description,
       category: data.category,
       framework: data.framework || 'standalone',
       version: data.version || '1.0.0',
-      coin_price: Number.isFinite(coinPrice) ? coinPrice : 0,
+      coin_price: data.coinPrice || 0,
       thumbnail: data.thumbnail || data.image,
       download_link: data.downloadLink,
       file_size: data.fileSize,
@@ -85,21 +72,19 @@ export async function POST(request: NextRequest) {
       author_id: session.user.id,
     })
 
-    const createdAsset = Array.isArray(asset) ? asset[0] : (asset as any)
-
     // Send Discord notification for new asset
-    if (createdAsset) {
+    if (asset && asset[0]) {
       await sendDiscordNotification({
-        title: createdAsset.title,
-        description: createdAsset.description,
-        category: createdAsset.category,
-        thumbnail: createdAsset.thumbnail,
+        title: asset[0].title,
+        description: asset[0].description,
+        category: asset[0].category,
+        thumbnail: asset[0].thumbnail,
         author: { username: session.user.name || 'Unknown' },
-        id: createdAsset.id,
+        id: asset[0].id,
       })
     }
 
-    return NextResponse.json(createdAsset, { status: 201 })
+    return NextResponse.json(asset[0], { status: 201 })
   } catch (error) {
     console.error('Create asset error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

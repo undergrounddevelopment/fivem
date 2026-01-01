@@ -1,18 +1,18 @@
 # 📚 API Documentation - FiveM Tools V7
 
 ## Base URL
-```
+\`\`\`
 Production: https://fivemtools.net/api
 Development: http://localhost:3000/api
-```
+\`\`\`
 
 ## Authentication
 All authenticated endpoints require a valid session cookie from NextAuth.
 
-```typescript
+\`\`\`typescript
 // Headers
 Cookie: next-auth.session-token=<token>
-```
+\`\`\`
 
 ---
 
@@ -22,21 +22,21 @@ Cookie: next-auth.session-token=<token>
 Sign in with Discord OAuth
 
 **Response:**
-```json
+\`\`\`json
 {
   "url": "https://discord.com/oauth2/authorize?..."
 }
-```
+\`\`\`
 
 ### POST `/api/auth/signout`
 Sign out current user
 
 **Response:**
-```json
+\`\`\`json
 {
   "success": true
 }
-```
+\`\`\`
 
 ---
 
@@ -48,7 +48,7 @@ Get current user profile
 **Auth Required:** Yes
 
 **Response:**
-```json
+\`\`\`json
 {
   "id": "123456789",
   "username": "user123",
@@ -58,7 +58,7 @@ Get current user profile
   "membership": "premium",
   "isAdmin": false
 }
-```
+\`\`\`
 
 ### PATCH `/api/user/profile`
 Update user profile
@@ -66,20 +66,20 @@ Update user profile
 **Auth Required:** Yes
 
 **Body:**
-```json
+\`\`\`json
 {
   "bio": "My bio text",
   "username": "newusername"
 }
-```
+\`\`\`
 
 **Response:**
-```json
+\`\`\`json
 {
   "success": true,
   "user": { ... }
 }
-```
+\`\`\`
 
 ---
 
@@ -96,7 +96,7 @@ Get all assets with pagination
 - `search` (string): Search query
 
 **Response:**
-```json
+\`\`\`json
 {
   "assets": [
     {
@@ -120,13 +120,13 @@ Get all assets with pagination
     "totalPages": 25
   }
 }
-```
+\`\`\`
 
 ### GET `/api/assets/[id]`
 Get single asset by ID
 
 **Response:**
-```json
+\`\`\`json
 {
   "id": "uuid",
   "title": "Asset Title",
@@ -145,7 +145,7 @@ Get single asset by ID
   },
   "created_at": "2025-01-01T00:00:00Z"
 }
-```
+\`\`\`
 
 ### POST `/api/assets`
 Create new asset
@@ -153,7 +153,7 @@ Create new asset
 **Auth Required:** Yes
 
 **Body:**
-```json
+\`\`\`json
 {
   "title": "My Script",
   "description": "Description...",
@@ -164,15 +164,15 @@ Create new asset
   "coin_price": 100,
   "tags": ["police", "job"]
 }
-```
+\`\`\`
 
 **Response:**
-```json
+\`\`\`json
 {
   "success": true,
   "asset": { ... }
 }
-```
+\`\`\`
 
 ### PATCH `/api/assets/[id]`
 Update asset
@@ -182,12 +182,12 @@ Update asset
 **Body:** Same as POST
 
 **Response:**
-```json
+\`\`\`json
 {
   "success": true,
   "asset": { ... }
 }
-```
+\`\`\`
 
 ### DELETE `/api/assets/[id]`
 Delete asset
@@ -195,11 +195,11 @@ Delete asset
 **Auth Required:** Yes (Owner or Admin)
 
 **Response:**
-```json
+\`\`\`json
 {
   "success": true
 }
-```
+\`\`\`
 
 ---
 
@@ -211,11 +211,11 @@ Get user coin balance
 **Auth Required:** Yes
 
 **Response:**
-```json
+\`\`\`json
 {
   "coins": 1000
 }
-```
+\`\`\`
 
 ### POST `/api/coins/daily`
 Claim daily coins
@@ -223,14 +223,14 @@ Claim daily coins
 **Auth Required:** Yes
 
 **Response:**
-```json
+\`\`\`json
 {
   "success": true,
   "coins": 50,
   "newBalance": 1050,
   "nextClaim": "2025-01-02T00:00:00Z"
 }
-```
+\`\`\`
 
 ### POST `/api/coins/purchase`
 Purchase asset with coins
@@ -238,20 +238,20 @@ Purchase asset with coins
 **Auth Required:** Yes
 
 **Body:**
-```json
+\`\`\`json
 {
   "assetId": "uuid"
 }
-```
+\`\`\`
 
 **Response:**
-```json
+\`\`\`json
 {
   "success": true,
   "newBalance": 900,
   "downloadUrl": "https://..."
 }
-```
+\`\`\`
 
 ---
 
@@ -261,7 +261,7 @@ Purchase asset with coins
 Get available prizes
 
 **Response:**
-```json
+\`\`\`json
 {
   "prizes": [
     {
@@ -273,7 +273,7 @@ Get available prizes
     }
   ]
 }
-```
+\`\`\`
 
 ### POST `/api/spin-wheel/spin`
 Spin the wheel
@@ -281,7 +281,7 @@ Spin the wheel
 **Auth Required:** Yes
 
 **Response:**
-```json
+\`\`\`json
 {
   "success": true,
   "prize": {
@@ -292,7 +292,7 @@ Spin the wheel
   },
   "newBalance": 1100
 }
-```
+\`\`\`
 
 ---
 
@@ -307,7 +307,7 @@ Get forum threads
 - `limit` (number): Items per page
 
 **Response:**
-```json
+\`\`\`json
 {
   "threads": [
     {
@@ -323,7 +323,7 @@ Get forum threads
   ],
   "pagination": { ... }
 }
-```
+\`\`\`
 
 ### POST `/api/forum/threads`
 Create new thread
@@ -331,21 +331,21 @@ Create new thread
 **Auth Required:** Yes
 
 **Body:**
-```json
+\`\`\`json
 {
   "title": "My Thread",
   "content": "Content...",
   "category": "general"
 }
-```
+\`\`\`
 
 **Response:**
-```json
+\`\`\`json
 {
   "success": true,
   "thread": { ... }
 }
-```
+\`\`\`
 
 ### POST `/api/forum/threads/[id]/reply`
 Reply to thread
@@ -353,19 +353,19 @@ Reply to thread
 **Auth Required:** Yes
 
 **Body:**
-```json
+\`\`\`json
 {
   "content": "My reply..."
 }
-```
+\`\`\`
 
 **Response:**
-```json
+\`\`\`json
 {
   "success": true,
   "reply": { ... }
 }
-```
+\`\`\`
 
 ---
 
@@ -379,7 +379,7 @@ Global search
 - `limit` (number): Results per category (default: 5)
 
 **Response:**
-```json
+\`\`\`json
 {
   "results": {
     "assets": [ ... ],
@@ -387,7 +387,7 @@ Global search
     "users": [ ... ]
   }
 }
-```
+\`\`\`
 
 ---
 
@@ -397,14 +397,14 @@ Global search
 Get site statistics
 
 **Response:**
-```json
+\`\`\`json
 {
   "totalAssets": 5000,
   "totalUsers": 10000,
   "totalDownloads": 50000,
   "totalThreads": 1000
 }
-```
+\`\`\`
 
 ---
 
@@ -416,7 +416,7 @@ Get user notifications
 **Auth Required:** Yes
 
 **Response:**
-```json
+\`\`\`json
 {
   "notifications": [
     {
@@ -428,7 +428,7 @@ Get user notifications
     }
   ]
 }
-```
+\`\`\`
 
 ### PATCH `/api/notifications/[id]/read`
 Mark notification as read
@@ -436,11 +436,11 @@ Mark notification as read
 **Auth Required:** Yes
 
 **Response:**
-```json
+\`\`\`json
 {
   "success": true
 }
-```
+\`\`\`
 
 ---
 
@@ -452,12 +452,12 @@ Get all users (Admin only)
 **Auth Required:** Yes (Admin)
 
 **Response:**
-```json
+\`\`\`json
 {
   "users": [ ... ],
   "pagination": { ... }
 }
-```
+\`\`\`
 
 ### PATCH `/api/admin/users/[id]`
 Update user (Admin only)
@@ -465,13 +465,13 @@ Update user (Admin only)
 **Auth Required:** Yes (Admin)
 
 **Body:**
-```json
+\`\`\`json
 {
   "coins": 1000,
   "membership": "premium",
   "isAdmin": false
 }
-```
+\`\`\`
 
 ### DELETE `/api/admin/assets/[id]`
 Delete any asset (Admin only)
@@ -484,13 +484,13 @@ Delete any asset (Admin only)
 
 All endpoints return errors in this format:
 
-```json
+\`\`\`json
 {
   "error": "Error message",
   "code": "ERROR_CODE",
   "details": { ... }
 }
-```
+\`\`\`
 
 ### Common Error Codes:
 - `UNAUTHORIZED` (401): Not authenticated
@@ -509,11 +509,11 @@ All endpoints return errors in this format:
 - **Admin**: 200 requests/minute
 
 Rate limit headers:
-```
+\`\`\`
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
 X-RateLimit-Reset: 2025-01-01T00:01:00Z
-```
+\`\`\`
 
 ---
 

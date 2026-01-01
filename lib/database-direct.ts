@@ -34,77 +34,31 @@ export async function updateUser(id: string, updates: any) {
   return data
 }
 
-import type { Asset } from '@/lib/db/types'
-
 // Assets
-export async function getAssets(): Promise<Asset[]> {
+export async function getAssets() {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('assets')
-    .select('*')
+    .select(`
+      *,
+      users(username, avatar)
+    `)
     .order('created_at', { ascending: false })
   if (error) throw error
-
-  const assets = (data || []) as any[]
-  const authorIds = Array.from(new Set(assets.map((a) => a.author_id).filter(Boolean)))
-  const { data: authors, error: authorsError } = authorIds.length
-    ? await supabase.from('users').select('id, discord_id, username, avatar, membership').in('discord_id', authorIds)
-    : { data: [], error: null }
-
-  if (authorsError) throw authorsError
-
-  const authorsByDiscordId = new Map<string, any>()
-  for (const a of authors || []) authorsByDiscordId.set(a.discord_id, a)
-
-  return assets.map((asset) => {
-    const author = authorsByDiscordId.get(asset.author_id)
-    return {
-      ...asset,
-      users: author
-        ? {
-            id: author.id,
-            discord_id: author.discord_id,
-            username: author.username,
-            avatar: author.avatar,
-            membership: author.membership,
-          }
-        : undefined,
-    }
-  }) as any
+  return data
 }
 
 export async function getAssetById(id: string) {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('assets')
-    .select('*')
+    .select(`
+      *,
+      users(username, avatar)
+    `)
     .eq('id', id)
     .single()
   if (error) throw error
-
-  if (!data) return data
-
-  if ((data as any).author_id) {
-    const { data: author } = await supabase
-      .from('users')
-      .select('id, discord_id, username, avatar, membership')
-      .eq('discord_id', (data as any).author_id)
-      .single()
-
-    return {
-      ...(data as any),
-      users: author
-        ? {
-            id: author.id,
-            discord_id: author.discord_id,
-            username: author.username,
-            avatar: author.avatar,
-            membership: author.membership,
-          }
-        : undefined,
-    }
-  }
-
   return data
 }
 
@@ -272,8 +226,12 @@ export async function deleteSpinWheelPrize(id: string) {
 export async function getSpinHistory(userId?: string) {
   const supabase = createAdminClient()
   let query = supabase
-    .from('spin_wheel_history')
-    .select('*')
+    .from('spin_history')
+    .select(`
+      *,
+      users(username, avatar),
+      spin_wheel_prizes(name, type, value)
+    `)
     .order('created_at', { ascending: false })
   
   if (userId) {
@@ -288,7 +246,7 @@ export async function getSpinHistory(userId?: string) {
 export async function createSpinHistory(spin: any) {
   const supabase = createAdminClient()
   const { data, error } = await supabase
-    .from('spin_wheel_history')
+    .from('spin_history')
     .insert(spin)
     .select()
     .single()
@@ -299,41 +257,12 @@ export async function createSpinHistory(spin: any) {
 // Forum
 export async function getForumCategories() {
   const supabase = createAdminClient()
-  
-  try {
-    const { data, error } = await supabase
-      .from('forum_categories')
-      .select('*')
-      .order('created_at', { ascending: false })
-    
-    if (error) {
-      console.error('Forum categories error:', error)
-      return []
-    }
-    
-    // Get thread counts for each category
-    if (data && data.length > 0) {
-      const categoriesWithCounts = await Promise.all(
-        data.map(async (category) => {
-          const { count } = await supabase
-            .from('forum_threads')
-            .select('*', { count: 'exact', head: true })
-            .eq('category_id', category.id)
-          
-          return {
-            ...category,
-            thread_count: count || 0
-          }
-        })
-      )
-      return categoriesWithCounts
-    }
-    
-    return data || []
-  } catch (err) {
-    console.error('Forum categories exception:', err)
-    return []
-  }
+  const { data, error } = await supabase
+    .from('forum_categories')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data || []
 }
 
 export async function createForumCategory(category: any) {
@@ -370,70 +299,33 @@ export async function deleteForumCategory(id: string) {
 
 export async function getForumThreads(categoryId?: string) {
   const supabase = createAdminClient()
+  let query = supabase
+    .from('forum_threads')
+    .select('*')
+    .order('created_at', { ascending: false })
   
-  try {
-    let query = supabase
-      .from('forum_threads')
-      .select('*')
-      .order('created_at', { ascending: false })
-    
-    if (categoryId) {
-      query = query.eq('category_id', categoryId)
-    }
-    
-    const { data, error } = await query
-    
-    if (error) {
-      console.error('Forum threads error:', error)
-      return []
-    }
-    
-    const threads = (data || []) as any[]
-    const authorIds = Array.from(new Set(threads.map((t) => t.author_id).filter(Boolean)))
-    const { data: authors } = authorIds.length
-      ? await supabase.from('users').select('discord_id, username, avatar, membership').in('discord_id', authorIds)
-      : { data: [] as any[] }
-
-    const authorsByDiscordId = new Map<string, any>()
-    for (const a of authors || []) authorsByDiscordId.set(a.discord_id, a)
-
-    return threads.map((t) => ({
-      ...t,
-      users: authorsByDiscordId.get(t.author_id) || null,
-    }))
-  } catch (err) {
-    console.error('Forum threads exception:', err)
-    return []
+  if (categoryId) {
+    query = query.eq('category_id', categoryId)
   }
+  
+  const { data, error } = await query
+  if (error) throw error
+  return data || []
 }
 
 export async function getForumThreadById(id: string) {
   const supabase = createAdminClient()
-  
-  try {
-    const { data, error } = await supabase
-      .from('forum_threads')
-      .select('*')
-      .eq('id', id)
-      .single()
-    
-    if (error) throw error
-    if (!data) return data
-
-    const { data: author } = await supabase
-      .from('users')
-      .select('discord_id, username, avatar, membership')
-      .eq('discord_id', (data as any).author_id)
-      .single()
-
-    return {
-      ...(data as any),
-      users: author || null,
-    }
-  } catch (err) {
-    console.error('Forum thread by id error:', err)
-    throw err
-  }
+  const { data, error } = await supabase
+    .from('forum_threads')
+    .select(`
+      *,
+      users(username, avatar),
+      forum_categories(name, slug)
+    `)
+    .eq('id', id)
+    .single()
+  if (error) throw error
+  return data
 }
 
 export async function createForumThread(thread: any) {
@@ -463,73 +355,6 @@ export async function deleteForumThread(id: string) {
   const supabase = createAdminClient()
   const { error } = await supabase
     .from('forum_threads')
-    .delete()
-    .eq('id', id)
-  if (error) throw error
-}
-
-// Forum Posts/Replies
-export async function getForumPosts(threadId: string) {
-  const supabase = createAdminClient()
-  
-  try {
-    const { data, error } = await supabase
-      .from('forum_replies')
-      .select('*')
-      .eq('thread_id', threadId)
-      .order('created_at', { ascending: true })
-    
-    if (error) {
-      console.error('Forum posts error:', error)
-      return []
-    }
-    
-    const replies = (data || []) as any[]
-    const authorIds = Array.from(new Set(replies.map((r) => r.author_id).filter(Boolean)))
-    const { data: authors } = authorIds.length
-      ? await supabase.from('users').select('discord_id, username, avatar, membership').in('discord_id', authorIds)
-      : { data: [] as any[] }
-
-    const authorsByDiscordId = new Map<string, any>()
-    for (const a of authors || []) authorsByDiscordId.set(a.discord_id, a)
-
-    return replies.map((r) => ({
-      ...r,
-      users: authorsByDiscordId.get(r.author_id) || null,
-    }))
-  } catch (err) {
-    console.error('Forum posts exception:', err)
-    return []
-  }
-}
-
-export async function createForumPost(post: any) {
-  const supabase = createAdminClient()
-  const { data, error } = await supabase
-    .from('forum_replies')
-    .insert(post)
-    .select()
-    .single()
-  if (error) throw error
-  return data
-}
-
-export async function updateForumPost(id: string, updates: any) {
-  const supabase = createAdminClient()
-  const { data, error } = await supabase
-    .from('forum_replies')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single()
-  if (error) throw error
-  return data
-}
-
-export async function deleteForumPost(id: string) {
-  const supabase = createAdminClient()
-  const { error } = await supabase
-    .from('forum_replies')
     .delete()
     .eq('id', id)
   if (error) throw error

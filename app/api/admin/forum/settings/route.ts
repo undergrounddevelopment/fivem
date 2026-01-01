@@ -15,12 +15,11 @@ export async function GET() {
 
     const { data: user } = await supabase
       .from("users")
-      .select("is_admin, membership")
+      .select("role")
       .eq("discord_id", (session.user as any).discord_id || session.user.id)
       .single()
 
-    const isAdmin = user?.is_admin === true || user?.membership === "admin"
-    if (!isAdmin) {
+    if (!user || user.role !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -52,12 +51,11 @@ export async function POST(request: Request) {
 
     const { data: user } = await supabase
       .from("users")
-      .select("is_admin, membership")
+      .select("role")
       .eq("discord_id", (session.user as any).discord_id || session.user.id)
       .single()
 
-    const isAdmin = user?.is_admin === true || user?.membership === "admin"
-    if (!isAdmin) {
+    if (!user || user.role !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -109,12 +107,11 @@ export async function PUT(request: Request) {
 
     const { data: user } = await supabase
       .from("users")
-      .select("is_admin, membership")
+      .select("role")
       .eq("discord_id", (session.user as any).discord_id || session.user.id)
       .single()
 
-    const isAdmin = user?.is_admin === true || user?.membership === "admin"
-    if (!isAdmin) {
+    if (!user || user.role !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -167,12 +164,11 @@ export async function DELETE(request: Request) {
 
     const { data: user } = await supabase
       .from("users")
-      .select("is_admin, membership")
+      .select("role")
       .eq("discord_id", (session.user as any).discord_id || session.user.id)
       .single()
 
-    const isAdmin = user?.is_admin === true || user?.membership === "admin"
-    if (!isAdmin) {
+    if (!user || user.role !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

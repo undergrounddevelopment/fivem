@@ -25,11 +25,11 @@
 ### 🔧 Cara Membuat Admin yang Aman
 
 1. **Melalui Supabase Dashboard:**
-   ```sql
+   \`\`\`sql
    UPDATE users 
    SET is_admin = true, role = 'admin', membership = 'admin' 
    WHERE discord_id = 'DISCORD_ID_USER';
-   ```
+   \`\`\`
 
 2. **Melalui Environment Variable:**
    - Set `ADMIN_DISCORD_ID` di `.env`

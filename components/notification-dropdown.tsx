@@ -9,12 +9,13 @@ import { useAuth } from "@/components/auth-provider"
 
 interface Notification {
   id: string
+  userId: string
   type: "reply" | "like" | "system" | "mention" | "download"
   title: string
-  message: string | null
+  message: string
   link: string | null
-  is_read: boolean
-  created_at: string
+  read: boolean
+  createdAt: string
 }
 
 const iconMap = {
@@ -30,7 +31,7 @@ export function NotificationDropdown() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  const unreadCount = notifications.filter((n) => !n.is_read).length
+  const unreadCount = notifications.filter((n) => !n.read).length
 
   useEffect(() => {
     if (!user) return
@@ -41,7 +42,7 @@ export function NotificationDropdown() {
         const res = await fetch("/api/notifications")
         if (res.ok) {
           const data = await res.json()
-          setNotifications(Array.isArray(data?.notifications) ? data.notifications : [])
+          setNotifications(Array.isArray(data) ? data : [])
         }
       } catch (error) {
         console.error("Failed to fetch notifications:", error)
@@ -56,7 +57,7 @@ export function NotificationDropdown() {
   const markAllRead = async () => {
     try {
       await fetch("/api/notifications/read", { method: "POST" })
-      setNotifications(notifications.map((n) => ({ ...n, is_read: true })))
+      setNotifications(notifications.map((n) => ({ ...n, read: true })))
     } catch (error) {
       console.error("Failed to mark notifications as read:", error)
     }
@@ -110,9 +111,9 @@ export function NotificationDropdown() {
                   key={notification.id}
                   className={cn(
                     "flex items-start gap-3 px-4 py-3 cursor-pointer",
-                    !notification.is_read && "" 
+                    !notification.read && "" 
                   )}
-                  style={!notification.is_read ? { background: 'rgba(236, 72, 153, 0.05)' } : {}}
+                  style={!notification.read ? { background: 'rgba(236, 72, 153, 0.05)' } : {}}
                 >
                   <div
                     className="flex h-8 w-8 items-center justify-center rounded-full"
@@ -122,12 +123,12 @@ export function NotificationDropdown() {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-[var(--text)]">{notification.title}</p>
-                    {notification.message ? <p className="text-xs text-[var(--textDim)]">{notification.message}</p> : null}
+                    <p className="text-xs text-[var(--textDim)]">{notification.message}</p>
                     <p className="mt-1 text-xs text-[var(--textDim)]">
-                      {new Date(notification.created_at).toLocaleDateString()}
+                      {new Date(notification.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  {!notification.is_read && <div className="h-2 w-2 rounded-full" style={{ background: 'var(--primary)' }} />}
+                  {!notification.read && <div className="h-2 w-2 rounded-full" style={{ background: 'var(--primary)' }} />}
                 </DropdownMenuItem>
               )
             })

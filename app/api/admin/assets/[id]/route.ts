@@ -29,29 +29,22 @@ export async function PUT(
       .from("assets")
       .update(updates)
       .eq("id", assetId)
-      .select("*")
+      .select(`
+        *,
+        author:users!assets_user_id_fkey(username, avatar)
+      `)
       .single()
 
     if (error) throw error
 
     // Send Discord notification if status changed to active
     if (updates.status === "active" && data) {
-      let author: any = null
-      if ((data as any).author_id) {
-        const { data: authorData } = await supabase
-          .from("users")
-          .select("username, avatar")
-          .eq("discord_id", (data as any).author_id)
-          .single()
-        author = authorData || null
-      }
-
       await sendDiscordNotification({
         title: data.title,
         description: data.description,
         category: data.category,
         thumbnail: data.thumbnail,
-        author,
+        author: data.author,
         id: data.id
       })
     }

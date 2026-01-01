@@ -1,94 +1,119 @@
 "use client"
 
-import { SessionProvider, useSession, signIn, signOut } from "next-auth/react"
+import { useSession, signIn, signOut } from "next-auth/react"
 import type { ReactNode } from "react"
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, createContext, useContext } from "react"
+import { CONFIG } from "@/lib/config"
+
+const AuthContext = createContext<{
+  user: any
+  isAdmin: boolean
+  isLoading: boolean
+  login: () => void
+  logout: () => void
+  isAuthConfigured: boolean
+  refreshSession: () => Promise<boolean>
+  refreshUser: () => Promise<boolean>
+  checkAdminStatus: () => Promise<boolean>
+}>({
+  user: null,
+  isAdmin: false,
+  isLoading: false,
+  login: () => {},
+  logout: () => {},
+  isAuthConfigured: false,
+  refreshSession: async () => false,
+  refreshUser: async () => false,
+  checkAdminStatus: async () => false,
+})
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  return (
-    <SessionProvider 
-      refetchInterval={0} // Disable auto refetch - reduces unnecessary API calls
-      refetchOnWindowFocus={false} // Disable refetch on window focus - prevents logout issues
-      refetchWhenOffline={false}
-    >
-      {children}
-    </SessionProvider>
-  )
-}
+  const [user, setUser] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isAdmin, setIsAdmin] = useState<boolean>(false)
+  const { data: sessionData, status } = useSession({
+    required: false,
+    onUnauthenticated() {
+      // Handle unauthenticated state gracefully
+    },
+  })
 
-export function useAuth() {
-  const { data: session, status, update } = useSession()
-  const [forceAdminCheck, setForceAdminCheck] = useState(false)
-
-  // Auto-refresh session every 5 minutes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      update()
-    }, 5 * 60 * 1000) // 5 minutes
-    return () => clearInterval(interval)
-  }, [update])
-
-  // Debug logging in development
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development" && session?.user) {
-      console.log("🔐 Auth State:", {
-        id: session.user.id,
-        isAdmin: session.user.isAdmin,
-        membership: session.user.membership,
-        coins: session.user.coins,
-      })
-    }
-  }, [session])
-
-  const user = session?.user
-    ? {
-        id: session.user.id || "",
-        discordId: session.user.discordId || session.user.id || "",
-        username: session.user.name || "",
-        email: session.user.email || "",
-        avatar: session.user.image || "",
-        membership: session.user.membership || "free",
-        coins: session.user.coins || 100,
-        isAdmin: session.user.isAdmin === true,
-        bio: (session.user as any).bio || "",
-      }
-    : null
-
-  // Force check admin status from API if needed
   const checkAdminStatus = useCallback(async () => {
     if (!user?.id) return false
     try {
       const res = await fetch("/api/force-admin")
-      if (!res.ok) throw new Error('Failed to check admin status')
+      if (!res.ok) throw new Error("Failed to check admin status")
       const data = await res.json()
       if (data.currentUser?.isAdmin && !user.isAdmin) {
-        await update() // Refresh session
+        setUser({ ...user, isAdmin: true })
         return true
       }
       return data.currentUser?.isAdmin || false
     } catch (error) {
-      console.error('Admin check error:', error)
+      console.error("Admin check error:", error)
       return false
     }
-  }, [user?.id, user?.isAdmin, update])
+  }, [user])
 
   const refreshUser = useCallback(async () => {
     try {
-      await update()
+      const res = await fetch("/api/auth/csrf", { method: "GET" })
+      const data = await res.json()
+      setUser(data.user)
       return true
     } catch {
       return false
     }
-  }, [update])
+  }, [])
 
-  return {
-    user,
-    isAdmin: user?.isAdmin === true,
-    isLoading: status === "loading",
-    login: () => signIn("discord"),
-    logout: () => signOut(),
-    refreshSession: () => update(),
-    refreshUser, // Added refreshUser to return
-    checkAdminStatus,
-  }
+  useEffect(() => {
+    if (status === "loading") {
+      setIsLoading(true)
+    } else {
+      setIsLoading(false)
+      if (sessionData?.user) {
+        setUser({
+          ...sessionData.user,
+          id: sessionData.user.id || "",
+          discordId: sessionData.user.id || "",
+          username: sessionData.user.name || "",
+          email: sessionData.user.email || "",
+          avatar: sessionData.user.image || "",
+          membership: sessionData.user.membership || "free",
+          coins: sessionData.user.coins || 100,
+          isAdmin: sessionData.user.isAdmin === true,
+          bio: (sessionData.user as any).bio || "",
+        })
+      }
+    }
+
+    if (sessionData?.user) {
+      setIsAdmin(sessionData.user.isAdmin === true)
+    } else {
+      setUser(null)
+      setIsAdmin(false)
+    }
+  }, [sessionData, status])
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isAdmin,
+        isLoading,
+        login: () => signIn("discord"),
+        logout: () => signOut(),
+        refreshSession: refreshUser,
+        refreshUser,
+        checkAdminStatus,
+        isAuthConfigured: !!CONFIG.discord.clientId && !!CONFIG.discord.clientSecret,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export function useAuth() {
+  return useContext(AuthContext)
 }

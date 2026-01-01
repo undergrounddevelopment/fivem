@@ -20,9 +20,12 @@ import { formatDescription, formatFeatures, formatInstallation, formatChangelog 
 
 const categories = [
   { value: "scripts", label: "Scripts" },
-  { value: "mlo", label: "MLO" },
+  { value: "mlo", label: "MLO/Maps" },
   { value: "vehicles", label: "Vehicles" },
-  { value: "clothing", label: "Clothing" },
+  { value: "eup", label: "EUP/Clothing" },
+  { value: "weapons", label: "Weapons" },
+  { value: "sounds", label: "Sounds" },
+  { value: "tools", label: "Tools" },
 ]
 
 const frameworks = [
@@ -30,24 +33,8 @@ const frameworks = [
   { value: "esx", label: "ESX" },
   { value: "qbcore", label: "QBCore" },
   { value: "qbox", label: "QBox" },
+  { value: "vrp", label: "vRP" },
 ]
-
-function mapCategory(raw: string | null | undefined) {
-  if (!raw) return "scripts"
-  if (raw === "script") return "scripts"
-  if (raw === "vehicle") return "vehicles"
-  if (raw === "eup") return "clothing"
-  if (raw === "maps") return "mlo"
-  if (raw === "tools") return "scripts"
-  const allowed = new Set(["scripts", "mlo", "vehicles", "clothing"])
-  return allowed.has(raw) ? raw : "scripts"
-}
-
-function mapFramework(raw: string | null | undefined) {
-  if (!raw) return "standalone"
-  const allowed = new Set(["standalone", "esx", "qbcore", "qbox"])
-  return allowed.has(raw) ? raw : "standalone"
-}
 
 export default function EditAssetPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
@@ -82,32 +69,31 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
         const response = await fetch(`/api/assets/${resolvedParams.id}`)
         if (!response.ok) throw new Error("Asset not found")
         const data = await response.json()
-        const loadedAsset = data?.asset || data
 
         // Check ownership
-        if (loadedAsset.author_id !== user?.discordId) {
+        if (data.author_id !== user?.discordId) {
           toast.error("You don't have permission to edit this asset")
           router.push(`/asset/${resolvedParams.id}`)
           return
         }
 
-        setAsset(loadedAsset)
+        setAsset(data)
         setFormData({
-          title: loadedAsset.title || "",
-          description: loadedAsset.description || "",
-          features: loadedAsset.features || "",
-          installation: loadedAsset.installation || "",
-          changelog: loadedAsset.changelog || "",
-          category: mapCategory(loadedAsset.category),
-          framework: mapFramework(loadedAsset.framework),
-          version: loadedAsset.version || "1.0.0",
-          coinPrice: loadedAsset.coin_price || 0,
-          tags: loadedAsset.tags || [],
-          thumbnail: loadedAsset.thumbnail || "",
-          downloadLink: loadedAsset.download_link || "",
-          youtubeLink: loadedAsset.youtube_link || "",
-          githubLink: loadedAsset.github_link || "",
-          docsLink: loadedAsset.docs_link || "",
+          title: data.title || "",
+          description: data.description || "",
+          features: data.features || "",
+          installation: data.installation || "",
+          changelog: data.changelog || "",
+          category: data.category || "scripts",
+          framework: data.framework || "standalone",
+          version: data.version || "1.0.0",
+          coinPrice: data.coin_price || 0,
+          tags: data.tags || [],
+          thumbnail: data.thumbnail || "",
+          downloadLink: data.download_link || "",
+          youtubeLink: data.youtube_link || "",
+          githubLink: data.github_link || "",
+          docsLink: data.docs_link || "",
         })
       } catch (err) {
         toast.error("Failed to load asset")

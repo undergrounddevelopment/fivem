@@ -11,18 +11,13 @@ async function verifyAdmin() {
   }
 
   const supabase = await createAdminClient()
-  const { data: user } = await supabase
-      .from("users")
-      .select("is_admin, membership")
-      .eq("id", session.user.id)
-      .single()
+  const { data: userData } = await supabase.from("users").select("id, role").eq("discord_id", session.user.id).single()
 
-    const isAdmin = user?.is_admin === true || user?.membership === "admin"
-    if (!isAdmin) {
-      return { error: "Forbidden", status: 403 }
-    }
+  if (!userData || !["admin", "owner", "vip"].includes(userData.role)) {
+    return { error: "Forbidden", status: 403 }
+  }
 
-  return { user, supabase }
+  return { userData, supabase }
 }
 
 // GET - Fetch settings

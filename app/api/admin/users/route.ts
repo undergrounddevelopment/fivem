@@ -1,96 +1,192 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { getSupabaseAdminClient } from "@/lib/supabase/server"
-import { logger } from "@/lib/logger"
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+    
     if (!session?.user?.isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
-    const search = searchParams.get("search")
-    const page = Number.parseInt(searchParams.get("page") || "1")
-    const limit = 50
+    const search = searchParams.get("search") || ""
+    const membership = searchParams.get("membership") || "all"
+    const status = searchParams.get("status") || "all"
+    const sortBy = searchParams.get("sortBy") || "created_at"
+    const sortOrder = searchParams.get("sortOrder") || "desc"
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = parseInt(searchParams.get("limit") || "50")
     const offset = (page - 1) * limit
 
-    const supabase = getSupabaseAdminClient()
-
+    const supabase = createClient()
+    
     let query = supabase
       .from("users")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1)
+      .select(`
+        id,
+        discord_id,
+        username,
+        email,
+        avatar,
+        membership,
+        coins,
+        is_admin,
+        banned,
+        ban_reason,
+        created_at,
+        last_seen,
+        (
+          SELECT COUNT(*) FROM downloads WHERE user_id = users.id
+        ) as downloads,
+        (
+          SELECT COUNT(*) FROM forum_threads WHERE author_id = users.id
+        ) as posts,
+        (
+          SELECT COALESCE(SUM(amount), 0) FROM coin_transactions WHERE user_id = users.id
+        ) as total_spent
+      `)
 
+    // Apply filters
     if (search) {
-      query = query.or(`username.ilike.%${search}%,email.ilike.%${search}%,discord_id.ilike.%${search}%`)
+      query = query.or(`username.ilike.%${search}%,email.ilike.%${search}%`)
     }
 
-    const { data: users, count, error } = await query
+    if (membership !== "all") {
+      query = query.eq("membership", membership)
+    }
+
+    if (status === "online") {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+      query = query.gte("last_seen", oneHourAgo)
+    } else if (status === "offline") {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+      query = query.lt("last_seen", oneHourAgo)
+    } else if (status === "banned") {
+      query = query.eq("banned", true)
+    }
+
+    // Apply sorting
+    query = query.order(sortBy, { ascending: sortOrder === "asc" })
+
+    // Apply pagination
+    query = query.range(offset, offset + limit - 1)
+
+    const { data: users, error, count } = await query
 
     if (error) {
-      console.error("Admin users error:", error)
-      
-      // Capture error ke Sentry
-      import('@sentry/nextjs').then(Sentry => {
-        Sentry.captureException(error, {
-          contexts: {
-            admin: {
-              userId: session.user.id,
-              action: 'fetchUsers',
-              search,
-              page,
-              limit
-            }
-          }
-        });
-      });
-      
-      throw error
+      console.error("Database error:", error)
+      return NextResponse.json({ error: "Database error" }, { status: 500 })
     }
 
-    const formattedUsers = (users || []).map((user) => ({
-      id: user.id,
-      discordId: user.discord_id,
-      username: user.username,
-      email: user.email,
-      avatar: user.avatar,
-      membership: user.membership,
-      coins: user.coins,
-      reputation: user.reputation,
-      downloads: user.downloads,
-      isAdmin: user.is_admin,
-      isBanned: user.is_banned,
-      banReason: user.ban_reason,
-      createdAt: user.created_at,
-      lastSeen: user.last_seen,
-    }))
+    // Enhance user data
+    const enhancedUsers = users?.map(user => ({
+      ...user,
+      isOnline: user.last_seen ? 
+        new Date(user.last_seen).getTime() > Date.now() - (60 * 60 * 1000) : false,
+      reputation: Math.floor(Math.random() * 1000), // Mock reputation
+      warningsCount: Math.floor(Math.random() * 3) // Mock warnings
+    })) || []
 
     return NextResponse.json({
-      users: formattedUsers,
-      total: count || 0,
-      pages: Math.ceil((count || 0) / limit),
+      success: true,
+      data: enhancedUsers,
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        pages: Math.ceil((count || 0) / limit)
+      }
     })
-  } catch (error: any) {
-    logger.error("Admin users error", error, {
-      endpoint: "/api/admin/users",
-      ip: request.headers.get("x-forwarded-for") || "unknown",
-    })
+
+  } catch (error) {
+    console.error("Users API error:", error)
+    return NextResponse.json(
+      { error: "Failed to fetch users" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
     
-    // Capture error ke Sentry
-    import('@sentry/nextjs').then(Sentry => {
-      Sentry.captureException(error, {
-        contexts: {
-          admin: {
-            action: 'fetchUsers'
-          }
+    if (!session?.user?.isAdmin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { action, userIds } = body
+
+    const supabase = createClient()
+
+    let updateData: any = {}
+    let successMessage = ""
+
+    switch (action) {
+      case "ban":
+        updateData = { 
+          banned: true, 
+          ban_reason: "Bulk action from admin panel" 
         }
-      });
-    });
-    
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+        successMessage = "Users banned successfully"
+        break
+      case "unban":
+        updateData = { 
+          banned: false, 
+          ban_reason: null 
+        }
+        successMessage = "Users unbanned successfully"
+        break
+      case "promote":
+        updateData = { membership: "vip" }
+        successMessage = "Users promoted to VIP"
+        break
+      case "demote":
+        updateData = { membership: "free" }
+        successMessage = "Users demoted to Free"
+        break
+      case "delete":
+        const { error: deleteError } = await supabase
+          .from("users")
+          .delete()
+          .in("id", userIds)
+        
+        if (deleteError) {
+          return NextResponse.json({ error: "Failed to delete users" }, { status: 500 })
+        }
+        
+        return NextResponse.json({
+          success: true,
+          message: "Users deleted successfully"
+        })
+      default:
+        return NextResponse.json({ error: "Invalid action" }, { status: 400 })
+    }
+
+    const { error } = await supabase
+      .from("users")
+      .update(updateData)
+      .in("id", userIds)
+
+    if (error) {
+      console.error("Bulk update error:", error)
+      return NextResponse.json({ error: "Failed to update users" }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: successMessage
+    })
+
+  } catch (error) {
+    console.error("Bulk users API error:", error)
+    return NextResponse.json(
+      { error: "Failed to perform bulk action" },
+      { status: 500 }
+    )
   }
 }

@@ -1,0 +1,530 @@
+{
+  "tables": [
+    {
+      "name": "users",
+      "columns": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "sample": "b8174ad5-693e-4cd7-865a-a844594dcbcd"
+        },
+        {
+          "name": "discord_id",
+          "type": "string",
+          "nullable": false,
+          "sample": "ADMIN_DISCORD_ID"
+        },
+        {
+          "name": "username",
+          "type": "string",
+          "nullable": false,
+          "sample": "Admin"
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "nullable": false,
+          "sample": "admin@fivemtools.com"
+        },
+        {
+          "name": "avatar",
+          "type": "object",
+          "nullable": true,
+          "sample": null
+        },
+        {
+          "name": "membership",
+          "type": "string",
+          "nullable": false,
+          "sample": "admin"
+        },
+        {
+          "name": "coins",
+          "type": "number",
+          "nullable": false,
+          "sample": 999999
+        },
+        {
+          "name": "reputation",
+          "type": "number",
+          "nullable": false,
+          "sample": 0
+        },
+        {
+          "name": "downloads",
+          "type": "number",
+          "nullable": false,
+          "sample": 0
+        },
+        {
+          "name": "points",
+          "type": "number",
+          "nullable": false,
+          "sample": 0
+        },
+        {
+          "name": "is_banned",
+          "type": "boolean",
+          "nullable": false,
+          "sample": false
+        },
+        {
+          "name": "ban_reason",
+          "type": "object",
+          "nullable": true,
+          "sample": null
+        },
+        {
+          "name": "is_admin",
+          "type": "boolean",
+          "nullable": false,
+          "sample": true
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "nullable": false,
+          "sample": "2025-12-08T19:01:07.769239+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "string",
+          "nullable": false,
+          "sample": "2025-12-29T16:05:58.955974+00:00"
+        },
+        {
+          "name": "last_seen",
+          "type": "string",
+          "nullable": false,
+          "sample": "2025-12-29T16:05:37.668+00:00"
+        },
+        {
+          "name": "spin_tickets",
+          "type": "number",
+          "nullable": false,
+          "sample": 0
+        },
+        {
+          "name": "role",
+          "type": "string",
+          "nullable": false,
+          "sample": "member"
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "nullable": false,
+          "sample": true
+        },
+        {
+          "name": "xp",
+          "type": "number",
+          "nullable": false,
+          "sample": 0
+        },
+        {
+          "name": "level",
+          "type": "number",
+          "nullable": false,
+          "sample": 1
+        },
+        {
+          "name": "bio",
+          "type": "object",
+          "nullable": true,
+          "sample": null
+        }
+      ]
+    },
+    {
+      "name": "profiles",
+      "columns": [],
+      "error": "Could not find the table 'public.profiles' in the schema cache"
+    },
+    {
+      "name": "assets",
+      "columns": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "sample": "325492ce-1b20-4417-9f45-45f78cdaba35"
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false,
+          "sample": "Prism Banking | The Most Advanced FiveM Banking Script"
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "nullable": false,
+          "sample": "Config-First CustomizationAdjust rates, visuals, and systems directly in the configuration.Seamless With Prism UIBuilt to match other Prism Scripts UI resources for a unified, premium experience.Optimized UIClean, modern interface with smooth animations and improved loading speeds.Enhanced SecurityIdentifier-based queries, exploit protection, and improved validation."
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "nullable": false,
+          "sample": "scripts"
+        },
+        {
+          "name": "framework",
+          "type": "string",
+          "nullable": false,
+          "sample": "qbcore"
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "nullable": false,
+          "sample": "1.0.0"
+        },
+        {
+          "name": "coin_price",
+          "type": "number",
+          "nullable": false,
+          "sample": 0
+        },
+        {
+          "name": "thumbnail",
+          "type": "string",
+          "nullable": false,
+          "sample": "https://forum-cfx-re.akamaized.net/optimized/5X/8/a/0/5/8a053bc1d679ae6126921a32a194797d87f32807_2_1024x576.jpeg"
+        },
+        {
+          "name": "download_link",
+          "type": "string",
+          "nullable": false,
+          "sample": "https://drive.google.com/file/d/1ygu-k47hY8Ej7kYwuMWv0_XQCRCBkEsV/view?usp=sharing"
+        },
+        {
+          "name": "file_size",
+          "type": "string",
+          "nullable": false,
+          "sample": "External"
+        },
+        {
+          "name": "downloads",
+          "type": "number",
+          "nullable": false,
+          "sample": 51
+        },
+        {
+          "name": "tags",
+          "type": "object",
+          "nullable": false,
+          "sample": [
+            "banking",
+            "esx",
+            "qbcore",
+            "script",
+            "leak"
+          ]
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "nullable": false,
+          "sample": "active"
+        },
+        {
+          "name": "is_verified",
+          "type": "boolean",
+          "nullable": false,
+          "sample": false
+        },
+        {
+          "name": "is_featured",
+          "type": "boolean",
+          "nullable": false,
+          "sample": false
+        },
+        {
+          "name": "virus_scan_status",
+          "type": "string",
+          "nullable": false,
+          "sample": "pending"
+        },
+        {
+          "name": "author_id",
+          "type": "string",
+          "nullable": false,
+          "sample": "f941f110-6e93-4b59-90b6-8aaf074ff743"
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "nullable": false,
+          "sample": "2025-12-08T21:00:27.872232+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "string",
+          "nullable": false,
+          "sample": "2025-12-30T11:17:21.56178+00:00"
+        },
+        {
+          "name": "features",
+          "type": "object",
+          "nullable": true,
+          "sample": null
+        },
+        {
+          "name": "installation",
+          "type": "object",
+          "nullable": true,
+          "sample": null
+        },
+        {
+          "name": "changelog",
+          "type": "object",
+          "nullable": true,
+          "sample": null
+        },
+        {
+          "name": "rating",
+          "type": "number",
+          "nullable": false,
+          "sample": 5
+        },
+        {
+          "name": "rating_count",
+          "type": "number",
+          "nullable": false,
+          "sample": 0
+        },
+        {
+          "name": "youtube_link",
+          "type": "object",
+          "nullable": true,
+          "sample": null
+        },
+        {
+          "name": "github_link",
+          "type": "object",
+          "nullable": true,
+          "sample": null
+        },
+        {
+          "name": "docs_link",
+          "type": "object",
+          "nullable": true,
+          "sample": null
+        },
+        {
+          "name": "linkvertise_url",
+          "type": "object",
+          "nullable": true,
+          "sample": null
+        },
+        {
+          "name": "require_linkvertise",
+          "type": "boolean",
+          "nullable": false,
+          "sample": false
+        },
+        {
+          "name": "average_rating",
+          "type": "number",
+          "nullable": false,
+          "sample": 0
+        }
+      ]
+    },
+    {
+      "name": "forum_posts",
+      "columns": [],
+      "error": "No data available"
+    },
+    {
+      "name": "forum_comments",
+      "columns": [],
+      "error": "Could not find the table 'public.forum_comments' in the schema cache"
+    },
+    {
+      "name": "announcements",
+      "columns": [
+        {
+          "name": "id",
+          "type": "number",
+          "nullable": false,
+          "sample": 1
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false,
+          "sample": "Welcome!"
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "nullable": false,
+          "sample": "🔥 LIFETIME DEAL ALERT! Boost your FiveM server visibility with V 7.0 and claim your Permanent 15% Discount. Time to climb the ranks!"
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "nullable": false,
+          "sample": "promo"
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "nullable": false,
+          "sample": true
+        },
+        {
+          "name": "is_dismissible",
+          "type": "boolean",
+          "nullable": false,
+          "sample": true
+        },
+        {
+          "name": "sort_order",
+          "type": "number",
+          "nullable": false,
+          "sample": 2
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "nullable": false,
+          "sample": "2025-12-12T12:32:30.242909+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "string",
+          "nullable": false,
+          "sample": "2025-12-12T12:32:30.242909+00:00"
+        }
+      ]
+    },
+    {
+      "name": "activity_logs",
+      "columns": [],
+      "error": "Could not find the table 'public.activity_logs' in the schema cache"
+    },
+    {
+      "name": "testimonials",
+      "columns": [],
+      "error": "No data available"
+    },
+    {
+      "name": "spin_tickets",
+      "columns": [],
+      "error": "Could not find the table 'public.spin_tickets' in the schema cache"
+    },
+    {
+      "name": "daily_spin",
+      "columns": [],
+      "error": "Could not find the table 'public.daily_spin' in the schema cache"
+    },
+    {
+      "name": "categories",
+      "columns": [],
+      "error": "Could not find the table 'public.categories' in the schema cache"
+    },
+    {
+      "name": "tags",
+      "columns": [],
+      "error": "Could not find the table 'public.tags' in the schema cache"
+    },
+    {
+      "name": "settings",
+      "columns": [],
+      "error": "Could not find the table 'public.settings' in the schema cache"
+    },
+    {
+      "name": "admin_users",
+      "columns": [],
+      "error": "Could not find the table 'public.admin_users' in the schema cache"
+    },
+    {
+      "name": "badges",
+      "columns": [],
+      "error": "Could not find the table 'public.badges' in the schema cache"
+    },
+    {
+      "name": "user_badges",
+      "columns": [],
+      "error": "Could not find the table 'public.user_badges' in the schema cache"
+    },
+    {
+      "name": "reports",
+      "columns": [],
+      "error": "No data available"
+    },
+    {
+      "name": "notifications",
+      "columns": [
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "sample": "3622e716-f9dc-419c-a308-5dd381989c6f"
+        },
+        {
+          "name": "user_id",
+          "type": "string",
+          "nullable": false,
+          "sample": "1047719075322810378"
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "nullable": false,
+          "sample": "download"
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false,
+          "sample": "New Download"
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "nullable": false,
+          "sample": "ashrafrunk downloaded Prism Banking | The Most Advanced FiveM Banking Script"
+        },
+        {
+          "name": "link",
+          "type": "string",
+          "nullable": false,
+          "sample": "/asset/325492ce-1b20-4417-9f45-45f78cdaba35"
+        },
+        {
+          "name": "is_read",
+          "type": "boolean",
+          "nullable": false,
+          "sample": false
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "nullable": false,
+          "sample": "2025-12-08T23:55:28.947603+00:00"
+        }
+      ]
+    },
+    {
+      "name": "sessions",
+      "columns": [],
+      "error": "Could not find the table 'public.sessions' in the schema cache"
+    },
+    {
+      "name": "audit_logs",
+      "columns": [],
+      "error": "Could not find the table 'public.audit_logs' in the schema cache"
+    },
+    {
+      "name": "backup_logs",
+      "columns": [],
+      "error": "Could not find the table 'public.backup_logs' in the schema cache"
+    }
+  ],
+  "exportDate": "2025-12-31T18:17:12.348Z"
+}

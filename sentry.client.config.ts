@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/nextjs"
 
 Sentry.init({
-  dsn: "https://28f4f9545467ddcfb8d709e583bcc282@o4510607747579904.ingest.us.sentry.io/4510607750070272",
+  dsn: process.env.SENTRY_DSN || "https://28f4f9545467ddcfb8d709e583bcc282@o4510607747579904.ingest.us.sentry.io/4510607750070272",
   
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
   
@@ -11,6 +11,8 @@ Sentry.init({
   environment: process.env.NODE_ENV,
   
   release: process.env.VERCEL_GIT_COMMIT_SHA,
+  
+  enabled: process.env.NODE_ENV === 'production',
   
   ignoreErrors: [
     'ResizeObserver loop limit exceeded',
@@ -25,7 +27,7 @@ Sentry.init({
     }
     
     if (event.request?.query_string) {
-      event.request.query_string = String(event.request.query_string)
+      event.request.query_string = event.request.query_string
         .replace(/token=[^&]*/g, 'token=[REDACTED]')
         .replace(/key=[^&]*/g, 'key=[REDACTED]')
     }

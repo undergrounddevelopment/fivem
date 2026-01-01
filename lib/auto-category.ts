@@ -329,9 +329,9 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
 
 // Framework keywords mapping
 const FRAMEWORK_KEYWORDS: Record<string, string[]> = {
-  qbcore: ["qb", "qbcore", "qb-core", "qb_", "qb-"],
-  qbox: ["qbox", "qbx"],
+  qbcore: ["qb", "qbcore", "qb-core", "qb_", "qb-", "qbx", "qbox"],
   esx: ["esx", "es_extended", "esx_", "esx-", "extendedmode"],
+  vorp: ["vorp", "redm", "red dead", "rdr", "western"],
   standalone: ["standalone", "universal", "all frameworks", "any framework", "framework independent"],
 }
 

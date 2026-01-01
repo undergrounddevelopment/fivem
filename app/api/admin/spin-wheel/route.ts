@@ -24,12 +24,12 @@ export async function GET() {
 
     // Get spin statistics
     const { data: stats } = await supabase
-      .from("spin_wheel_history")
-      .select("id, prize_value, created_at")
+      .from("spin_history")
+      .select("id, coins_won, created_at")
       .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
 
     const totalSpins = stats?.length || 0
-    const totalCoinsWon = stats?.reduce((sum, s: any) => sum + (s.prize_value || 0), 0) || 0
+    const totalCoinsWon = stats?.reduce((sum, s) => sum + (s.coins_won || 0), 0) || 0
 
     return NextResponse.json({ 
       prizes: prizes || [],

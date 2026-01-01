@@ -1,37 +1,42 @@
-import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { type NextRequest, NextResponse } from "next/server"
+import { getSupabaseAdminClient } from "@/lib/supabase/server"
+import { security } from "@/lib/security"
 
-export const dynamic = 'force-dynamic'
+export async function GET(request: NextRequest) {
+  const clientIP = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown"
 
-export async function GET() {
+  if (!security.checkRateLimit(`trending_${clientIP}`, 200, 60000)) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 })
+  }
+
   try {
-    const supabase = createAdminClient()
-    const { data, error } = await supabase
-      .from('assets')
-      .select('*')
-      .eq('status', 'active')
-      .order('downloads', { ascending: false })
+    const supabase = getSupabaseAdminClient()
+
+    const { data: assets, error } = await supabase
+      .from("assets")
+      .select("*")
+      .eq("status", "active")
+      .order("downloads", { ascending: false })
       .limit(4)
-    
+
     if (error) throw error
 
-    const assets = (data || []) as any[]
-    const authorIds = Array.from(new Set(assets.map((a: any) => a.author_id).filter(Boolean)))
+    const formatted = await Promise.all(
+      (assets || []).map(async (asset) => {
+        let author = null
+        if (asset.author_id) {
+          const { data: authorData } = await supabase
+            .from("users")
+            .select("username, avatar, membership, is_banned")
+            .eq("discord_id", asset.author_id)
+            .single()
+          author = authorData
+        }
 
-    const { data: users, error: usersError } = authorIds.length
-      ? await supabase.from('users').select('discord_id, username, avatar, membership').in('discord_id', authorIds)
-      : { data: [], error: null }
+        // Skip if author is banned
+        if (author?.is_banned) return null
 
-    if (usersError) throw usersError
-
-    const usersByDiscordId = new Map<string, any>()
-    for (const u of users || []) usersByDiscordId.set(u.discord_id, u)
-
-    const items = assets
-      .map((asset: any) => {
-        const user = asset.author_id ? usersByDiscordId.get(asset.author_id) : null
-        const computedRating = Math.min(5.0, 3.5 + ((asset.downloads || 0) / 100) * 0.5)
-
+        const rating = Math.min(5.0, 3.5 + (asset.downloads / 100) * 0.5)
         return {
           id: asset.id,
           title: asset.title,
@@ -39,29 +44,27 @@ export async function GET() {
           category: asset.category,
           framework: asset.framework,
           version: asset.version,
-          price: asset.coin_price === 0 ? 'free' : 'premium',
+          price: asset.coin_price === 0 ? "free" : "premium",
           coinPrice: asset.coin_price,
           image: asset.thumbnail,
           thumbnail: asset.thumbnail,
           downloads: asset.downloads,
-          views: asset.views,
-          tags: asset.tags || [],
-          author: user?.username || 'Unknown',
-          authorId: asset.author_id,
-          authorData: user
-            ? { username: user.username, avatar: user.avatar, membership: user.membership }
-            : { username: 'Unknown', avatar: null },
-          rating: Math.round(computedRating * 10) / 10,
-          isVerified: asset.is_verified || asset.virus_scan_status === 'clean',
-          isFeatured: asset.is_featured || (asset.downloads || 0) > 1000,
+          tags: asset.tags,
+          author: author?.username || "Unknown",
+          authorAvatar: author?.avatar,
+          rating: Math.round(rating * 10) / 10,
+          isVerified: asset.is_verified || asset.virus_scan_status === "clean",
+          isFeatured: asset.is_featured || asset.downloads > 1000,
+          trending: true,
           createdAt: asset.created_at,
-          updatedAt: asset.updated_at,
         }
-      })
+      }),
+    )
 
-    return NextResponse.json({ items })
+    // Filter out null values (banned authors)
+    return NextResponse.json(formatted.filter(Boolean))
   } catch (error) {
-    console.error('Trending assets error:', error)
-    return NextResponse.json({ items: [] })
+    console.error("Trending API error:", error)
+    return NextResponse.json([])
   }
 }

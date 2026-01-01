@@ -1,7 +1,6 @@
 import { getAssets } from '@/lib/database-direct'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import type { Asset } from '@/lib/db/types'
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Search, Download, Star, Eye, Filter } from "lucide-react"
@@ -13,7 +12,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default async function AssetsPage() {
-  let assets: Asset[] = []
+  let assets = []
   
   try {
     assets = await getAssets()
@@ -23,7 +22,7 @@ export default async function AssetsPage() {
     assets = []
   }
   
-  const activeAssets: Asset[] = assets.filter(asset => asset.status === 'active' || asset.status === 'approved')
+  const activeAssets = assets.filter(asset => asset.status === 'active' || asset.status === 'approved')
 
   return (
     <div className="container mx-auto px-4 py-8">

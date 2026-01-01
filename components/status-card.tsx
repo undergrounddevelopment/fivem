@@ -24,9 +24,8 @@ export function StatusCard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch("/api/stats", { cache: "no-store" })
-        if (!res.ok) throw new Error("Failed to fetch stats")
-        const data = await res.json()
+        const { getStats } = await import('@/lib/actions/general')
+        const data = await getStats()
         setStats({
           onlineUsers: data.onlineUsers || 0,
           totalMembers: data.totalUsers || 0,

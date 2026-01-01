@@ -1,13 +1,4 @@
 import { getSpinWheelPrizes } from '@/lib/database-direct'
-
-interface SpinPrize {
-  id: string
-  name: string
-  probability: number
-  type: string
-  value: string | number
-  is_active: boolean
-}
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { Button } from "@/components/ui/button"
@@ -27,7 +18,7 @@ export default async function SpinWheelPage() {
     redirect('/')
   }
 
-  let prizes: SpinPrize[] = []
+  let prizes = []
   
   try {
     prizes = await getSpinWheelPrizes()
@@ -36,7 +27,7 @@ export default async function SpinWheelPage() {
     prizes = []
   }
   
-  const activePrizes = prizes.filter((prize: SpinPrize) => prize.is_active)
+  const activePrizes = prizes.filter(prize => prize.is_active)
 
   return (
     <div className="container mx-auto px-4 py-8">

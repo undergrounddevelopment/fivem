@@ -1,61 +1,185 @@
-import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { NextResponse } from "next/server"
+import { getSupabaseAdminClient } from "@/lib/supabase/server"
 
 export async function POST() {
   try {
-    const supabase = createAdminClient()
-    
-    // Insert forum categories
-    const categories = [
-      { name: 'General Discussion', description: 'General FiveM discussions', slug: 'general', icon: 'message-circle', color: '#22C55E', sort_order: 1, is_active: true },
-      { name: 'Help & Support', description: 'Get help with scripts', slug: 'help', icon: 'help-circle', color: '#F59E0B', sort_order: 2, is_active: true },
-      { name: 'Script Requests', description: 'Request new scripts', slug: 'requests', icon: 'code', color: '#3B82F6', sort_order: 3, is_active: true },
-      { name: 'Showcase', description: 'Show off your servers', slug: 'showcase', icon: 'star', color: '#EC4899', sort_order: 4, is_active: true },
-    ]
-    
-    for (const cat of categories) {
-      await supabase.from('forum_categories').upsert(cat, { onConflict: 'slug' })
+    const adminId = process.env.ADMIN_DISCORD_ID || "1047719075322810378"
+    const supabase = getSupabaseAdminClient()
+
+    // Check if already seeded
+    const { count: existingAssets } = await supabase.from("assets").select("*", { count: "exact", head: true })
+
+    if (existingAssets && existingAssets > 0) {
+      return NextResponse.json({ message: "Already seeded", count: existingAssets })
     }
-    
-    // Insert sample assets
-    const assets = [
+
+    // First ensure admin user exists
+    const { data: existingUser } = await supabase.from("users").select("*").eq("discord_id", adminId).single()
+
+    if (!existingUser) {
+      await supabase.from("users").insert({
+        discord_id: adminId,
+        username: "Admin",
+        membership: "admin",
+        coins: 999999,
+        is_admin: true,
+      })
+    }
+
+    const forumCategories = [
       {
-        title: 'QB Banking System',
-        description: 'Advanced banking system',
-        category: 'scripts',
-        framework: 'qbcore',
-        version: '1.0.0',
-        coin_price: 0,
-        status: 'active',
-        downloads: 1250,
-        likes: 89,
-        is_verified: true,
-        tags: ['banking', 'qbcore']
+        name: "Announcements",
+        description: "Official announcements and updates",
+        icon: "Megaphone",
+        color: "#ef4444",
+        sort_order: 1,
+      },
+      {
+        name: "General Discussion",
+        description: "General FiveM and GTA V discussions",
+        icon: "MessageSquare",
+        color: "#3b82f6",
+        sort_order: 2,
+      },
+      {
+        name: "Help & Support",
+        description: "Get help with scripts and resources",
+        icon: "HelpCircle",
+        color: "#22c55e",
+        sort_order: 3,
+      },
+      { name: "Showcase", description: "Show off your creations", icon: "Star", color: "#f59e0b", sort_order: 4 },
+      { name: "Tutorials", description: "Guides and tutorials", icon: "BookOpen", color: "#8b5cf6", sort_order: 5 },
+      {
+        name: "Off-Topic",
+        description: "Non-FiveM related discussions",
+        icon: "Coffee",
+        color: "#6b7280",
+        sort_order: 6,
+      },
+    ]
+
+    const { count: existingCategories } = await supabase
+      .from("forum_categories")
+      .select("*", { count: "exact", head: true })
+
+    if (!existingCategories || existingCategories === 0) {
+      for (const cat of forumCategories) {
+        await supabase.from("forum_categories").insert(cat)
       }
-    ]
-    
-    for (const asset of assets) {
-      await supabase.from('assets').insert(asset)
     }
-    
-    // Insert spin prizes
-    const prizes = [
-      { name: '50 Coins', type: 'coins', value: 50, probability: 30, color: '#22C55E', sort_order: 1, is_active: true },
-      { name: '100 Coins', type: 'coins', value: 100, probability: 25, color: '#3B82F6', sort_order: 2, is_active: true },
-      { name: '250 Coins', type: 'coins', value: 250, probability: 15, color: '#8B5CF6', sort_order: 3, is_active: true },
-      { name: '500 Coins', type: 'coins', value: 500, probability: 10, color: '#EC4899', sort_order: 4, is_active: true },
-      { name: '1000 Coins', type: 'coins', value: 1000, probability: 5, color: '#EF4444', sort_order: 5, is_active: true },
-      { name: 'Free Spin', type: 'ticket', value: 1, probability: 10, color: '#F59E0B', sort_order: 6, is_active: true },
-      { name: 'Better Luck', type: 'nothing', value: 0, probability: 5, color: '#6B7280', sort_order: 7, is_active: true },
+
+    const allData = [
+      {
+        title: "QBCore Banking System",
+        category: "scripts",
+        framework: "qbcore",
+        coin_price: 0,
+        thumbnail: "/banking-system-ui-dark-theme.jpg",
+        tags: ["banking", "economy", "qbcore"],
+        downloads: 1250,
+      },
+      {
+        title: "BMW M5 F90",
+        category: "vehicles",
+        framework: "standalone",
+        coin_price: 50,
+        thumbnail: "/bmw-m5-f90-gta-style.jpg",
+        tags: ["bmw", "vehicle", "car"],
+        downloads: 890,
+      },
+      {
+        title: "Hospital MLO",
+        category: "mlo",
+        framework: "standalone",
+        coin_price: 100,
+        thumbnail: "/hospital-interior-gta-mlo.jpg",
+        tags: ["hospital", "mlo", "interior"],
+        downloads: 456,
+      },
+      {
+        title: "Police Uniform Pack",
+        category: "clothing",
+        framework: "standalone",
+        coin_price: 40,
+        thumbnail: "/police-uniform-gta-roleplay.jpg",
+        tags: ["police", "uniform", "clothing"],
+        downloads: 1100,
+      },
+      {
+        title: "ESX Drug System",
+        category: "scripts",
+        framework: "esx",
+        coin_price: 75,
+        thumbnail: "/drug-system-dark-ui.jpg",
+        tags: ["drugs", "esx", "economy"],
+        downloads: 2300,
+      },
+      {
+        title: "Character Customization",
+        category: "scripts",
+        framework: "standalone",
+        coin_price: 0,
+        thumbnail: "/character-customization-ui.jpg",
+        tags: ["character", "customization", "ui"],
+        downloads: 3400,
+      },
+      {
+        title: "Advanced Garage System",
+        category: "scripts",
+        framework: "qbcore",
+        coin_price: 0,
+        thumbnail: "/garage-system-preview.jpg",
+        tags: ["garage", "vehicles", "qbcore"],
+        downloads: 1890,
+      },
+      {
+        title: "Luxury Apartment MLO",
+        category: "mlo",
+        framework: "standalone",
+        coin_price: 150,
+        thumbnail: "/luxury-apartment-interior.jpg",
+        tags: ["apartment", "luxury", "mlo"],
+        downloads: 780,
+      },
     ]
-    
-    for (const prize of prizes) {
-      await supabase.from('spin_wheel_prizes').upsert(prize, { onConflict: 'name' })
+
+    // Insert assets
+    for (const asset of allData) {
+      await supabase.from("assets").insert({
+        ...asset,
+        description: `${asset.title} - High quality FiveM resource for your server. Fully optimized and easy to install.`,
+        author_id: adminId,
+        status: "active",
+        is_verified: true,
+        is_featured: asset.downloads > 1000,
+        download_link: `https://github.com/fivem-tools/releases/download/v1.0/${asset.title.toLowerCase().replace(/\s+/g, "-")}.zip`,
+      })
     }
-    
-    return NextResponse.json({ success: true, message: 'Database seeded successfully' })
-  } catch (error: any) {
-    console.error('Seed error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // Create sample forum thread
+    const { data: category } = await supabase.from("forum_categories").select("id").eq("name", "Announcements").single()
+
+    if (category) {
+      await supabase.from("forum_threads").insert({
+        title: "Welcome to FiveM Tools Forum",
+        content:
+          "Welcome to our community forum! This is the place to discuss FiveM development, share resources, and get help from fellow developers.\n\nPlease read the rules before posting and be respectful to other members.",
+        category_id: category.id,
+        author_id: adminId,
+        views: 234,
+        likes: 12,
+        is_pinned: true,
+      })
+    }
+
+    return NextResponse.json({
+      success: true,
+      seeded: allData.length,
+      categories: forumCategories.length,
+    })
+  } catch (error) {
+    console.error("Seed error:", error)
+    return NextResponse.json({ error: String(error) }, { status: 500 })
   }
 }

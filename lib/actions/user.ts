@@ -1,101 +1,109 @@
-'use server'
+"use server"
 
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { db } from "@/lib/db"
+import { createClient } from "@/lib/supabase/server"
 
-async function getUserId() {
-  const session = await getServerSession(authOptions)
-  return session?.user?.id || null
+async function getUser() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  return user
 }
 
 export async function getUserBalance() {
-  const userId = await getUserId()
-  if (!userId) return null
+  const user = await getUser()
+  if (!user) return null
 
-  const [coins, tickets] = await Promise.all([
-    db.coins.getUserBalance(userId),
-    db.spinWheel.getTickets(userId),
+  const [coinsResult, ticketsResult] = await Promise.all([
+    db.query("SELECT COALESCE(SUM(amount), 0)::int as total FROM coin_transactions WHERE user_id = $1", [user.id]),
+    db.query("SELECT COUNT(*)::int as total FROM spin_wheel_tickets WHERE user_id = $1 AND used = false", [user.id]),
   ])
 
-  return { coins, spin_tickets: tickets.length }
+  return {
+    coins: coinsResult.rows[0].total,
+    spin_tickets: ticketsResult.rows[0].total,
+  }
 }
 
 export async function claimDailyCoins() {
-  const userId = await getUserId()
-  if (!userId) throw new Error('Unauthorized')
+  const user = await getUser()
+  if (!user) throw new Error("Unauthorized")
 
-  const amount = 100
-  await db.coins.claimDailyReward(userId, 'coins', amount)
-  const newBalance = await db.coins.getUserBalance(userId)
+  const canClaim = await db.query("SELECT can_claim_daily($1) as can_claim", [user.id])
 
-  return { success: true, amount, newBalance }
+  if (!canClaim.rows[0].can_claim) {
+    throw new Error("Already claimed today")
+  }
+
+  await db.query("SELECT claim_daily_reward($1)", [user.id])
+
+  return { success: true, amount: 100 }
 }
 
 export async function addCoinsFromLinkvertise(amount: number) {
-  const userId = await getUserId()
-  if (!userId) throw new Error('Unauthorized')
+  const user = await getUser()
+  if (!user) throw new Error("Unauthorized")
 
-  await db.coins.addCoins({
-    user_id: userId,
-    amount,
-    type: 'linkvertise',
-    description: 'Earned from Linkvertise',
-  })
+  await db.query(
+    "INSERT INTO coin_transactions (user_id, amount, transaction_type, description) VALUES ($1, $2, $3, $4)",
+    [user.id, amount, "linkvertise", "Earned from Linkvertise"],
+  )
 
   return { success: true }
 }
 
 export async function useSpinTicket() {
-  const userId = await getUserId()
-  if (!userId) throw new Error('Unauthorized')
+  const user = await getUser()
+  if (!user) throw new Error("Unauthorized")
 
-  const result = await db.spinWheel.useTicket(userId)
-  if (!result.success) throw new Error('No tickets available')
+  const result = await db.query(
+    "UPDATE spin_wheel_tickets SET used = true WHERE id = (SELECT id FROM spin_wheel_tickets WHERE user_id = $1 AND used = false LIMIT 1) RETURNING id",
+    [user.id],
+  )
+
+  if (result.rows.length === 0) {
+    throw new Error("No tickets available")
+  }
 
   return { success: true }
 }
 
-export async function addSpinTicket(type: 'reward' | 'purchase' = 'reward') {
-  const userId = await getUserId()
-  if (!userId) throw new Error('Unauthorized')
+export async function addSpinTicket(type: "reward" | "purchase" = "reward") {
+  const user = await getUser()
+  if (!user) throw new Error("Unauthorized")
 
-  await db.spinWheel.addTicket(userId, type)
+  await db.query("INSERT INTO spin_wheel_tickets (user_id, ticket_type) VALUES ($1, $2)", [user.id, type])
+
   return { success: true }
 }
 
 export async function getSpinHistory() {
-  const userId = await getUserId()
-  if (!userId) return []
-  return await db.spinWheel.getHistory(userId)
+  const user = await getUser()
+  if (!user) return []
+
+  const result = await db.query(
+    "SELECT sh.*, sp.name as prize_name, sp.type as prize_type FROM spin_wheel_history sh JOIN spin_wheel_prizes sp ON sh.prize_id = sp.id WHERE sh.user_id = $1 ORDER BY sh.created_at DESC LIMIT 50",
+    [user.id],
+  )
+
+  return result.rows
 }
 
 export async function recordSpinResult(prizeId: string) {
-  const userId = await getUserId()
-  if (!userId) throw new Error('Unauthorized')
+  const user = await getUser()
+  if (!user) throw new Error("Unauthorized")
 
-  const prizes = await db.spinWheel.getPrizes()
-  const prize = prizes.find((p: any) => p.id === prizeId)
-  if (!prize) throw new Error('Prize not found')
+  await db.query("INSERT INTO spin_wheel_history (user_id, prize_id) VALUES ($1, $2)", [user.id, prizeId])
 
-  await db.spinWheel.recordSpin({
-    user_id: userId,
-    prize_id: prize.id,
-    prize_name: prize.name,
-    prize_type: prize.type,
-    prize_value: Number(prize.value) || 0,
-  })
+  const prize = await db.query("SELECT * FROM spin_wheel_prizes WHERE id = $1", [prizeId])
 
-  if (prize.type === 'coins') {
-    await db.coins.addCoins({
-      user_id: userId,
-      amount: Number(prize.value) || 0,
-      type: 'spin_wheel',
-      description: `Won ${Number(prize.value) || 0} coins from spin wheel`,
-    })
-  } else if (prize.type === 'ticket' || prize.type === 'spin') {
-    await db.spinWheel.addTicket(userId, 'reward')
+  if (prize.rows[0].type === "coins") {
+    await db.query(
+      "INSERT INTO coin_transactions (user_id, amount, transaction_type, description) VALUES ($1, $2, $3, $4)",
+      [user.id, prize.rows[0].value, "spin_wheel", `Won ${prize.rows[0].value} coins from spin wheel`],
+    )
   }
 
-  return { success: true, prize }
+  return { success: true, prize: prize.rows[0] }
 }

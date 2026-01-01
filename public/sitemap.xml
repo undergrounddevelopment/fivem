@@ -1,48 +1,58 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://www.fivem.tools</loc><priority>1.0</priority></url>
-<url><loc>https://www.fivem.tools/forum</loc><priority>0.9</priority></url>
-<url><loc>https://www.fivem.tools/assets</loc><priority>0.9</priority></url>
-<url><loc>https://www.fivem.tools/spin-wheel</loc><priority>0.8</priority></url>
-  <url><loc>https://www.fivem.tools/forum/thread/bb6da22e-9fc4-497a-b908-84e1239a4dd8</loc><lastmod>2025-12-26T05:50:25.401Z</lastmod></url>
-<url><loc>https://www.fivem.tools/forum/thread/5b5f5d42-09f7-4164-a269-81d5db0ba169</loc><lastmod>2025-12-26T08:24:07.522Z</lastmod></url>
-  <url><loc>https://www.fivem.tools/asset/325492ce-1b20-4417-9f45-45f78cdaba35</loc><lastmod>2025-12-30T11:17:21.561Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/efbd2af0-5aaf-459f-882a-0e014cfba696</loc><lastmod>2025-12-30T11:17:25.083Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/eaa4743d-0bd1-4c53-b736-192fe50a88de</loc><lastmod>2025-12-30T11:17:25.922Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/39a897b8-2188-4838-84bb-e7720ff55e1f</loc><lastmod>2025-12-30T11:17:26.725Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/2cf207c4-773b-4a4c-abf1-22e01ab028d4</loc><lastmod>2025-12-31T02:22:43.271Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/0d67ad51-bd57-433e-bc0a-3297dbfbb64a</loc><lastmod>2025-12-31T02:31:48.749Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/4db4b3f6-99a2-4f2e-941a-2749e58e3b00</loc><lastmod>2025-12-30T11:17:28.351Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/87dff107-56d2-4c8e-a866-b071f88a9859</loc><lastmod>2025-12-30T11:17:32.293Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/45fab085-c704-47fb-bc0d-2909c35675d4</loc><lastmod>2025-12-30T17:43:28.578Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/db64cb29-f18c-43ac-a22a-0f9373e309d0</loc><lastmod>2025-12-30T11:17:30.727Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/d664af3d-62e1-4905-b968-99219ea3031d</loc><lastmod>2025-12-30T11:17:33.065Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/fd7d17a7-a1dc-4720-86a0-a1f303f1c43c</loc><lastmod>2025-12-30T11:17:36.129Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/6d746f45-8e26-480f-8423-b932d3dae35b</loc><lastmod>2025-12-30T11:17:34.591Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/845642de-4a0a-4a5f-a4a7-62d847a4bb08</loc><lastmod>2025-12-31T02:21:57.263Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/6dc660fb-3b96-497f-ab39-ac2b7831accc</loc><lastmod>2025-12-30T12:49:02.911Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/acddfeb8-7d74-42e9-a3f5-415334434d0a</loc><lastmod>2025-12-30T11:17:36.906Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/7b3bf164-8cf6-4ab9-9149-0ee73ea87f1f</loc><lastmod>2025-12-30T11:17:38.539Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/c1ab9377-9286-43d4-9c0b-54c3866c21bc</loc><lastmod>2025-12-30T11:17:39.312Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/e9d627b5-10c4-42ae-93d1-83ac19424660</loc><lastmod>2025-12-30T11:17:31.505Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/86b8f23c-e0d7-403d-a000-f1725b936aec</loc><lastmod>2025-12-30T11:17:40.073Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/8713a378-bab5-478c-9a72-3e60387c4e51</loc><lastmod>2025-12-31T04:14:30.922Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/22a37efb-a4e5-4953-a533-0383131492e1</loc><lastmod>2025-12-31T04:26:29.073Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/4f7c0784-606e-48af-87b6-b09d7e43b432</loc><lastmod>2025-12-30T11:17:41.536Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/8d09934d-aae5-44db-a44e-6460d4531e22</loc><lastmod>2025-12-30T11:17:42.279Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/f8ceec6f-a8e0-43c4-b7a7-75b02962007b</loc><lastmod>2025-12-30T12:54:41.431Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/e68b2350-1c1e-47eb-b129-14413597d839</loc><lastmod>2025-12-30T12:57:21.024Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/3a8e614f-fb00-4b4e-8a43-6e866cc46f7f</loc><lastmod>2025-12-30T15:44:07.115Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/34ad8138-7d19-4285-91ba-7c91c59589c4</loc><lastmod>2025-12-30T11:17:46.995Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/c20d908d-a807-4322-a333-5dc7778e7b65</loc><lastmod>2025-12-31T02:33:56.403Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/35890c47-db03-456d-b6f4-d3b6b03e9a92</loc><lastmod>2025-12-30T23:51:58.075Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/7df9764a-99bb-4d84-acaa-92d6c2db4dba</loc><lastmod>2025-12-31T01:51:37.583Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/0658fdf4-0071-42d3-a3d3-85c8798b62d9</loc><lastmod>2025-12-31T01:51:56.247Z</lastmod></url>
-<url><loc>https://www.fivem.tools/asset/05b44f3a-ef57-4f9e-916e-e71e99c4a2fd</loc><lastmod>2025-12-31T13:07:03.886Z</lastmod></url>
-  <url><loc>https://www.fivem.tools/forum/category/general</loc></url>
-<url><loc>https://www.fivem.tools/forum/category/help</loc></url>
-<url><loc>https://www.fivem.tools/forum/category/showcase</loc></url>
-<url><loc>https://www.fivem.tools/forum/category/marketplace</loc></url>
-<url><loc>https://www.fivem.tools/forum/category/announcements</loc></url>
-<url><loc>https://www.fivem.tools/forum/category/requests</loc></url>
+  <url><loc>https://www.fivemtools.net</loc><priority>1.0</priority></url>
+<url><loc>https://www.fivemtools.net/scripts</loc><priority>0.9</priority></url>
+<url><loc>https://www.fivemtools.net/mlo</loc><priority>0.9</priority></url>
+<url><loc>https://www.fivemtools.net/vehicles</loc><priority>0.9</priority></url>
+<url><loc>https://www.fivemtools.net/clothing</loc><priority>0.8</priority></url>
+<url><loc>https://www.fivemtools.net/forum</loc><priority>0.9</priority></url>
+<url><loc>https://www.fivemtools.net/assets</loc><priority>0.9</priority></url>
+<url><loc>https://www.fivemtools.net/spin-wheel</loc><priority>0.7</priority></url>
+<url><loc>https://www.fivemtools.net/decrypt</loc><priority>0.8</priority></url>
+<url><loc>https://www.fivemtools.net/upvotes</loc><priority>0.8</priority></url>
+<url><loc>https://www.fivemtools.net/membership</loc><priority>0.7</priority></url>
+<url><loc>https://www.fivemtools.net/upload</loc><priority>0.6</priority></url>
+<url><loc>https://www.fivemtools.net/dashboard</loc><priority>0.7</priority></url>
+<url><loc>https://www.fivemtools.net/discord</loc><priority>0.5</priority></url>
+  <url><loc>https://www.fivemtools.net/forum/thread/bb6da22e-9fc4-497a-b908-84e1239a4dd8</loc><lastmod>2025-12-26T05:50:25.401Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/forum/thread/5b5f5d42-09f7-4164-a269-81d5db0ba169</loc><lastmod>2025-12-26T08:24:07.522Z</lastmod></url>
+  <url><loc>https://www.fivemtools.net/asset/efbd2af0-5aaf-459f-882a-0e014cfba696</loc><lastmod>2025-12-30T11:17:25.083Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/eaa4743d-0bd1-4c53-b736-192fe50a88de</loc><lastmod>2025-12-30T11:17:25.922Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/39a897b8-2188-4838-84bb-e7720ff55e1f</loc><lastmod>2025-12-30T11:17:26.725Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/2cf207c4-773b-4a4c-abf1-22e01ab028d4</loc><lastmod>2025-12-31T02:22:43.271Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/325492ce-1b20-4417-9f45-45f78cdaba35</loc><lastmod>2025-12-31T21:49:30.129Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/0d67ad51-bd57-433e-bc0a-3297dbfbb64a</loc><lastmod>2026-01-01T04:05:37.363Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/4db4b3f6-99a2-4f2e-941a-2749e58e3b00</loc><lastmod>2025-12-30T11:17:28.351Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/45fab085-c704-47fb-bc0d-2909c35675d4</loc><lastmod>2025-12-30T17:43:28.578Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/db64cb29-f18c-43ac-a22a-0f9373e309d0</loc><lastmod>2025-12-30T11:17:30.727Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/d664af3d-62e1-4905-b968-99219ea3031d</loc><lastmod>2025-12-30T11:17:33.065Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/fd7d17a7-a1dc-4720-86a0-a1f303f1c43c</loc><lastmod>2025-12-30T11:17:36.129Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/6d746f45-8e26-480f-8423-b932d3dae35b</loc><lastmod>2025-12-30T11:17:34.591Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/87dff107-56d2-4c8e-a866-b071f88a9859</loc><lastmod>2026-01-01T05:24:41.043Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/845642de-4a0a-4a5f-a4a7-62d847a4bb08</loc><lastmod>2025-12-31T02:21:57.263Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/acddfeb8-7d74-42e9-a3f5-415334434d0a</loc><lastmod>2025-12-30T11:17:36.906Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/7b3bf164-8cf6-4ab9-9149-0ee73ea87f1f</loc><lastmod>2025-12-30T11:17:38.539Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/c1ab9377-9286-43d4-9c0b-54c3866c21bc</loc><lastmod>2025-12-30T11:17:39.312Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/e9d627b5-10c4-42ae-93d1-83ac19424660</loc><lastmod>2025-12-30T11:17:31.505Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/86b8f23c-e0d7-403d-a000-f1725b936aec</loc><lastmod>2025-12-30T11:17:40.073Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/22a37efb-a4e5-4953-a533-0383131492e1</loc><lastmod>2025-12-31T15:35:06.799Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/6dc660fb-3b96-497f-ab39-ac2b7831accc</loc><lastmod>2025-12-31T21:02:45.250Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/8713a378-bab5-478c-9a72-3e60387c4e51</loc><lastmod>2026-01-01T04:06:03.858Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/4f7c0784-606e-48af-87b6-b09d7e43b432</loc><lastmod>2025-12-30T11:17:41.536Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/8d09934d-aae5-44db-a44e-6460d4531e22</loc><lastmod>2025-12-31T20:17:35.824Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/e68b2350-1c1e-47eb-b129-14413597d839</loc><lastmod>2025-12-30T12:57:21.024Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/3a8e614f-fb00-4b4e-8a43-6e866cc46f7f</loc><lastmod>2025-12-30T15:44:07.115Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/34ad8138-7d19-4285-91ba-7c91c59589c4</loc><lastmod>2025-12-30T11:17:46.995Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/c20d908d-a807-4322-a333-5dc7778e7b65</loc><lastmod>2025-12-31T02:33:56.403Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/7df9764a-99bb-4d84-acaa-92d6c2db4dba</loc><lastmod>2025-12-31T01:51:37.583Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/0658fdf4-0071-42d3-a3d3-85c8798b62d9</loc><lastmod>2025-12-31T01:51:56.247Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/f8ceec6f-a8e0-43c4-b7a7-75b02962007b</loc><lastmod>2025-12-31T18:57:20.608Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/05b44f3a-ef57-4f9e-916e-e71e99c4a2fd</loc><lastmod>2026-01-01T01:14:56.711Z</lastmod></url>
+<url><loc>https://www.fivemtools.net/asset/35890c47-db03-456d-b6f4-d3b6b03e9a92</loc><lastmod>2026-01-01T04:34:44.988Z</lastmod></url>
+  <url><loc>https://www.fivemtools.net/forum/category/general</loc></url>
+<url><loc>https://www.fivemtools.net/forum/category/help</loc></url>
+<url><loc>https://www.fivemtools.net/forum/category/showcase</loc></url>
+<url><loc>https://www.fivemtools.net/forum/category/marketplace</loc></url>
+<url><loc>https://www.fivemtools.net/forum/category/announcements</loc></url>
+<url><loc>https://www.fivemtools.net/forum/category/requests</loc></url>
 </urlset>

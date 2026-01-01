@@ -1,4 +1,10 @@
 const { createClient } = require('@supabase/supabase-js');
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Load environment variables from .env at the project root
+// This makes the script work consistently in local/dev environments
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

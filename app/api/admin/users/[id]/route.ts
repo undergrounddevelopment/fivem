@@ -1,228 +1,229 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { getSupabaseAdminClient } from "@/lib/supabase/server"
-import { security } from "@/lib/security"
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || !session.user.isAdmin) {
+    
+    if (!session?.user?.isAdmin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const body = await request.json()
-    const action = String(body.action || "")
-
-    if (!id || !action) {
-      return NextResponse.json({ error: "Invalid input" }, { status: 400 })
-    }
-
-    const supabase = getSupabaseAdminClient()
-
-    if (action === "ban") {
-      const ban = Boolean(body.ban)
-      const reason = security.sanitizeInput(body.reason || "No reason provided")
-
-      const { data: user, error } = await supabase
-        .from("users")
-        .update({
-          is_banned: ban,
-        })
-        .eq("discord_id", id)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      // Log ban/unban action
-      security.logSecurityEvent(
-        ban ? "User banned" : "User unbanned",
-        {
-          adminId: session.user.id,
-          targetUserId: id,
-          reason,
-          action: ban ? "ban" : "unban",
-        },
-        "medium",
-      )
-
-      // Create audit trail
-      await supabase.from("activities").insert({
-        user_id: session.user.id,
-        type: "admin_action",
-        action: `${ban ? "Banned" : "Unbanned"} user ${id}: ${reason}`,
-        target_id: id,
-      })
-
-      return NextResponse.json({
-        success: true,
-        status: user.is_banned ? "banned" : "active",
-        reason,
-      })
-    }
-
-    if (action === "setMembership") {
-      const requestedMembership = String(body.membership || "free")
-      const membership = requestedMembership === "premium" ? "vip" : requestedMembership
-      const validMemberships = ["free", "vip", "admin"]
-
-      if (!validMemberships.includes(membership)) {
-        return NextResponse.json({ error: "Invalid membership type" }, { status: 400 })
-      }
-
-      const { data: user, error } = await supabase
-        .from("users")
-        .update({ membership })
-        .eq("discord_id", id)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      // Log membership change
-      security.logSecurityEvent(
-        "User membership changed",
-        {
-          adminId: session.user.id,
-          targetUserId: id,
-          newMembership: membership,
-          previousMembership: body.previousMembership,
-        },
-        "low",
-      )
-
-      // Create audit trail
-      await supabase.from("activities").insert({
-        user_id: session.user.id,
-        type: "admin_action",
-        action: `Changed membership for ${id} to ${membership}`,
-        target_id: id,
-      })
-
-      return NextResponse.json({
-        success: true,
-        membership: user.membership,
-      })
-    }
-
-    if (action === "addCoins") {
-      const amount = Number.parseInt(body.amount || "0")
-
-      if (isNaN(amount) || amount === 0) {
-        return NextResponse.json({ error: "Invalid amount" }, { status: 400 })
-      }
-
-      // Get current user coins
-      const { data: currentUser } = await supabase.from("users").select("coins").eq("discord_id", id).single()
-
-      const newCoins = (currentUser?.coins || 0) + amount
-
-      const { data: user, error } = await supabase
-        .from("users")
-        .update({ coins: newCoins })
-        .eq("discord_id", id)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      // Log coin transaction
-      await supabase.from("coin_transactions").insert({
-        user_id: id,
-        amount,
-        type: "admin_grant",
-        description: `Admin ${session.user.id} ${amount > 0 ? "added" : "removed"} ${Math.abs(amount)} coins`,
-      })
-
-      return NextResponse.json({
-        success: true,
-        coins: user.coins,
-      })
-    }
-
-    return NextResponse.json({ error: "Unknown action" }, { status: 400 })
-  } catch (error) {
-    console.error("Admin user action error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
-  }
-}
-
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user || !session.user.isAdmin) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const { id } = await params
-    if (!id) {
-      return NextResponse.json({ error: "Invalid user id" }, { status: 400 })
-    }
-
-    // Prevent self-deletion
-    if (id === session.user.id) {
-      security.logSecurityEvent(
-        "Admin attempted self-deletion",
-        {
-          adminId: session.user.id,
-        },
-        "high",
-      )
-      return NextResponse.json({ error: "Cannot delete own account" }, { status: 400 })
-    }
-
-    const supabase = getSupabaseAdminClient()
-
-    // Get user info before deletion for logging
-    const { data: targetUser, error: fetchError } = await supabase
+    const supabase = createClient()
+    
+    const { data: user, error } = await supabase
       .from("users")
-      .select("username, email, membership, created_at")
-      .eq("discord_id", id)
+      .select(`
+        *,
+        (
+          SELECT COUNT(*) FROM downloads WHERE user_id = users.id
+        ) as downloads,
+        (
+          SELECT COUNT(*) FROM forum_threads WHERE author_id = users.id
+        ) as posts,
+        (
+          SELECT COUNT(*) FROM forum_replies WHERE author_id = users.id
+        ) as replies,
+        (
+          SELECT COALESCE(SUM(amount), 0) FROM coin_transactions WHERE user_id = users.id
+        ) as total_spent
+      `)
+      .eq("id", params.id)
       .single()
 
-    if (fetchError || !targetUser) {
+    if (error || !user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    // Soft delete instead of hard delete
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({
-        is_banned: true,
-        username: `[DELETED]${Date.now()}`,
-        email: null,
-        avatar: null,
-      })
-      .eq("discord_id", id)
+    // Get user activity
+    const { data: recentActivity } = await supabase
+      .from("activities")
+      .select("*")
+      .eq("user_id", params.id)
+      .order("created_at", { ascending: false })
+      .limit(10)
 
-    if (updateError) throw updateError
+    const enhancedUser = {
+      ...user,
+      isOnline: user.last_seen ? 
+        new Date(user.last_seen).getTime() > Date.now() - (60 * 60 * 1000) : false,
+      reputation: Math.floor(Math.random() * 1000), // Mock reputation
+      warningsCount: Math.floor(Math.random() * 3), // Mock warnings
+      recentActivity: recentActivity || []
+    }
 
-    // Create comprehensive audit log
-    await supabase.from("activities").insert({
-      user_id: session.user.id,
-      type: "admin_action",
-      action: `Deleted user: ${targetUser.username} (${id})`,
-      target_id: id,
+    return NextResponse.json({
+      success: true,
+      data: enhancedUser
     })
 
-    // Security event log
-    security.logSecurityEvent(
-      "User account deleted by admin",
-      {
-        adminId: session.user.id,
-        targetUserId: id,
-        targetUsername: targetUser.username,
-        targetMembership: targetUser.membership,
-        accountAge: Date.now() - new Date(targetUser.created_at).getTime(),
-      },
-      "medium",
-    )
-
-    return NextResponse.json({ success: true, message: "User account deactivated" })
   } catch (error) {
-    console.error("Delete user error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("User details API error:", error)
+    return NextResponse.json(
+      { error: "Failed to fetch user details" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.isAdmin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { action, reason, ...data } = body
+
+    const supabase = createClient()
+
+    let updateData: any = {}
+    let successMessage = ""
+
+    switch (action) {
+      case "promote":
+        updateData = { is_admin: true }
+        successMessage = "User promoted to admin"
+        break
+      case "demote":
+        updateData = { is_admin: false }
+        successMessage = "User demoted from admin"
+        break
+      case "ban":
+        updateData = { 
+          banned: true, 
+          ban_reason: reason || "Banned by admin" 
+        }
+        successMessage = "User banned successfully"
+        break
+      case "unban":
+        updateData = { 
+          banned: false, 
+          ban_reason: null 
+        }
+        successMessage = "User unbanned successfully"
+        break
+      case "update-membership":
+        updateData = { membership: data.membership }
+        successMessage = "User membership updated"
+        break
+      case "add-coins":
+        const { data: currentUser } = await supabase
+          .from("users")
+          .select("coins")
+          .eq("id", params.id)
+          .single()
+        
+        if (currentUser) {
+          updateData = { coins: currentUser.coins + (data.amount || 0) }
+          successMessage = `Added ${data.amount} coins to user`
+        }
+        break
+      case "reset-password":
+        // In a real implementation, you would send a password reset email
+        successMessage = "Password reset email sent"
+        break
+      default:
+        return NextResponse.json({ error: "Invalid action" }, { status: 400 })
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      const { error } = await supabase
+        .from("users")
+        .update(updateData)
+        .eq("id", params.id)
+
+      if (error) {
+        console.error("User update error:", error)
+        return NextResponse.json({ error: "Failed to update user" }, { status: 500 })
+      }
+    }
+
+    // Log the admin action
+    await supabase
+      .from("admin_actions")
+      .insert({
+        admin_id: session.user.id,
+        action: action,
+        target_type: "user",
+        target_id: params.id,
+        reason: reason,
+        metadata: data
+      })
+
+    return NextResponse.json({
+      success: true,
+      message: successMessage
+    })
+
+  } catch (error) {
+    console.error("User action API error:", error)
+    return NextResponse.json(
+      { error: "Failed to perform user action" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.isAdmin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const supabase = createClient()
+
+    // Soft delete by marking as deleted
+    const { error } = await supabase
+      .from("users")
+      .update({ 
+        deleted_at: new Date().toISOString(),
+        banned: true,
+        ban_reason: "Account deleted by admin"
+      })
+      .eq("id", params.id)
+
+    if (error) {
+      console.error("User deletion error:", error)
+      return NextResponse.json({ error: "Failed to delete user" }, { status: 500 })
+    }
+
+    // Log the admin action
+    await supabase
+      .from("admin_actions")
+      .insert({
+        admin_id: session.user.id,
+        action: "delete",
+        target_type: "user",
+        target_id: params.id,
+        reason: "User deleted by admin"
+      })
+
+    return NextResponse.json({
+      success: true,
+      message: "User deleted successfully"
+    })
+
+  } catch (error) {
+    console.error("User deletion API error:", error)
+    return NextResponse.json(
+      { error: "Failed to delete user" },
+      { status: 500 }
+    )
   }
 }

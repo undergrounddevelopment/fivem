@@ -2,7 +2,6 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { createAdminClient } from "@/lib/supabase/server"
-import { db } from "@/lib/db"
 
 export async function GET() {
   try {
@@ -12,13 +11,15 @@ export async function GET() {
       return NextResponse.json({ tickets: 0 })
     }
 
-    const userId = session.user.id
-
-    // Use the correct ticket table (spin_wheel_tickets) instead of legacy users.spin_tickets
-    const tickets = await db.spinWheel.getTickets(userId)
+    const supabase = await createAdminClient()
+    const { data: user } = await supabase
+      .from("users")
+      .select("spin_tickets")
+      .eq("discord_id", session.user.id)
+      .single()
 
     return NextResponse.json({
-      tickets: tickets.length,
+      tickets: user?.spin_tickets || 0,
     })
   } catch (error) {
     console.error("Error fetching spin tickets:", error)

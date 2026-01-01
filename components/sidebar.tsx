@@ -70,9 +70,8 @@ export function Sidebar() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch("/api/stats", { cache: "no-store" })
-      if (!res.ok) return
-      const data = await res.json()
+      const { getStats } = await import('@/lib/actions/general')
+      const data = await getStats()
       setStats({
         totalMembers: data.totalUsers || 0,
         totalAssets: data.totalAssets || 0,

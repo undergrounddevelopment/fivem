@@ -51,7 +51,6 @@ export default function AnalyticsPage() {
     topAssets?: Array<{ title: string; downloads: number; growth: number }>;
     overview?: { totalUsers: number; totalDownloads: number; totalPosts: number; newUsersToday: number };
   } | null>(null)
-  const [loadingData, setLoadingData] = useState(true)
 
   useEffect(() => {
     if (!isLoading && !isAdmin) {
@@ -66,13 +65,13 @@ export default function AnalyticsPage() {
         const data = await res.json()
         setAnalytics(data)
       } finally {
-        setLoadingData(false)
+        setLoading(false)
       }
     }
     load()
   }, [])
 
-  if (isLoading || loadingData) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />

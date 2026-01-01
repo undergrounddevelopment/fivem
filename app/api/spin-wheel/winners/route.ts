@@ -1,16 +1,27 @@
-import { createAdminClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const supabase = createAdminClient()
+    const supabase = await createClient()
 
-    const { data: spins, error } = await supabase
-      .from("spin_wheel_history")
-      .select("id, user_id, prize_name, prize_value, created_at")
-      .gt("prize_value", 0)
+    // Get recent winners with user profiles
+    const { data: winners, error } = await supabase
+      .from("spin_history")
+      .select(`
+        id,
+        user_id,
+        prize_name,
+        coins_won,
+        created_at,
+        users:user_id (
+          username,
+          avatar_url
+        )
+      `)
+      .gt("coins_won", 0)
       .order("created_at", { ascending: false })
       .limit(50)
 
@@ -19,27 +30,16 @@ export async function GET() {
       return NextResponse.json({ winners: [] })
     }
 
-    const userIds = Array.from(new Set((spins || []).map((s) => s.user_id).filter(Boolean)))
-
-    const { data: users } = await supabase
-      .from("users")
-      .select("discord_id, username, avatar")
-      .in("discord_id", userIds.length ? userIds : ["__none__"])
-
-    const userMap = new Map((users || []).map((u) => [u.discord_id, u]))
-
-    const formattedWinners = (spins || []).map((s: any) => {
-      const u = userMap.get(s.user_id)
-      return {
-        id: s.id,
-        user_id: s.user_id,
-        username: u?.username || "Anonymous",
-        avatar_url: u?.avatar || null,
-        prize_name: s.prize_name,
-        coins_won: s.prize_value,
-        created_at: s.created_at,
-      }
-    })
+    // Format winners data
+    const formattedWinners = (winners || []).map((w: any) => ({
+      id: w.id,
+      user_id: w.user_id,
+      username: w.users?.username || "Anonymous",
+      avatar_url: w.users?.avatar_url || null,
+      prize_name: w.prize_name,
+      coins_won: w.coins_won,
+      created_at: w.created_at
+    }))
 
     return NextResponse.json({ winners: formattedWinners })
   } catch (error) {

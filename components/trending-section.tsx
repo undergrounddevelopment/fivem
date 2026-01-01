@@ -12,11 +12,19 @@ export function TrendingSection() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/assets/trending')
-      .then(res => res.json())
-      .then(data => setAssets(data.items || []))
-      .catch(() => setAssets([]))
-      .finally(() => setIsLoading(false))
+    async function fetchTrending() {
+      try {
+        const { getAssets } = await import('@/lib/actions/general')
+        const data = await getAssets()
+        const sorted = (data || []).sort((a: Asset, b: Asset) => (b.downloads || 0) - (a.downloads || 0))
+        setAssets(sorted.slice(0, 4))
+      } catch (error) {
+        console.error("Failed to fetch trending:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchTrending()
   }, [])
 
   return (

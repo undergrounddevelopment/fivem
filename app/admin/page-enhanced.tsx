@@ -1,303 +1,370 @@
-"use client"
-
-import { useEffect, useState } from "react"
+import { Suspense } from "react"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { redirect } from "next/navigation"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Users, ImageIcon, Megaphone, MessageSquare, Sparkles, FileText,
-  TrendingUp, Coins, Activity, Loader2, Settings, Database, Shield,
-  BarChart3, Bell, Zap, Eye, Download, RefreshCw
-} from "lucide-react"
-import Link from "next/link"
+import { Separator } from "@/components/ui/separator"
+import { AdvancedAnalytics } from "@/components/admin/advanced-analytics"
+import { UserManagement } from "@/components/admin/user-management"
+import { AssetManagement } from "@/components/admin/asset-management"
+import { ForumManagement } from "@/components/admin/forum-management"
+import { SecurityMonitoring } from "@/components/admin/security-monitoring"
+import { RealtimeSystem } from "@/components/realtime-system"
+import { LoadingSpinner } from "@/components/loading-spinner"
+import { BarChart3, Users, Package, MessageSquare, Shield, Activity, Settings, Bell, Search, Menu, Crown, Zap, TrendingUp, AlertTriangle, CheckCircle, Clock } from "lucide-react"
+import { motion } from "framer-motion"
 
-interface DashboardStats {
-  totalUsers: number
-  totalBanners: number
-  activeBanners: number
-  totalAnnouncements: number
-  activeAnnouncements: number
-  forumCategories: number
-  totalSpins: number
-  totalCoinsWon: number
-  pendingAssets: number
-  todayUsers: number
-  weeklyGrowth: number
-  totalRevenue: number
-}
-
-const quickLinks = [
-  { title: "Users", href: "/admin/users", icon: Users, color: "cyan", desc: "Manage users" },
-  { title: "Banners", href: "/admin/banners", icon: ImageIcon, color: "blue", desc: "Banner ads" },
-  { title: "Announcements", href: "/admin/announcements", icon: Megaphone, color: "green", desc: "Site news" },
-  { title: "Forum", href: "/admin/forum-settings", icon: MessageSquare, color: "purple", desc: "Forum config" },
-  { title: "Spin Wheel", href: "/admin/spin-wheel", icon: Sparkles, color: "yellow", desc: "Prize system" },
-  { title: "Assets", href: "/admin/assets", icon: FileText, color: "orange", desc: "Content review" },
-  { title: "Analytics", href: "/admin/analytics", icon: BarChart3, color: "pink", desc: "Statistics" },
-  { title: "Database", href: "/admin/database", icon: Database, color: "indigo", desc: "DB status" },
-]
-
-export default function AdminDashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-
-  const fetchStats = async () => {
-    try {
-      setRefreshing(true)
-      const res = await fetch("/api/admin/dashboard-stats")
-      if (res.ok) {
-        const data = await res.json()
-        setStats(data)
-      }
-    } catch (error) {
-      console.error("Failed to fetch stats:", error)
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchStats()
-    const interval = setInterval(fetchStats, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    )
+export default async function AdminDashboard() {
+  const session = await getServerSession(authOptions)
+  
+  if (!session?.user?.isAdmin) {
+    redirect("/")
   }
 
   return (
-    <div className="space-y-6 animate-slide-up">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold gradient-text">Admin Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Complete platform management</p>
-        </div>
-        <Button onClick={fetchStats} disabled={refreshing} className="gap-2">
-          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
-      </div>
-
-      {/* Main Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="glass glass-hover card-hover group">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-4 rounded-xl bg-cyan-500/20 group-hover:bg-cyan-500/30 transition-all group-hover:scale-110">
-                <Users className="h-7 w-7 text-cyan-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Total Users</p>
-                <p className="text-3xl font-bold">{stats?.totalUsers || 0}</p>
-                <p className="text-xs text-cyan-400 mt-1">+{stats?.todayUsers || 0} today</p>
-              </div>
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Crown className="h-6 w-6 text-yellow-500" />
+              <h1 className="text-xl font-bold">Admin Dashboard</h1>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass glass-hover card-hover group">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-4 rounded-xl bg-green-500/20 group-hover:bg-green-500/30 transition-all group-hover:scale-110">
-                <TrendingUp className="h-7 w-7 text-green-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Weekly Growth</p>
-                <p className="text-3xl font-bold">{stats?.weeklyGrowth || 0}%</p>
-                <p className="text-xs text-green-400 mt-1">↑ Trending up</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass glass-hover card-hover group">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-4 rounded-xl bg-yellow-500/20 group-hover:bg-yellow-500/30 transition-all group-hover:scale-110">
-                <Sparkles className="h-7 w-7 text-yellow-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Total Spins</p>
-                <p className="text-3xl font-bold">{stats?.totalSpins || 0}</p>
-                <p className="text-xs text-yellow-400 mt-1">Gamification</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass glass-hover card-hover group">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-4 rounded-xl bg-orange-500/20 group-hover:bg-orange-500/30 transition-all group-hover:scale-110">
-                <Coins className="h-7 w-7 text-orange-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Coins Won</p>
-                <p className="text-3xl font-bold">{(stats?.totalCoinsWon || 0).toLocaleString()}</p>
-                <p className="text-xs text-orange-400 mt-1">Virtual currency</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <Zap className="h-5 w-5 text-primary" />
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-          {quickLinks.map((link) => (
-            <Link key={link.href} href={link.href}>
-              <Card className="glass glass-hover card-hover group h-full cursor-pointer">
-                <CardContent className="p-4 flex flex-col items-center text-center gap-3">
-                  <div className={`p-3 rounded-xl bg-${link.color}-500/20 group-hover:bg-${link.color}-500/30 transition-all group-hover:scale-110`}>
-                    <link.icon className={`h-6 w-6 text-${link.color}-400`} />
-                  </div>
-                  <div>
-                    <span className="text-sm font-semibold block">{link.title}</span>
-                    <span className="text-xs text-muted-foreground">{link.desc}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Content Overview & Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="glass glass-hover">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              Content Overview
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-4 rounded-xl glass-hover group">
-              <div className="flex items-center gap-3">
-                <ImageIcon className="h-5 w-5 text-blue-400" />
-                <span className="text-sm font-medium">Banners</span>
-              </div>
-              <Badge variant="secondary" className="group-hover:scale-110 transition-transform">
-                {stats?.activeBanners || 0} / {stats?.totalBanners || 0}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between p-4 rounded-xl glass-hover group">
-              <div className="flex items-center gap-3">
-                <Megaphone className="h-5 w-5 text-green-400" />
-                <span className="text-sm font-medium">Announcements</span>
-              </div>
-              <Badge variant="secondary" className="group-hover:scale-110 transition-transform">
-                {stats?.activeAnnouncements || 0} / {stats?.totalAnnouncements || 0}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between p-4 rounded-xl glass-hover group">
-              <div className="flex items-center gap-3">
-                <MessageSquare className="h-5 w-5 text-purple-400" />
-                <span className="text-sm font-medium">Forum Categories</span>
-              </div>
-              <Badge variant="secondary" className="group-hover:scale-110 transition-transform">
-                {stats?.forumCategories || 0}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between p-4 rounded-xl glass-hover group">
-              <div className="flex items-center gap-3">
-                <FileText className="h-5 w-5 text-orange-400" />
-                <span className="text-sm font-medium">Pending Assets</span>
-              </div>
-              <Badge 
-                variant={stats?.pendingAssets ? "destructive" : "secondary"}
-                className="group-hover:scale-110 transition-transform"
-              >
-                {stats?.pendingAssets || 0}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass glass-hover">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              System Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-4 rounded-xl glass-hover">
-              <div className="flex items-center gap-3">
-                <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse-glow" />
-                <span className="text-sm font-medium">Database</span>
-              </div>
-              <Badge variant="secondary" className="bg-green-500/20 text-green-400">Online</Badge>
-            </div>
-            <div className="flex items-center justify-between p-4 rounded-xl glass-hover">
-              <div className="flex items-center gap-3">
-                <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse-glow" />
-                <span className="text-sm font-medium">API</span>
-              </div>
-              <Badge variant="secondary" className="bg-green-500/20 text-green-400">Healthy</Badge>
-            </div>
-            <div className="flex items-center justify-between p-4 rounded-xl glass-hover">
-              <div className="flex items-center gap-3">
-                <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse-glow" />
-                <span className="text-sm font-medium">Storage</span>
-              </div>
-              <Badge variant="secondary" className="bg-green-500/20 text-green-400">Active</Badge>
-            </div>
-            <div className="flex items-center justify-between p-4 rounded-xl glass-hover">
-              <div className="flex items-center gap-3">
-                <Eye className="h-4 w-4 text-cyan-400" />
-                <span className="text-sm font-medium">Monitoring</span>
-              </div>
-              <Badge variant="secondary" className="bg-cyan-500/20 text-cyan-400">Enabled</Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Performance Metrics */}
-      <Card className="glass glass-hover">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            Performance Metrics
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 rounded-xl glass-hover">
-              <p className="text-2xl font-bold text-cyan-400">98.5%</p>
-              <p className="text-xs text-muted-foreground mt-1">Uptime</p>
-            </div>
-            <div className="text-center p-4 rounded-xl glass-hover">
-              <p className="text-2xl font-bold text-green-400">145ms</p>
-              <p className="text-xs text-muted-foreground mt-1">Avg Response</p>
-            </div>
-            <div className="text-center p-4 rounded-xl glass-hover">
-              <p className="text-2xl font-bold text-yellow-400">2.4k</p>
-              <p className="text-xs text-muted-foreground mt-1">Daily Visits</p>
-            </div>
-            <div className="text-center p-4 rounded-xl glass-hover">
-              <p className="text-2xl font-bold text-orange-400">4.8/5</p>
-              <p className="text-xs text-muted-foreground mt-1">User Rating</p>
-            </div>
+            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+              <Zap className="h-3 w-3 mr-1" />
+              Super Admin
+            </Badge>
           </div>
-        </CardContent>
-      </Card>
+          
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="sm">
+              <Bell className="h-4 w-4 mr-2" />
+              Notifications
+              <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
+                3
+              </Badge>
+            </Button>
+            <Button variant="outline" size="sm">
+              <Search className="h-4 w-4 mr-2" />
+              Quick Search
+            </Button>
+            <Button variant="outline" size="sm">
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container py-8">
+        {/* Quick Stats Overview */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="relative overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">System Status</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-lg font-bold">Operational</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-full bg-green-100">
+                    <Activity className="h-6 w-6 text-green-600" />
+                  </div>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent" />
+              </CardContent>
+            </Card>
+
+            <Card className="relative overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Active Users</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <TrendingUp className="h-4 w-4 text-blue-500" />
+                      <span className="text-lg font-bold">1,234</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-full bg-blue-100">
+                    <Users className="h-6 w-6 text-blue-600" />
+                  </div>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent" />
+              </CardContent>
+            </Card>
+
+            <Card className="relative overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Pending Reviews</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Clock className="h-4 w-4 text-orange-500" />
+                      <span className="text-lg font-bold">47</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-full bg-orange-100">
+                    <Package className="h-6 w-6 text-orange-600" />
+                  </div>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent" />
+              </CardContent>
+            </Card>
+
+            <Card className="relative overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Security Alerts</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                      <span className="text-lg font-bold">2</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-full bg-red-100">
+                    <Shield className="h-6 w-6 text-red-600" />
+                  </div>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent" />
+              </CardContent>
+            </Card>
+          </div>
+        </motion.div>
+
+        {/* Real-time System */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-8"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Real-time System Monitor
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Suspense fallback={<LoadingSpinner />}>
+                <RealtimeSystem />
+              </Suspense>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Main Admin Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Tabs defaultValue="analytics" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-6 h-12">
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="assets" className="flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Assets
+              </TabsTrigger>
+              <TabsTrigger value="forum" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Forum
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Security
+              </TabsTrigger>
+              <TabsTrigger value="system" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                System
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="analytics" className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Suspense fallback={<LoadingSpinner />}>
+                  <AdvancedAnalytics />
+                </Suspense>
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="users" className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Suspense fallback={<LoadingSpinner />}>
+                  <UserManagement />
+                </Suspense>
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="assets" className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Suspense fallback={<LoadingSpinner />}>
+                  <AssetManagement />
+                </Suspense>
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="forum" className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ForumManagement />
+                </Suspense>
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="security" className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Suspense fallback={<LoadingSpinner />}>
+                  <SecurityMonitoring />
+                </Suspense>
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="system" className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>System Configuration</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span>Maintenance Mode</span>
+                        <Button variant="outline" size="sm">Configure</Button>
+                      </div>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <span>Database Backup</span>
+                        <Button variant="outline" size="sm">Run Backup</Button>
+                      </div>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <span>Cache Management</span>
+                        <Button variant="outline" size="sm">Clear Cache</Button>
+                      </div>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <span>System Logs</span>
+                        <Button variant="outline" size="sm">View Logs</Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Performance Metrics</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>CPU Usage</span>
+                          <span>23%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-blue-600 h-2 rounded-full" style={{ width: "23%" }}></div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Memory Usage</span>
+                          <span>67%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-green-600 h-2 rounded-full" style={{ width: "67%" }}></div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Disk Usage</span>
+                          <span>45%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-yellow-600 h-2 rounded-full" style={{ width: "45%" }}></div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Network I/O</span>
+                          <span>12%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-purple-600 h-2 rounded-full" style={{ width: "12%" }}></div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </motion.div>
+            </TabsContent>
+          </Tabs>
+        </motion.div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span>FiveM Tools V7 Admin Dashboard</span>
+            <Separator orientation="vertical" className="h-4" />
+            <span>Version 7.0.0</span>
+            <Separator orientation="vertical" className="h-4" />
+            <span>Last updated: {new Date().toLocaleDateString()}</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              All Systems Operational
+            </Badge>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

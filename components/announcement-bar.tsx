@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { X, Sparkles, AlertTriangle, CheckCircle, Info, ChevronLeft, ChevronRight, ExternalLink, Megaphone, Gift, Zap } from "lucide-react"
+import { X, AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, ExternalLink, Megaphone, Gift } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 
 interface Announcement {
   id: string
@@ -23,29 +23,30 @@ export function AnnouncementBar() {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
   const [isMounted, setIsMounted] = useState(false)
+  const [error, setError] = useState(false)
 
   const fetchAnnouncements = useCallback(async () => {
     try {
-      const res = await fetch("/api/announcements", { cache: "no-store" })
-      if (!res.ok) {
-        setAnnouncements([])
-        return
-      }
-      const data = await res.json()
-      setAnnouncements(Array.isArray(data?.announcements) ? data.announcements : [])
-    } catch (error) {
-      console.error("Failed to fetch announcements:", error)
+      const { getPublicAnnouncements } = await import("@/lib/actions/general")
+      const data = await getPublicAnnouncements()
+      setAnnouncements(Array.isArray(data) ? data : [])
+      setError(false)
+    } catch (err) {
+      console.error("Failed to fetch announcements:", err)
       setAnnouncements([])
+      setError(true)
     } finally {
       setIsLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    fetchAnnouncements()
-    const interval = setInterval(fetchAnnouncements, 30000)
-    return () => clearInterval(interval)
-  }, [fetchAnnouncements])
+    if (isMounted) {
+      fetchAnnouncements()
+      const interval = setInterval(fetchAnnouncements, 60000)
+      return () => clearInterval(interval)
+    }
+  }, [fetchAnnouncements, isMounted])
 
   // Auto-rotate announcements
   useEffect(() => {
@@ -66,24 +67,24 @@ export function AnnouncementBar() {
   // Load dismissed state from localStorage and mark as mounted
   useEffect(() => {
     setIsMounted(true)
-    const saved = localStorage.getItem("dismissed_announcements")
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem("dismissed_announcements")
+      if (saved) {
         const parsed = JSON.parse(saved)
         setDismissed(new Set(parsed))
-      } catch (e) {
-        // Ignore parse errors
       }
+    } catch (e) {
+      console.error("Error loading dismissed announcements:", e)
     }
   }, [])
 
   const visibleAnnouncements = announcements.filter((a) => (a.is_dismissible ? !dismissed.has(a.id) : true))
 
-  // Prevent hydration mismatch
-  if (!isMounted || isLoading || visibleAnnouncements.length === 0) return null
+  if (!isMounted || (isLoading && announcements.length === 0)) return null
+  if (error || visibleAnnouncements.length === 0) return null
 
   const current = visibleAnnouncements[currentIndex % visibleAnnouncements.length]
-  if (!current) return null
+  if (!current || !current.message) return null
 
   const getTypeStyles = (type: string) => {
     switch (type) {
@@ -134,7 +135,7 @@ export function AnnouncementBar() {
   const IconComponent = typeStyles.icon
 
   const Content = (
-    <motion.div 
+    <motion.div
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       className={cn("relative w-full overflow-hidden bg-gradient-to-r shadow-lg", typeStyles.bg, typeStyles.glow)}
@@ -163,7 +164,7 @@ export function AnnouncementBar() {
         )}
 
         {/* Icon */}
-        <motion.div 
+        <motion.div
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: "spring", delay: 0.2 }}
@@ -173,7 +174,7 @@ export function AnnouncementBar() {
         </motion.div>
 
         {/* Message */}
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -184,8 +185,8 @@ export function AnnouncementBar() {
               {current.title}
             </span>
           )}
-          <span className="hidden sm:inline">{current.message}</span>
-          <span className="sm:hidden">{current.message.slice(0, 50)}...</span>
+          <span className="hidden sm:inline">{current.message || ''}</span>
+          <span className="sm:hidden">{(current.message || '').slice(0, 50)}{(current.message || '').length > 50 ? '...' : ''}</span>
           {current.link && (
             <span className="hidden md:flex items-center gap-1 text-white/80 hover:text-white transition-colors">
               <ExternalLink className="h-3.5 w-3.5" />
@@ -239,8 +240,8 @@ export function AnnouncementBar() {
               }}
               className={cn(
                 "h-1.5 rounded-full transition-all duration-300",
-                idx === currentIndex % visibleAnnouncements.length 
-                  ? "bg-white w-6 shadow-sm shadow-white/50" 
+                idx === currentIndex % visibleAnnouncements.length
+                  ? "bg-white w-6 shadow-sm shadow-white/50"
                   : "bg-white/40 hover:bg-white/60 w-1.5",
               )}
               aria-label={`Go to announcement ${idx + 1}`}

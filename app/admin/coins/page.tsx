@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/components/auth-provider"
 import { Plus, Minus, Search, TrendingUp, Users, History, Loader2 } from "lucide-react"
+import { CoinIcon } from "@/components/coin-icon"
+import { getCSRFToken } from "@/lib/csrf"
 
 interface Transaction {
   id: string
@@ -63,9 +65,13 @@ export default function AdminCoinsPage() {
 
   const handleAddCoins = async () => {
     if (!selectedUser || !amount) return
+    const csrfToken = getCSRFToken()
     const res = await fetch("/api/admin/coins", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
+      },
       body: JSON.stringify({ userId: selectedUser.id, amount: Number.parseInt(amount), reason, action: "add" }),
     })
     const data = await res.json()
@@ -91,9 +97,13 @@ export default function AdminCoinsPage() {
 
   const handleRemoveCoins = async () => {
     if (!selectedUser || !amount) return
+    const csrfToken = getCSRFToken()
     const res = await fetch("/api/admin/coins", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
+      },
       body: JSON.stringify({ userId: selectedUser.id, amount: Number.parseInt(amount), reason, action: "remove" }),
     })
     const data = await res.json()
@@ -127,7 +137,7 @@ export default function AdminCoinsPage() {
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-warning to-chart-5 flex items-center justify-center glow-sm">
-                <span className="text-2xl">💰</span>
+                <CoinIcon size="lg" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Coin Management</h1>
@@ -140,7 +150,7 @@ export default function AdminCoinsPage() {
             <div className="glass rounded-2xl p-5">
               <div className="flex items-center gap-3 mb-2">
                 <div className="h-10 w-10 rounded-xl bg-warning/20 flex items-center justify-center">
-                  <span>💰</span>
+                  <CoinIcon size="sm" />
                 </div>
                 <span className="text-sm text-muted-foreground">Total Coins</span>
               </div>
@@ -204,7 +214,7 @@ export default function AdminCoinsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span>💰</span>
+                      <CoinIcon size="sm" />
                       <span className="text-lg font-bold text-warning">{u.coins || 0}</span>
                     </div>
                   </div>
@@ -227,7 +237,7 @@ export default function AdminCoinsPage() {
                         <div>
                           <p className="font-semibold text-foreground">{selectedUser.username}</p>
                           <div className="flex items-center gap-2">
-                            <span>💰</span>
+                            <CoinIcon size="xs" />
                             <span className="text-sm text-warning font-bold">{selectedUser.coins || 0} coins</span>
                           </div>
                         </div>

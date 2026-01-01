@@ -12,11 +12,18 @@ export function RecentAssets() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/assets/recent')
-      .then(res => res.json())
-      .then(data => setAssets(data.items || []))
-      .catch(() => setAssets([]))
-      .finally(() => setIsLoading(false))
+    async function fetchRecent() {
+      try {
+        const { getAssets } = await import('@/lib/actions/general')
+        const data = await getAssets()
+        setAssets(data.slice(0, 4) || [])
+      } catch (error) {
+        console.error("Failed to fetch recent:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchRecent()
   }, [])
 
   return (

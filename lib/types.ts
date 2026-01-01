@@ -8,26 +8,19 @@ export type NotificationType = "reply" | "mention" | "like" | "system" | "downlo
 export interface Asset {
   id: string
   title: string
-  description: string | null
+  description: string
   category: AssetCategory
   framework: Framework
   version: string
   price: "free" | "premium"
   coinPrice: number
-  image: string | null
-  thumbnail?: string
+  image: string
   downloads: number
   rating: number
   author: string
   authorId: string
-  authorData?: {
-    username?: string
-    avatar?: string | null
-    membership?: Membership
-  }
-  views?: number
   createdAt: string
-  updatedAt?: string
+  updatedAt: string
   tags: string[]
   fileSize?: string
   requirements?: string[]
@@ -44,7 +37,7 @@ export interface User {
   discordId: string
   username: string
   email: string | null
-  avatar: string | null
+  avatar: string
   membership: Membership
   downloads: number
   reputation: number
@@ -165,7 +158,6 @@ export interface FrameworkInfo {
 // Session User type for auth
 export interface SessionUser {
   id: string
-  userId?: string
   discordId: string
   username: string
   email: string | null

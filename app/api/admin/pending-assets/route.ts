@@ -3,17 +3,6 @@ import { createClient } from "@/lib/supabase/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
-function mapLegacyTypeToCategory(type: string) {
-  switch (type) {
-    case "script":
-      return "scripts"
-    case "vehicle":
-      return "vehicles"
-    default:
-      return type
-  }
-}
-
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
@@ -37,38 +26,21 @@ export async function GET(request: Request) {
     const type = searchParams.get("type") || "all"
     const status = searchParams.get("status") || "pending"
 
-    let query = supabase.from("assets").select("*").eq("status", status).order("created_at", { ascending: false })
+    let query = supabase
+      .from("assets")
+      .select("*, user:users!assets_user_id_fkey(discord_id, username, avatar)")
+      .eq("status", status)
+      .order("created_at", { ascending: false })
 
     if (type !== "all") {
-      query = query.eq("category", mapLegacyTypeToCategory(type))
+      query = query.eq("type", type)
     }
 
     const { data: assets, error } = await query
 
     if (error) throw error
 
-    const safeAssets = assets || []
-    const authorIds = Array.from(new Set(safeAssets.map((a: any) => a.author_id).filter(Boolean)))
-    const { data: users, error: usersError } = authorIds.length
-      ? await supabase.from("users").select("discord_id, username, avatar").in("discord_id", authorIds)
-      : { data: [], error: null }
-
-    if (usersError) throw usersError
-    const usersByDiscordId = new Map<string, any>()
-    for (const u of users || []) usersByDiscordId.set(u.discord_id, u)
-
-    const hydrated = safeAssets.map((asset: any) => {
-      const author = usersByDiscordId.get(asset.author_id)
-      return {
-        ...asset,
-        user: author ? { username: author.username, avatar: author.avatar } : { username: "Unknown", avatar: null },
-        image_url: asset.thumbnail,
-        download_url: asset.download_link,
-        type: asset.category,
-      }
-    })
-
-    return NextResponse.json({ assets: hydrated })
+    return NextResponse.json({ assets: assets || [] })
   } catch (error) {
     console.error("Pending assets error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -103,39 +75,33 @@ export async function PUT(request: Request) {
 
     const newStatus = action === "approve" ? "active" : "rejected"
 
-    const updatePayload: any = {
-      status: newStatus,
-    }
+    const { error } = await supabase
+      .from("assets")
+      .update({
+        status: newStatus,
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: session.user.id,
+        rejection_reason: action === "reject" ? reason : null
+      })
+      .eq("id", id)
 
-    let updateError: any = null
-    const { error: firstUpdateError } = await supabase.from("assets").update(updatePayload).eq("id", id)
-    updateError = firstUpdateError
-    if (updateError) throw updateError
+    if (error) throw error
 
-    const { data: asset } = await supabase.from("assets").select("author_id, title").eq("id", id).single()
+    const { data: asset } = await supabase
+      .from("assets")
+      .select("user_id, title")
+      .eq("id", id)
+      .single()
 
     if (asset) {
-      const notificationPayload: any = {
-        user_id: asset.author_id,
-        type: "system",
+      await supabase.from("notifications").insert({
+        user_id: asset.user_id,
         title: action === "approve" ? "Asset Approved!" : "Asset Rejected",
-        message:
-          action === "approve"
-            ? `Your asset "${asset.title}" has been approved and is now live!`
-            : `Your asset "${asset.title}" was rejected. Reason: ${reason || "No reason provided"}`,
-        link: `/asset/${id}`,
-        is_read: false,
-      }
-
-      const { error: notifError } = await supabase.from("notifications").insert(notificationPayload)
-      if (notifError) {
-        await supabase.from("notifications").insert({
-          user_id: asset.author_id,
-          type: notificationPayload.type,
-          title: notificationPayload.title,
-          message: notificationPayload.message,
-        })
-      }
+        message: action === "approve" 
+          ? `Your asset "${asset.title}" has been approved and is now live!`
+          : `Your asset "${asset.title}" was rejected. Reason: ${reason || "No reason provided"}`,
+        type: action === "approve" ? "success" : "warning"
+      })
     }
 
     return NextResponse.json({ success: true })

@@ -1,0 +1,394 @@
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('325492ce-1b20-4417-9f45-45f78cdaba35', 'Prism Banking | The Most Advanced FiveM Banking Script', 'Config-First CustomizationAdjust rates, visuals, and systems directly in the configuration.Seamless With Prism UIBuilt to match other Prism Scripts UI resources for a unified, premium experience.Optimized UIClean, modern interface with smooth animations and improved loading speeds.Enhanced SecurityIdentifier-based queries, exploit protection, and improved validation.', 'scripts', 'qbcore', '1.0.0', 0, 'https://forum-cfx-re.akamaized.net/optimized/5X/8/a/0/5/8a053bc1d679ae6126921a32a194797d87f32807_2_1024x576.jpeg', 'https://drive.google.com/file/d/1ygu-k47hY8Ej7kYwuMWv0_XQCRCBkEsV/view?usp=sharing', 'External', 51, '["banking","esx","qbcore","script","leak"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-08T21:00:27.872232+00:00', '2025-12-30T11:17:21.56178+00:00', NULL, NULL, NULL, 5, 0, NULL, NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('efbd2af0-5aaf-459f-882a-0e014cfba696', 'ONEX - DRUG SELLING OPEN RESOURCES', 'ONEX- DRUGSELLING', 'scripts', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1766726684662.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766726703940.txt', 'Unknown', 33, '["fiovem","roleplay","qbcore","qbox","drug"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-26T05:25:06.743865+00:00', '2025-12-30T11:17:25.083985+00:00', NULL, NULL, NULL, 5, 0, NULL, NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('eaa4743d-0bd1-4c53-b736-192fe50a88de', 'TGIANN Bank', 'RequirementsQBCore or ESX 1.1+MySQL or oxmysqlNote: also this script is compatible with ox_lib', 'scripts', 'qbcore', '1.0.0', 0, 'https://forum-cfx-re.akamaized.net/original/4X/3/7/c/37c2e54a9dd6a99db736b9d125df6d79ce12cd88.jpeg', 'https://gofile.io/d/p7GbUU', 'Unknown', 13, '["UI Included","Database","fivem","script","qbcore","esx"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-09T09:36:48.58994+00:00', '2025-12-30T11:17:25.92264+00:00', 'FeaturesEasy configFull optimizeEasy to useQB and ESX compatibleIBAN FeatureWithdrawal and deposit featureTransaction historyFeature to send money to offline playersBillings', NULL, NULL, 5, 0, 'https://www.youtube.com/watch?v=bCq8qqd-tuA&feature=youtu.be', NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('39a897b8-2188-4838-84bb-e7720ff55e1f', 'DECRYPTER FIXER V2 UPDATED', 'Fixer V2 MLO STREAM DECRYPT', 'mlo', 'standalone', '1.0.0', 10000, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1765263726047.PNG', 'gofile.com', 'Unknown', 50, '["Updated","Fivem","tools","decrypt"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-09T07:02:22.841628+00:00', '2025-12-30T11:17:26.725613+00:00', NULL, NULL, NULL, 5, 0, NULL, NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('2cf207c4-773b-4a4c-abf1-22e01ab028d4', 'FiveM Tools - NOPIXEL CARS 4.0 Full Package Updated', 'FiveM Tools - NOPIXEL CARS 4.0 Full Package Updated', 'vehicles', 'standalone', '4.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1766726259564-CLlyQ6mTzafdtj3YKQPHPbRYtQwbPI.jpg', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766726329884-PAguukGXCwgGNTrO6v9L1ag1wv5mH7.txt', 'Unknown', 28, '["Updated","FiveM Ready","nopixel","prodigy","esx","qbcore","qbox"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-26T05:19:27.036229+00:00', '2025-12-31T02:22:43.271674+00:00', NULL, NULL, NULL, 5, 0, 'https://www.youtube.com/watch?v=5YiQjhZLWmE', NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('0d67ad51-bd57-433e-bc0a-3297dbfbb64a', 'Account Steam 200+ - FiveM Tools V7.0 Updated', 'ACCOUNT STEAM FULL 100%', 'scripts', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1766861445557-H8Cu9PUrHsw8W68jcDOTmS5DD8dLaK.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766861527890-SzkdAjUNpjHD0m3Zu0LIiCwMiIatDW.txt', 'Unknown', 45, '["Target System","FiveM Ready","Updated","steam","account"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-27T18:52:18.912121+00:00', '2025-12-31T02:31:48.749832+00:00', NULL, NULL, NULL, 5, 0, NULL, NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('4db4b3f6-99a2-4f2e-941a-2749e58e3b00', 'Aquapark &amp; Restaurant | Multiplayer Cooking, Orders, Ticket System | ak4y-aquapark_restaurant', ':feather: Aquapark Features:tickets: Ticket System with Custom UI (tickets as inventory items with usage counts):roller_coaster: Access to 12+ Functional Waterslides:world_map: Requires the Aura Studio Aquapark Map:feather: Restaurant Job Features:necktie: Restaurant Job MenuStart/Stop work, equip work clothesTrack your level, completed orders, and earnings:cook: Multiplayer NPC OrdersRandomized orders for Pizza, Burger, Fries, DrinksOrders are shared server-wide, only accepted players can deliver:pushpin: Order Pinning system (accepted orders stay on screen):open_book: Recipe Tablets (see preparation steps &amp; required ingredients):money_with_wings: Correct deliveries = Money + EXP | Wr angry customers, no payout:wastebasket: Trash bin for discarding failed items:feather: Cooking Systems:pizza: PizzaRoll dough with rolling pin, add sauce &amp; cheeseTop with dozens of ingredients (pepperoni, corn, olive, onion, tomato, pepper, mushroom, pastirma, arugula)Bake pizzas with raw → cooked visual transitions:hamburger: HamburgerCook beef or chicken patties with live visual donenessAssemble burgers ingredient by ingredient (buns, lettuce, tomato, onion, cheese, patties)Raw &amp; cooked states for every prop:fries: FriesCustom props (oil bottles, potato bags, fry baskets, cartons)Pour oil with animations, fry potatoes, serve in cartons:cup_with_straw: DrinksCola, Diet Cola, Soda, Diet Soda, Orange JuicePlace empty cups into dispenser and watch them fill live', 'scripts', 'standalone', '1.0.0', 800, 'https://forum-cfx-re.akamaized.net/optimized/5X/4/0/7/0/4070c6bfadfacc0d74d593c7f4bed53b1e035e2a_2_690x388.jpeg', 'https://gofile.io/d/6jW7bc', 'Unknown', 12, '["QBCORE","ESX","QBOX","SERVER","FIVEM","ROLEPLAY","UI Included","Inventory","Animated"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-09T15:33:10.036354+00:00', '2025-12-30T11:17:28.351112+00:00', NULL, NULL, NULL, 5, 0, 'https://www.youtube.com/watch?v=C5ww7itfQ-o', NULL, 'https://forum.cfx.re/t/aquapark-restaurant-sliders-3d-prop-interaction-cooking-and-multiplayer-order-system/5349083', NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('87dff107-56d2-4c8e-a866-b071f88a9859', 'JG - MECHANIC UPDATED FULL OPEN RESOURCES', 'JG MECHANIC', 'scripts', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1766727792996.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766727752133.txt', 'Unknown', 48, '["Updated","JG  MECHANIC","QBCORE","ESX"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-26T05:43:30.453373+00:00', '2025-12-30T11:17:32.293995+00:00', NULL, NULL, NULL, 5, 0, 'https://www.youtube.com/watch?v=Zvxozmq3huc&t=1s', NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('45fab085-c704-47fb-bc0d-2909c35675d4', 'KuzQuality - Full Package', 'KuzQuality - FiveM Scripts', 'scripts', 'standalone', '1.0.0', 0, 'https://docs.kuzquality.com/~gitbook/ogimage/-McQL53Fj2k4wtIFD6gV', 'https://www.mediafire.com/file/4lc0b6t5ws7enxn/[KQ+Scripts].zip/file', 'Unknown', 89, '["fivem","qbcore","roleplay","eesx","qbox","script fiveem","script"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-11T02:04:47.633677+00:00', '2025-12-30T17:43:28.578899+00:00', 'https://docs.kuzquality.com/', 'https://docs.kuzquality.com/', NULL, 5, 0, 'https://www.youtube.com/@KuzQuality', NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('db64cb29-f18c-43ac-a22a-0f9373e309d0', 'Jim-ClosedShop (Cleaned & Working)', '- *Mutli Framework Closed-Shop script**
+Let your player owned stores keep making money when no workers are online
+
+Supports
+QB-Core / QBOX / ESX
+QB_Target / OX_Target
+QB_Inventory / OX_Inventory / Lation_UI
+QB- Menu / OX_Lib Context Menus / Lation_UI
+progressbar / OX_Lib ProgressBars / Lation_UI
+
+- *Dependencies**
+jim_bridge - [https://github.com/jimathy/jim_bridge](url)', 'scripts', 'standalone', '2.1.02', 50, '/placeholder.svg?height=400&width=600&query=Jim-ClosedShop%20(Cleaned%20%26%20Working)', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/903241143813283890-1766326357869.zip', 'Unknown', 10, '["jim","script","ananaya"]', 'active', false, false, 'pending', 'a7832d46-b517-4a7a-b6e4-82d32deff61a', '2025-12-21T14:12:52.844633+00:00', '2025-12-30T11:17:30.7275+00:00', 'Features
+When all members of a job are off duty, a NPC is spawned with shop for people to buy from
+This allows people to buy food and drink items even when the store is technically closed
+This is a fair system for big servers with players from different timezones.
+Highly customisable
+Config.lua controls what items can be sold in the shop
+(Personally recommend selling only crafted goods, as others can be economy breaking)
+This stops people trying to sell illegal goods at legal jobs
+Fine tune the prices of each items in the config.
+Boss controlled stock
+Only Boss roles can access stock from NPC
+Stock only as large as total possible items? 8 items in config - 8 slots
+This stops people using it as a personal stash', '- *Documentation**
+[https://jixelpatterns.gitbook.io/docs/paid-assets/jim-closedshops](url)', '', 5, 0, NULL, NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('d664af3d-62e1-4905-b968-99219ea3031d', 'Fashion & Print Job [MULTIPLAYER] - Fivem Script', 'Seamless multiplayer integration
+All Responsive design
+designed with synchronized
+Ready to elevate your FiveM roleplay server? Dive into the world of Multiplayer Transport today!', 'scripts', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1765578661055.jpg', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1765578777340.txt', 'Unknown', 44, '["FiveM Ready","SCRIPT","QBCORE","QBOX","ESX"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-12T22:33:00.177949+00:00', '2025-12-30T11:17:33.065278+00:00', NULL, NULL, NULL, 5, 0, 'https://www.youtube.com/watch?v=J9Pif2_9lvs', NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('fd7d17a7-a1dc-4720-86a0-a1f303f1c43c', 'L2S V6 FULL PACKAGE', '🚨 Get ready for an unmatched experience with L2S V6 – where creativity meets realism! 🚨', 'scripts', 'standalone', '6.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1765549475833.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1765549562880.txt', 'Unknown', 65, '["fivem","qbcore","esx","qbox","server","roleplay"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-12T14:26:20.00519+00:00', '2025-12-30T11:17:36.129667+00:00', NULL, NULL, NULL, 5, 0, 'https://www.youtube.com/watch?v=RFnyQP3LasQ&embeds_referring_euri=https%3A%2F%2Fwww.fivemtools.net%2F&source_ve_path=MjM4NTE', NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('6d746f45-8e26-480f-8423-b932d3dae35b', 'Prodigy V 2.5 Full Assets', 'Prodigy Assets V 2.5', 'scripts', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1765579268712.webp', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1765579254371.txt', 'Unknown', 80, '["Fivem","server","qbcore","esc","prodigy","nopixel"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-12T22:41:10.875401+00:00', '2025-12-30T11:17:34.591718+00:00', NULL, NULL, NULL, 5, 0, 'https://prodigyrp.net/', 'https://prodigyrp.net/', 'https://prodigyrp.net/', NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('845642de-4a0a-4a5f-a4a7-62d847a4bb08', 'GOM DOCK PACKAGE VEHICLE', 'GOM DOCK PACKAGE', 'vehicles', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1766727129578.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766727135802.txt', 'Unknown', 32, '["VEHICLES","CARD","FIVEM","ROLEPLAY"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-26T05:32:18.63305+00:00', '2025-12-31T02:21:57.26361+00:00', NULL, NULL, NULL, 5, 0, NULL, NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('6dc660fb-3b96-497f-ab39-ac2b7831accc', 'FIXER V 2.5 DECRYPT MLO', 'https://fixer.boostfivem.com', 'mlo', 'standalone', '2.5.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1766096184178.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766097338287.txt', 'Unknown', 76, '["FIVEM","DECRYPT FXAP","FIXER V 2.5","ROLEPLAY","QBCORE","ESX","QBOX","GTA V"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-18T22:35:43.537105+00:00', '2025-12-30T12:49:02.911912+00:00', 'https://fixer.boostfivem.com', 'https://fixer.boostfivem.com', 'https://fixer.boostfivem.com', 5, 0, 'https://direct-link.net/1461354/USBOQFP44qKK', 'https://direct-link.net/1461354/USBOQFP44qKK', 'https://direct-link.net/1461354/USBOQFP44qKK', NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('acddfeb8-7d74-42e9-a3f5-415334434d0a', 'Morning Wood Gang MLO [FIVEM/GTAV]', '- *Versatile Gang Hideout | 8-Room HQ + 10 Player Apartments | Underground Fight Club**
+
+Bring the streets to life with this lore-friendly gang compound located deep in the Morningwood area. Whether you''re running a ruthless street crew or an underground mafia network, this MLO is built to fit any gang style, with customizable touches to make it truly yours.
+
+Key Features:
+
+8 Interior Rooms – Ideal for meetings, stash spots, gun storage, or RP chill zones
+
+10 Individual Apartments – Fully enterable and designed for player ownership or gang housing
+
+Underground Boxing Arena – Hidden illegal fight club for RP events, perfect for high-stakes gambling
+
+Gambling Den – Add risk and reward to your RP with a gritty, atmospheric underground casino
+
+Roof Access via Elevator –Easily travel from floor to floor with the multi level connector
+
+Color-Reactive Lighting – Dynamic glowing lights to match your gang colors
+
+Gang Logo Ready – Multiple surfaces designed for custom gang tags, logos, or graffiti
+
+Spacious Garage - This huge open space with multiple car spaces allows for full meets and gatherings, maybe you wanna work on your cars well it has that too, done working on your car drive you car in the middle where you can snap up some excellent photos with our excellent lighting for that perfect look
+
+Why It Stands Out:
+
+Lore Friendly Design – Feels right at home in Los Santos with natural map blending
+
+Highly Adaptable – Not tied to any specific gang theme; fits Street Gangs, Mafia, Cartels, or custom crews
+
+RP-Ready – Suited for both gang and mafia-style RP, from drug ops to underground fight nights
+
+Elevator script isnt included into this asset
+![alt text](https://dunb17ur4ymx4.cloudfront.net/wysiwyg/1013964/e9e65fbe6592693ffc49ca52ef6d9f5184560902.png)', 'mlo', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1765525209420.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1765525419293.txt', 'Unknown', 22, '["FiveM Ready","MLO","ROLEPLAY","ESX","QBCORE"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-12T07:43:45.53322+00:00', '2025-12-30T11:17:36.906915+00:00', NULL, NULL, NULL, 5, 0, 'https://www.youtube.com/watch?v=Xfuhvg-puy8', NULL, 'https://redlinedev.tebex.io/package/6914924', NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('7b3bf164-8cf6-4ab9-9149-0ee73ea87f1f', 'V7 Duplicate Ymap Fixer', 'This is a tool to delete duplicate ymaps, not to repair maps.', 'mlo', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1765678490947.PNG', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1765678658096.txt', 'Unknown', 52, '["FIVEM","MLO","SCRIPT","QBCORE","ESX","QBOX","DECRYPT"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-14T02:17:49.96628+00:00', '2025-12-30T11:17:38.539589+00:00', NULL, NULL, NULL, 5, 0, 'https://discord.gg/fivemtools', 'https://discord.gg/fivemtools', 'https://discord.gg/fivemtools', NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('c1ab9377-9286-43d4-9c0b-54c3866c21bc', 'JAPANESE PACK & EXTRA MLO', 'JAPANESE PACK & EXTRA', 'mlo', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1766145955246.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766146233660.txt', 'Unknown', 21, '["MLO","ESX","QBCORE","QBOX","ROLEPLAY","FIVEEM"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-19T12:10:41.747986+00:00', '2025-12-30T11:17:39.312223+00:00', NULL, NULL, NULL, 5, 0, NULL, NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('e9d627b5-10c4-42ae-93d1-83ac19424660', 'KuzQuality-Shell Creator', 'Take total control of your server’s interior design with our Shell Creator. No more hunting down separate MLOs or Shells. Now you can craft, customize, and setup any interior layout directly in‐game. From cozy apartments to expansive garages or buzzing community centers, the possibilities are endless.', 'scripts', 'standalone', '1.0.0', 100, 'https://dunb17ur4ymx4.cloudfront.net/packages/images/bf1a3c660b37931588cf900d08b35c9a248c9213.jpg', 'https://drive.google.com/file/d/1HT90w7baUzpUc96CDpRaEcq9YjFd6tXQ/view?usp=sharing', 'Unknown', 19, '["fivem","qbcore","esx","qbox","script fivem"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-09T04:41:39.413947+00:00', '2025-12-30T11:17:31.505983+00:00', 'Easy to use Shell Creator tool50+ custom props allowing for perfect shell customizations (all under 12mb!)64 different colors for walls, floors, counters and few other elements. (Utilizing Texture tinting)Multi-floor supportInstant previews while creating shellsBuilt-in teleporter systemWorks with truly any housing (as IPL or Shells)', 'KQ_LINK Requiredkq_link is our fully open-source solution to link resources with any framework or dependency you may be using, such as inventories, notifications or dispatch systems. Ensuring the best possible compatibility between our new resources and your server.You can find out which resources are supported on the Github page', NULL, 5, 0, 'https://www.youtube.com/watch?v=9kUD3YFXHF4&embeds_referring_euri=https%3A%2F%2Fkuzquality.com%2F&source_ve_path=MjM4NTE', 'https://github.com/Kuzkay/kq_link/archive/refs/heads/main.zip', NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('86b8f23c-e0d7-403d-a000-f1725b936aec', 'Sentinel AntiCheat', 'The World''s First Cloud Based Machine Learning Anti-Cheat
+
+Sentinel AntiCheat by CaroNet Systems™ is the worlds First AI Machine Learning, Cloud Based AntiCheat. With us as your partners in Community Security, you will Never have to worry about Cheaters Again.', 'scripts', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1765679052886.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1765679124740.zip', 'Unknown', 49, '["fivem","anticheat","fiveguard","qb","qbcore","qbox","esx","roleplay"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-14T02:25:57.158894+00:00', '2025-12-30T11:17:40.073996+00:00', NULL, NULL, NULL, 5, 0, 'https://cloud.caronetsystems.com/images/017e6a31-9d3d-40b9-04ef-e521b6afa600/public', 'discord.gg/fivemtools', NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('22a37efb-a4e5-4953-a533-0383131492e1', 'FIXER V 2.5 DECRYPT MLO UPDATED', 'https://direct-link.net/1461354/USBOQFP44qKK', 'scripts', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1766097479787.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766097481018.txt', 'Unknown', 93, '["Updated"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-18T22:38:04.133278+00:00', '2025-12-31T15:35:06.799259+00:00', 'https://direct-link.net/1461354/USBOQFP44qKK', 'https://direct-link.net/1461354/USBOQFP44qKK', 'https://direct-link.net/1461354/USBOQFP44qKK', 5, 0, 'https://direct-link.net/1461354/USBOQFP44qKK', 'https://direct-link.net/1461354/USBOQFP44qKK', 'https://direct-link.net/1461354/USBOQFP44qKK', NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('8713a378-bab5-478c-9a72-3e60387c4e51', '50 Scripts Job Full Package Open Resources FiveM', 'FULL PACKAGE', 'scripts', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1766728617543-gJqh4md0wvxbGnk7o8WvzA0cxDhfJT.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766728531439-cpeK8a6ZqoGLiMHhQUvs0Xl6jV8PlP.txt', 'Unknown', 107, '["FiveM Ready","script","qbcore","esx","qbox"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-26T05:57:18.437124+00:00', '2025-12-31T04:14:30.922818+00:00', NULL, NULL, NULL, 5, 0, 'https://fivemtools.net', 'https://fivemtools.net', 'https://fivemtools.net', NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('4f7c0784-606e-48af-87b6-b09d7e43b432', 'FiveGuard AC DECRYPT LURAPH V14 OPEN RESOURCES', '&quot;AdminMenu&quot;: {    &quot;AdminMenuAccess&quot;: &quot;boolean&quot;,    &quot;AnnouncementAccess&quot;: &quot;boolean&quot;,    &quot;ESPAccess&quot;: &quot;boolean&quot;,    &quot;ClearEntitiesAccess&quot;: &quot;boolean&quot;,    &quot;BanAndKickAccess&quot;: &quot;boolean&quot;,    &quot;GotoAndBringAccess&quot;: &quot;boolean&quot;,    &quot;VehicleAccess&quot;: &quot;boolean&quot;,    &quot;MiscAccess&quot;: &quot;boolean&quot;,    &quot;LogsAccess&quot;: &quot;boolean&quot;,    &quot;PlayerSelectorAccess&quot;: &quot;boolean&quot;,    &quot;BanListAndUnbanAccess&quot;: &quot;boolean&quot;,    &quot;ModelChangerAccess&quot;: &quot;boolean&quot;},&quot;Client&quot;: {    &quot;BypassSpectate&quot;: &quot;boolean&quot;,    &quot;BypassGodMode&quot;: &quot;boolean&quot;,    &quot;BypassInvisible&quot;: &quot;boolean&quot;,    &quot;BypassStealOutfit&quot;: &quot;boolean&quot;,    &quot;BypassInfStamina&quot;: &quot;boolean&quot;,    &quot;BypassNoclip&quot;: &quot;boolean&quot;,    &quot;BypassSuperJump&quot;: &quot;boolean&quot;,    &quot;BypassFreecam&quot;: &quot;boolean&quot;,    &quot;BypassSpeedHack&quot;: &quot;boolean&quot;,    &quot;BypassTeleport&quot;: &quot;boolean&quot;,    &quot;BypassNightVision&quot;: &quot;boolean&quot;,    &quot;BypassThermalVision&quot;: &quot;boolean&quot;,    &quot;BypassExplosiveAmmo&quot;: &quot;boolean&quot;,    &quot;BypassOCR&quot;: &quot;boolean&quot;,    &quot;BypassNuiDevtools&quot;: &quot;boolean&quot;,    &quot;BypassBlacklistedTextures&quot;: &quot;boolean&quot;,    &quot;BlipsBypass&quot;: &quot;boolean&quot;,    &quot;BypassCbScanner&quot;: &quot;boolean&quot;,    &quot;BypassSpoofedBulletShot&quot;: &quot;boolean&quot;},&quot;Weapon&quot;: {    &quot;BypassWeaponDmgModifier&quot;: &quot;boolean&quot;,    &quot;BypassInfAmmo&quot;: &quot;boolean&quot;,    &quot;BypassNoReload&quot;: &quot;boolean&quot;,    &quot;BypassRapidFire&quot;: &quot;boolean&quot;},&quot;Vehicle&quot;: {    &quot;BypassVehicleFixAndGodMode&quot;: &quot;boolean&quot;,    &quot;BypassVehicleHandlingEdit&quot;: &quot;boolean&quot;,    &quot;BypassVehicleModifier&quot;: &quot;boolean&quot;,    &quot;BypassBulletproofTires&quot;: &quot;boolean&quot;,    &quot;BypassVehiclePlateChanger&quot;: &quot;boolean&quot;},&quot;Blacklist&quot;: {    &quot;BypassModelChanger&quot;: &quot;boolean&quot;,    &quot;BypassWeaponBlacklist&quot;: &quot;boolean&quot;},&quot;Misc&quot;: {    &quot;FGCommands&quot;: &quot;boolean&quot;,    &quot;BypassVPN&quot;: &quot;boolean&quot;,    &quot;BypassExplosion&quot;: &quot;boolean&quot;,    &quot;BypassClearTasks&quot;: &quot;boolean&quot;,    &quot;BypassParticle&quot;: &quot;boolean&quot;,    &quot;BypassSpoofedWeapons&quot;: &quot;boolean&quot;}', 'scripts', 'standalone', '1.0.0', 10000, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSsb-fr5wqwLxjXsfXiJAKEwtLvs7k8knHOdQ&s', 'https://drive.google.com/file/d/1HT90w7baUzpUc96CDpRaEcq9YjFd6tXQ/view?usp=sharing', 'Unknown', 69, '["Encrypted","FIVEM","ANTICHEAT"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-09T06:42:20.19985+00:00', '2025-12-30T11:17:41.536881+00:00', 'Web panelFiveguard has a web panel with a cloud config system that allows you to manage your licenses and share with your staff team without sharing your passwordsAnti On screen menuFiveguard has an advanced AI that takes screenshots every set period of time to check if there is a lua menu on it effectively banning cheatersSafe events verification systemFiveguard also has a system of safe events that makes it impossible to execute events by hackers and spawning moneyAI props detectionFiveguard has advanced AI that effectively detects unusual behavior in spawning of entities and cars, which stops cheaters from destroying your server', 'https://docs.fiveguard.net/', NULL, 5, 0, 'https://www.youtube.com/watch?v=WaShpj4p_Fo&embeds_referring_euri=https%3A%2F%2Fcdn.iframe.ly%2F&source_ve_path=MjM4NTE', NULL, 'https://docs.fiveguard.net/', NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('8d09934d-aae5-44db-a44e-6460d4531e22', 'RTX Anticheat - LifeTime', 'Our anticheat blocks a lot of functions, all functions are listed below. We provide unlimited support for anticheat. You need to set the anticheat in the config according to your preferences. Our anticheat is optimized. It can be used on any server. Independent banning and discord log system. We listen to the community, if you discover a feature that is not detected, just report it and we will try to detect it. Customer is always our first priority, we will always try to help you. We do not guarantee that all listed features will be 100% detected, it always depends on the hack.', 'scripts', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1765705068553.webp', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1765705616223.txt', 'Unknown', 60, '["ANTICHEAT","SCRIPT","FIVEM","QBCORE","QBOX","ESX","RTX","RTX SCRIPTS"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-14T09:47:22.943137+00:00', '2025-12-30T11:17:42.279112+00:00', 'AntiSpectate
+
+AntiGodMode
+
+AntiMaxArmor
+
+AntiArmorGive
+
+AntiBlacklistedKeys
+
+AntiCheatEngine
+
+AntiInjectionCommand
+
+AntiInjectionGlobal
+
+AntiInjectionBC
+
+AntiInjectionNRC
+
+AntiScreenResult
+
+AntiSuspiciousResources
+
+AntiBlipsCheat
+
+AntiInfinityAmmo
+
+AntiNoClip
+
+AntiTeleport
+
+AntiInvisible
+
+AntiSpeedHack
+
+AntiVehicleRam
+
+AntiSuperJump
+
+AntiVehicleSpeedModifier
+
+AntiDamageChange
+
+AntiSpawnMassParticles
+
+AntiTriggeringClientEvents
+
+AntiGameTimerChanger
+
+AntiResourceStopper
+
+AntiResourceStarter
+
+AntiModiferDamage
+
+AntiWeaponsExplosive
+
+AntiNightVision
+
+AntiThermalVision
+
+AntiMenyoo
+
+AntiRagDoll
+
+AntiRadar
+
+AntiNoDamage
+
+AntiVehicleTuning
+
+AntiVehicleRainbow
+
+AntiBlacklistedCommands
+
+AntiSpawningBlacklistedObjects
+
+AntiSpawnBlacklistedPeds
+
+AntiSpawningBlacklistedVehicles
+
+AntiSpawnMassObjects
+
+AntiSpawnMassPeds
+
+AntiServerNuke
+
+AntiSpawnMassVehicles
+
+AntiTriggeringServerEvents
+
+AntiExplosions
+
+AntiBlacklistedMessages
+
+AntiBlacklistedPedChanger
+
+AntiBlacklistedWeapons
+
+AntiMaxHealthChanger
+
+AntiNative
+
+AntiTaskCanceling
+
+AntiBlacklistedPlayerNames
+
+AntiRandomStringResource
+
+AntiVPN
+
+AntiLicenseClear
+
+TextureDetector
+
+On Screen Detect
+
+Admin Menu
+
+Country Whitelist
+
+Discord Logs
+
+Screenshots Logs
+
+Everything is configurable
+
+Ban System
+
+Permission Bypass
+
+Ban Announce
+
+Easy To Install
+
+Compliant support
+
+Adequate price for quality
+
+Constant updates
+
+OneSync Infinity Ready
+
+Language Config
+
+AntiCheat can be used on any server
+
+Best optimalization', NULL, NULL, 5, 0, 'https://youtu.be/uRJc7fOTqN4', 'https://fivemtools.net', 'https://fivemtools.net', NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('f8ceec6f-a8e0-43c4-b7a7-75b02962007b', 'Prism - Appearance', 'Replace the default character customization system with Prism Appearance, a sleek, modern redesign of illenium-appearance built for immersion, performance, and full customization. With attention to detail and smooth animations, Prism Appearance turns character creation and styling into a polished, premium experience for any FiveM server.DESIGNED FOR IMMERSIONPrism Appearance combines functionality with a modern UI that feels intuitive and fluid. From clothing to tattoos, every option is presented with clean visuals and responsive transitions, ensuring players stay immersed in the roleplay experience.CLEAR AND FUNCTIONAL STRUCTURE👕 Clothing System – Browse and preview outfits with clean photo-based displays.💉 Tattoos as Photos – Easily choose tattoos through image previews instead of text lists.📦 Import &amp; Export – Save and load full character appearances instantly.📏 Ped Scale Adjustments – Adjust character height and proportions seamlessly.🎨 Full Color Customization – Apply precise color controls to clothing, hair, and more.☁️ CDN Integration – Faster asset loading for smoother performance.EXTENSIVE CUSTOMIZATIONEvery aspect of Prism Appearance can be configured — from layout and icons to categories and display options. Whether you want to expand clothing stores, add new tattoo packs, or brand the interface with your own server identity, customization is quick and flexible.ATTENTION TO DETAIL &amp; FULL CONTROL    Complete redesign of illenium-appearance with modern improvements.    Clean, minimal UI built for smooth roleplay integration.    Lightweight and optimized to keep performance stable.    Works seamlessly with ESX, QBCore, and other frameworks.The Prism Appearance script isn’t just a redesign, it’s a next-gen character customization system that makes personalizing your character immersive, stylish, and efficient.## Links[YouTube Preview](https://www.youtube.com/watch?v=J3UAKnJv6QU)', 'scripts', 'standalone', '1.0.0', 15, 'https://i.ytimg.com/vi/J3UAKnJv6QU/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLDrYrXca_Ug1cltjx2xWlnITNCVxw', 'https://drive.google.com/file/d/1G86enJcSDg2ZtCTJ-H_ViZcB6mcLC2uY/view?usp=sharing', 'Unknown', 54, '["Free","Open Source","Premium","Optimized","Drag &amp; Drop","UI Included","Configurable","Updated"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-09T01:40:39.003782+00:00', '2025-12-30T12:54:41.431583+00:00', NULL, NULL, NULL, 5, 0, NULL, NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('e68b2350-1c1e-47eb-b129-14413597d839', 'Woofer Permanent V7.0 – Anti-Ban FiveM & Valorant 100% Aman', 'https://www.virustotal.com/gui/file/72d5f13312caaf1a00d60eef2960f055faebf2958daab4e93005638003ba9f3a?nocache=1
+Core Features of a "Full" Spoofer
+A comprehensive ("Full") spoofer typically targets the following identifiers:
+
+Disk Serials: Changes the serial numbers of your SSD or HDD (often the primary way FiveM tracks hardware).
+
+MAC Address: Randomizes the unique identifier for your network adapters (Ethernet/Wi-Fi).
+
+Motherboard UUID/Serial: Masks the unique ID assigned to your motherboard BIOS.
+
+GPU Identifiers: Changes the tracked ID of your graphics card.
+
+Registry & Cache Cleaner: Automatically deletes FiveM/Cfx.re cache files and registry keys that store "digital crumbs" of your previous identity.
+
+Monitor Serials: Some advanced spoofers even mask the serial numbers of connected monitors.
+
+How it Works: Temporary vs. Permanent
+Temporary (Kernel-Level): These spoofers run in the background. They intercept the game''s request for hardware info and provide "fake" data. Once you restart your PC, your hardware IDs return to normal.
+
+Permanent (Changer): These tools attempt to actually rewrite the serial numbers in your hardware''s firmware or the Windows registry.
+
+[!CAUTION] Significant Risks Involved
+
+Security: Many "free" spoofers are bundled with malware, such as AsyncRAT or stealers, designed to hijack your Discord, bank info, or crypto wallets.
+
+Windows Deactivation: Changing your HWID can trick Windows into thinking you''ve moved the OS to a new computer, causing your Windows license to become unactivated.
+
+System Instability: Permanent changes can lead to "Blue Screen of Death" (BSOD) or prevent other software (like Adobe or Office) from working correctly.
+
+Important Considerations
+New Accounts: A spoofer alone is often not enough. You usually need a new Rockstar Social Club account, a new Discord account, and sometimes even a new Steam account to successfully return to a server.
+
+IP Bans: If the server or FiveM has banned your IP address, you will also need a VPN or a way to change your public IP (like restarting your router if you have a dynamic IP).', 'scripts', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1766866066776-Yv3qeayd8Qqsa4fYMAm1vIvPsN9lZT.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766866106833-6aQP2VQ19JGI59XWwFRU7xEgeDrNuy.txt', 'Unknown', 42, '["FiveM Ready","woofer","spoofer","fivem","valorant"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-27T20:09:12.120851+00:00', '2025-12-30T12:57:21.024555+00:00', 'https://www.virustotal.com/gui/file/72d5f13312caaf1a00d60eef2960f055faebf2958daab4e93005638003ba9f3a?nocache=1', 'https://www.virustotal.com/gui/file/72d5f13312caaf1a00d60eef2960f055faebf2958daab4e93005638003ba9f3a?nocache=1', 'https://www.virustotal.com/gui/file/72d5f13312caaf1a00d60eef2960f055faebf2958daab4e93005638003ba9f3a?nocache=1', 5, 0, 'https://www.virustotal.com/gui/file/72d5f13312caaf1a00d60eef2960f055faebf2958daab4e93005638003ba9f3a?nocache=1', 'https://www.virustotal.com/gui/file/72d5f13312caaf1a00d60eef2960f055faebf2958daab4e93005638003ba9f3a?nocache=1', 'https://www.virustotal.com/gui/file/72d5f13312caaf1a00d60eef2960f055faebf2958daab4e93005638003ba9f3a?nocache=1', NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('3a8e614f-fb00-4b4e-8a43-6e866cc46f7f', 'OkOk Script Package New Updated', 'okokBanking.zip
+okokBilling.zip
+okokCrafting.zip
+okokMarketplace.zip
+okokPhone.zip
+okokReports.zip
+okokRequests.zip', 'scripts', 'standalone', '1.0.0', 0, '/placeholder.svg?height=400&width=600&query=%20OkOk%20Script%20Package%20New%20Updated', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766895663536-daspcBlURqI41jl4mmB2o8yFtulFbw.txt', 'Unknown', 27, '["Updated","FiveM Ready","FIVEM","SCRIPT","OKOK","QBCORE","QBOX"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-28T04:21:37.519834+00:00', '2025-12-30T15:44:07.115599+00:00', NULL, NULL, NULL, 5, 0, NULL, NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('34ad8138-7d19-4285-91ba-7c91c59589c4', 'PEGASUS AC UPDATED 2025', 'PegasusAC (Anti-Cheat)', 'scripts', 'standalone', '1.0.0', 50, 'https://forum-cfx-re.akamaized.net/optimized/5X/f/1/f/b/f1fb504172276cd7c5e4c8a3768ad94a4c5fe310_2_690x387.jpeg', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1765409452687.zip', 'Unknown', 35, '["PEGASUS AC","FIVEM","QBCORE","ESX","ROLEPLAY","ANTICHEAT","FIVEGUARD","Updated"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-10T23:31:31.623114+00:00', '2025-12-30T11:17:46.995449+00:00', '🛡️ Key Features of PegasusAC (Anti-Cheat)
+
+PegasusAC is a comprehensive anti-cheat solution designed for advanced server security, management automation, and high compatibility.
+I. Advanced Security and Protection
+Feature Description & Benefit
+High Cheating Detection Capable of detecting 95% of futures (cheating features) found in popular executors (cheating software).
+Best Connection Prechecks Provides detailed information about players connecting to your server. Automatically handles suspicious connections by rejecting them.
+Powerful Event Protection System Features an event protection system concept that can be easily activated with a single command, ensuring security during critical server events.
+Advanced Ban System An advanced ban system is included as part of the anti-cheat measures, helping administrators take effective action against rule violators.
+
+II. Administration and Compatibility
+Feature Description & Benefit
+Comprehensive Automated Logs Offers advanced logging capabilities for both Discord and in-game activities, useful for administrators and staff to monitor server aspects.
+Extensive Configuration Features a configuration file with 1000+ lines that is fully configurable, allowing server administrators to fine-tune the anti-cheat''s behavior to their specific needs.
+Standalone Compatibility Designed to work seamlessly with most server frameworks, making it accessible to a wide range of users.
+
+III. Value and Pricing
+Feature Description & Benefit
+Very Affordable Price Priced reasonably/very affordably, making it an attractive option for server owners looking to enhance security without a large expenditure.', 'https://forum.cfx.re/t/paid-pegasusac-best-fivem-anticheat-2025/5208717', NULL, 5, 0, 'https://www.youtube.com/watch?v=qR1TJYjVaKg', NULL, 'https://forum.cfx.re/t/paid-pegasusac-best-fivem-anticheat-2025/5208717', NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('c20d908d-a807-4322-a333-5dc7778e7b65', 'TGIANN GPS', 'ynamic Updates and TrackingProximity and Updates: If you are close to a GPS, it updates in real-time. The update interval increases as you move further away.Vehicle GPS: You can add GPS to vehicles. The vehicle will appear as a GPS on the map. Anyone entering the vehicle with their GPS on will automatically see the vehicle’s GPS. Even if there are no players in the vehicle, it will still be visible on the map.GPS Tracking: If you’re having trouble finding a GPS, you can mark its location from the menu and use the tracking option to follow it. This ensures you never lose the lead police car during a chase.Distance LimitationsDistance Settings: You can limit the distance of your GPS. For example, setting the distance to 200 units will prevent GPS signals beyond 200 units from appearing.Available in languages (U can add new languages - Language File)', 'scripts', 'standalone', '1.0.0', 0, 'https://forum-cfx-re.akamaized.net/original/5X/9/c/1/6/9c16c66e82d600894cc4bacf679cd7d9a03f91e8.jpeg', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1765272775839.rar', 'Unknown', 28, '["fivem","scripts","qbcore","qbox"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-09T09:33:45.752023+00:00', '2025-12-31T02:33:56.40328+00:00', 'Features:Item Addition and Customization: You can add multiple items to your GPS system and customize each item’s features as you wish.Favorite Channels: Add frequently used GPS channels to your favorites and remove them whenever you want. Additionally, you can add job-specific channels to your favorites for easy access.Private Channels and Encryption: When joining a channel, you can set a password to create a private channel. Channels without passwords are accessible to everyone. After joining a channel, you can add it to or remove it from your favorites.GPS Tag Customization: After joining a channel, you can change your GPS tag and remove it whenever you want.Color Customization: Change the color of your GPS using colors set by the server owners. All these changes are updated in real-time for every user on the GPS.Vehicle Icons: Your GPS will show different icons depending on the vehicle you are in. You’ll see a car icon while in a car, a rotating propeller while in a helicopter, and a boat icon while on a boat. Server owners can change these icons from the config file or make them all the same.', NULL, NULL, 5, 0, 'https://www.youtube.com/watch?v=zfdp9DjDPE0&feature=youtu.be', NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('35890c47-db03-456d-b6f4-d3b6b03e9a92', 'DUMP SERVER FIVEM V 7.0 ALL SERVER.LUA CLIENT.LUA INCLUDE SQL ( VIP )', 'ELITE FEATURES V4.0 Total Resource Extraction: Seamlessly retrieve all server-side and client-side assets, including server.lua, client.lua, and all associated metadata. Next-Gen Auto-Decryption: No more manual reverse-engineering. Our tool features an integrated decryption engine for: FXAP Decryption: Instant bypass and unlocking. Luraph V4.0: Full support for the latest obfuscation (Industry-leading capability). Automatic Clean 100% (No AI V2.0): Avoid the mess of AI-generated code reconstruction. Our No AI V2.0 engine restores scripts based on the original developer’s coding logic, ensuring 100% clean, functional, and readable source code. New Stream API Bypass: Fully updated to navigate the latest FiveM (Cfx.re) "New Stream" API protocols, ensuring undetectable and uninterrupted data flow. Critical Bug Fixes: Optimized for stability. No more crashes when dumping massive high-slot servers or encrypted .rpf archives.', 'scripts', 'standalone', '7.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1766329638834.PNG', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766329668568.txt', 'Unknown', 258, '["FiveM Ready","DUMP SERVER FIVEM","SERVER.LUA","SQL","client","roleplay","sql","qbox","qbcore","esx"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-21T15:07:56.762041+00:00', '2025-12-30T23:51:58.075797+00:00', 'FiveM Dump 4.0 Executable (Lifetime Access License) Professional Documentation (Setup & Best Practices) Priority Updates for future FiveM API patches Ready to unlock the full potential of your development workflow? Contact us today!', NULL, NULL, 5, 0, 'https://www.youtube.com/watch?v=Q8FW7BIADEY', NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('7df9764a-99bb-4d84-acaa-92d6c2db4dba', 'GET Account Rockstar FiveM Full Access v7.0 - 300+ Assets & Unban Ready', 'Looking for a high-quality Rockstar Social Club Account for FiveM? Get the latest v7.0 Full Access Account with 300+ Assets included. This account is specially configured for players who need a fresh start or a bypass for FiveM servers.
+
+Main Features:
+
+Full Access: Change to your own Email, Password, and Security Questions.
+
+Version 7.0: Optimized for the latest FiveM build and anti-cheat updates.
+
+300+ Assets: Includes pre-leveled characters, vehicles, or high-tier assets.
+
+No Ban History: Clean global status, ready to use on any server.
+
+Multi-Launcher: Works with Rockstar Games Launcher and FiveM client.
+
+How to use:
+
+Complete the Linkvertise steps to get the account credentials.
+
+Log in to the Rockstar Social Club website.
+
+Change the recovery email to your personal email immediately.
+
+Launch FiveM and start playing!
+
+Note: If you are HWID banned, please use a spoofer before logging in to avoid damaging this account.', 'scripts', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1766867154145-DVv3zDl3l0g9eUQhArdcPtlyu22huf.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766867231196-6o8e9QEozIg4qMkzRD0uKWMyPsjX3l.txt', 'Unknown', 79, '["FiveM Ready","ROCKSTAR","FREE","QBCORE","ESX","QBOX","FiveM Unban, Rockstar Social Club, Cheap GTA 5 Acc"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-27T20:27:16.5858+00:00', '2025-12-31T01:51:37.583975+00:00', 'Looking for a high-quality Rockstar Social Club Account for FiveM? Get the latest v7.0 Full Access Account with 300+ Assets included. This account is specially configured for players who need a fresh start or a bypass for FiveM servers.
+
+Main Features:
+
+Full Access: Change to your own Email, Password, and Security Questions.
+
+Version 7.0: Optimized for the latest FiveM build and anti-cheat updates.
+
+300+ Assets: Includes pre-leveled characters, vehicles, or high-tier assets.
+
+No Ban History: Clean global status, ready to use on any server.
+
+Multi-Launcher: Works with Rockstar Games Launcher and FiveM client.
+
+How to use:
+
+Complete the Linkvertise steps to get the account credentials.
+
+Log in to the Rockstar Social Club website.
+
+Change the recovery email to your personal email immediately.
+
+Launch FiveM and start playing!
+
+Note: If you are HWID banned, please use a spoofer before logging in to avoid damaging this account.', NULL, NULL, 5, 0, NULL, NULL, NULL, NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('0658fdf4-0071-42d3-a3d3-85c8798b62d9', 'RCORE CLOTHING FULLY WORKING PACK UPDATED NEW !!! OPEN SRC NO LEAKED', 'We believe clothes shopping should be fun and easy. That''s why we have built the solution to ALL of your clothing needs. Never has it been easier to create an outfit that accurately represents your character - with a stunning UI, filters for colors and article type (like jacket/shirt/suit/hoodie, ...) and much, much more.
+
+If you have ''rcore_clothes'' in your Keymaster, you already own this script.
+For the first time in FiveM, you can properly filter clothing in-game. Do you have a color of your outfit in mind? Filter by color! Looking to create a business outfit? Select suit or dress shoes. With our appearance script you can make unique and charming outfits in the blink of an eye!', 'scripts', 'standalone', '1.0.0', 0, 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/thumbnails/1047719075322810378-1766688846962-UAgr2XJGiRm8iJLSy0z6Pifaf6du04.png', 'https://sluijfrtqgieucrk.public.blob.vercel-storage.com/assets/1047719075322810378-1766689062400-PZOa24OwwMIZUnwAkWhFcscc3sEvTb.txt', 'Unknown', 12, '["Updated","FIVEM","QBCORE","SCRIPT","ESX","ROLEPLAY","TOOLS FIVEM"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-25T18:57:53.801648+00:00', '2025-12-31T01:51:56.247715+00:00', 'Clothing is much more than just code for us. We have painstakingly preconfigured all 46 000 in-game clothes for you - categories, names, colors, suggested arms (no more texture clipping 🎉), prices, shop assignment.
+
+Now you can go to Binco for budget-friendly finds, Suburban for streetwear, Ponsonbys for high-end fashion or the Ammu-Nation for Hunting gear! Want a hair cut? Find your nearest barber shop, we heard Bob Mulét has some new exciting haircut.
+Addon Clothing
+
+We know everyone loves addon and replace clothing. That''s why we built this clothing script from the ground up with your custom clothing in mind! We built a fully featured system that will automatically
+
+Detect clothes you have replaced and flag them for re-processing
+Generate clothing hashes for all your addons, to make sure the internal IDs never change (even when you go to a new game build or add new pack)
+Find all of your addon clothes and prepare them for processing
+Automatically take photos of all of your clothes, detect color, remove background, center them, optimize them.
+Apply easily configurable pricing policy to all your newly added fashion.
+All of this for free!
+
+If you want some extra spice, you can use our AI services to categorize the clothes and generate in-game names!
+
+It sounds like magic, because it is! The RCore magic.
+Character Creator
+
+A solution for all your clothing needs wouldn''t really be complete without a beautiful character creator for your beautiful characters!
+In-Game Admin Mode
+
+You will never need to spend hours and hours in configs. We have fully fledged admin mode where you can manage job outfits, stock management, metadata (name, colors, restrictions), recommended arms all from within the game.
+Unique take on Arms
+
+We have always struggled with arms. Especially once you want to select some nice gloves. That''s why we separated arms and gloves selection to two different shop sections. Get arms that fit and then go wild with a wide selection of gloves! If compatible, the gloves will stay on even when you change to different arms for a different top.
+Fully compatible replacement
+
+Thanks to all the features this resource offers, you will no longer need to have different scripts for char-creator and clothing shops. Plus, we''ve included integrations and migrations, making it likely to be a seamless replacement for your existing setup.
+Features
+
+Each shop (Binco, Suburban, Ponsonbys, Ammu-Nation, Movie Masks, Vangelico) carries different clothing
+Shops have filters (by color, name, clothing sub-type (shirt/tshirt/jacket/...|dress-pants, sweatpants, shorts, ...))
+46 000 pre-configured clothes (that''s everything in the game), with labels, prices, images, color tags, subtype tags
+Preconfigured clothes respect what game build you''re on, so it doesn''t show things from future DLCs
+Doesn''t use the usual "ids", so the pre-configured items don''t break when you add addon clothing or change to a different game build
+Pre-configured clothes work flawlessly with your addon/replace clothing
+Detects replace clothing and marks them for re-processing
+Easy to use automated system to process replace/addon clothes, screenshot them, crop, remove background, detect colors, ...
+All "torsos" have pre-configured arms, so your players don''t need to spend time messing around finding the ones that fit
+We''ve split arms and gloves into it''s own categories, to make picking gloves that much easier
+Admin mode to manage job outfits, what''s assigned to each shop, edit metadata, edit default arms
+Restrictions on clothes & outfits based on job, identifier or ace group
+Character creator
+(optional) AI service that adds labels and sub-types to your replace/addon clothes (this requires extra payment, but is not necessary to enjoy the script)
+Fully backwards compatible with qb-clothing/skinchanger+esx_skin (as a replacement)
+Barber shop included', 'https://store.rcore.cz/package/6430968', NULL, 5, 0, 'https://www.youtube.com/watch?v=Y8JFvbT_LuQ&embeds_referring_euri=https%3A%2F%2Fstore.rcore.cz%2F&source_ve_path=MjM4NTE', 'https://store.rcore.cz/package/6430968', 'https://store.rcore.cz/package/6430968', NULL, false, 0);
+INSERT INTO assets (id, title, description, category, framework, version, coin_price, thumbnail, download_link, file_size, downloads, tags, status, is_verified, is_featured, virus_scan_status, author_id, created_at, updated_at, features, installation, changelog, rating, rating_count, youtube_link, github_link, docs_link, linkvertise_url, require_linkvertise, average_rating) VALUES ('05b44f3a-ef57-4f9e-916e-e71e99c4a2fd', 'AC ELECTRON', 'ANTI CHEAT AC ELECTRON', 'scripts', 'standalone', '1.0.0', 0, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTt17mi3XHvUai-Q7yjrvfpR6qKUn715C2AXQ&s', 'https://drive.google.com/file/d/15emUTqBaeNbHQhDFrovKJB07N0D8yHVW/view?usp=sharing', 'Unknown', 87, '["anticheat","fivem","roleplay","qbcore","esx","qbox","scripts"]', 'active', false, false, 'pending', 'f941f110-6e93-4b59-90b6-8aaf074ff743', '2025-12-09T03:01:00.632086+00:00', '2025-12-31T13:07:03.886203+00:00', NULL, '# Installation GuideFollow these steps to set up Electron Anticheat on your FiveM server.## 1. Purchase a License KeyObtain a license key from our [website](https://electron-services.com).## 2. Download the ResourceAfter purchasing, go to your [Dashboard](https://electron-services.com/dashboard/anticheat) and click &quot;Download&quot; to get the latest version.## 3. Install the ResourceExtract the downloaded files and place the `ElectronAC` folder into your server&#x27;s `resources` directory.## 4. Add to `server.cfg`In your `server.cfg`, add the following line:```inistart ElectronAC```Restart your server to apply the changes.## Installation Guide VideoFor a detailed walkthrough, watch our [Installation Guide Video](https://www.youtube.com/watch?v=kiwN20_m4E0).Whitelist PlayersTo allow specific players, such as staff members, to use features like noclip or godmode without triggering bans, you can whitelist them in Electron Anticheat. There are three primary methods to achieve this:1. Automatic Whitelisting via txAdmin PermissionsElectron Anticheat automatically whitelists users with txAdmin permissions, which is sufficient for most servers. You can manage this behavior through the “Whitelist Tx” option in the settings panel.2. Whitelisting through the ElectronAC Web PanelBy adding a user as an admin in the ElectronAC web panel and including their Discord ID, they will be automatically whitelisted.3. Using ACE Permissions for WhitelistingFor more granular control, you can use ACE permissions:    Whitelisting a Group:To whitelist an entire group, add the following line to your server configuration:add_ace group.[group_name] Bypass allowReplace [group_name] with the appropriate group identifier, such as mod or admin.    Whitelisting an Individual Player:To whitelist a specific player, use their Discord identifier:add_ace identifier.discord:[discord_id] Bypass allowReplace [discord_id] with the player’s Discord ID.', NULL, 5, 0, 'https://www.youtube.com/watch?v=4o1YwBnLOpg', NULL, 'https://docs.electron-services.com/', NULL, false, 0);

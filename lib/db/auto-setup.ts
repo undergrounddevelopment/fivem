@@ -1,8 +1,11 @@
 import { createClient } from "@supabase/supabase-js"
 import * as Sentry from "@sentry/browser"
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const DB_URL =
+  "postgresql://postgres.linnqtixdfjwbrixitrb:06Zs04s8vCBrW4XE@aws-1-us-east-1.pooler.supabase.com:6543/postgres"
+const SUPABASE_URL = "https://linnqtixdfjwbrixitrb.supabase.co"
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxpbm5xdGl4ZGZqd2JyaXhpdHJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1MzEwNjcsImV4cCI6MjA1MDEwNzA2N30.w0mClq-Y2M6qRGp60HN2KWXC7vRc_yPQi8l2FN1kVy8"
 
 let isInitialized = false
 let initializationPromise: Promise<boolean> | null = null
@@ -14,11 +17,6 @@ export async function ensureDatabaseSetup(): Promise<boolean> {
   initializationPromise = (async () => {
     try {
       console.log("[v0] Starting automatic database setup...")
-
-      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-        return false
-      }
-
       const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
       // Check if tables exist
@@ -190,20 +188,13 @@ export async function ensureDatabaseSetup(): Promise<boolean> {
         `
       })
 
-      // Fix author_id column type and add proper foreign key
+      // Add foreign key for forum_threads to users
       await supabase.rpc("execute_sql", {
         statement: `
           ALTER TABLE forum_threads
-          ALTER COLUMN author_id TYPE TEXT USING author_id::TEXT;
-        `
-      })
-
-      await supabase.rpc("execute_sql", {
-        statement: `
-          ALTER TABLE forum_threads
-          ADD CONSTRAINT fk_author
+          ADD CONSTRAINT fk_user
           FOREIGN KEY (author_id)
-          REFERENCES users(discord_id);
+          REFERENCES auth.users(id);
         `
       })
 

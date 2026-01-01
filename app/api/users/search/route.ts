@@ -12,15 +12,10 @@ export async function GET(request: Request) {
 
     const supabase = await createAdminClient()
 
-    const { data: user } = await supabase
-      .from("users")
-      .select("is_admin, membership")
-      .eq("discord_id", (session.user as any).discord_id || session.user.id)
-      .single()
+    const { data: userData } = await supabase.from("users").select("role").eq("discord_id", session.user.id).single()
 
-    const isAdmin = user?.is_admin === true || user?.membership === "admin"
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    if (!userData?.role || !["admin", "owner", "vip"].includes(userData.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)

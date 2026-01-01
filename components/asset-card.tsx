@@ -30,11 +30,6 @@ interface AssetCardProps {
       avatar?: string
       membership?: string
     }
-    authorData?: {
-      username?: string
-      avatar?: string | null
-      membership?: string
-    }
   }
   variant?: "default" | "compact"
 }
@@ -45,24 +40,7 @@ export const AssetCard = memo(function AssetCard({ asset }: AssetCardProps) {
   
   const imageUrl = asset.thumbnail || asset.image
   const hasImage = imageUrl && !imageError
-
-  const priceAsNumber = useMemo(() => {
-    if (typeof asset.coinPrice === "number") return asset.coinPrice
-    if (typeof asset.price === "number") return asset.price
-    if (typeof asset.price === "string") {
-      const n = parseInt(asset.price)
-      return Number.isFinite(n) ? n : 0
-    }
-    return 0
-  }, [asset.coinPrice, asset.price])
-
-  const isPremium =
-    asset.isPremium === true || priceAsNumber > 0 || (typeof asset.price === "string" && asset.price === "premium")
-
-  const authorObj = useMemo(() => {
-    if (typeof asset.author === "object" && asset.author) return asset.author
-    return asset.authorData
-  }, [asset.author, asset.authorData])
+  const isPremium = asset.isPremium || (asset.price && Number(asset.price) > 0)
   
   const formatNumber = useCallback((num: number | string | undefined) => {
     if (!num) return "0"
@@ -165,7 +143,7 @@ export const AssetCard = memo(function AssetCard({ asset }: AssetCardProps) {
                 ? "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/30" 
                 : "bg-green-500/20 text-green-400 border border-green-500/30"
             )}>
-              {isPremium ? `${priceAsNumber} Coins` : "FREE"}
+              {isPremium ? `$${asset.price}` : "FREE"}
             </span>
           </div>
 
@@ -202,8 +180,8 @@ export const AssetCard = memo(function AssetCard({ asset }: AssetCardProps) {
           {asset.author && (
             <div className="flex items-center gap-2 pt-2 border-t border-white/5">
               <div className="w-6 h-6 rounded-full overflow-hidden bg-gradient-to-br from-primary to-pink-500 ring-1 ring-white/20">
-                {authorObj?.avatar && (
-                  <img src={authorObj.avatar} alt="" className="w-full h-full object-cover" />
+                {typeof asset.author === "object" && asset.author.avatar && (
+                  <img src={asset.author.avatar} alt="" className="w-full h-full object-cover" />
                 )}
               </div>
               <span className="text-xs text-muted-foreground">
@@ -211,7 +189,7 @@ export const AssetCard = memo(function AssetCard({ asset }: AssetCardProps) {
                   {typeof asset.author === "string" ? asset.author : (asset.author.username || "Unknown")}
                 </span>
               </span>
-              {authorObj?.membership === "vip" && (
+              {typeof asset.author === "object" && asset.author.membership === "vip" && (
                 <Crown className="w-3 h-3 text-primary" />
               )}
             </div>

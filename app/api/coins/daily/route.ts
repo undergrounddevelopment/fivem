@@ -25,15 +25,14 @@ export async function POST(request: NextRequest) {
     }
 
     const amount = 25
-    await db.coins.claimDailyReward(userId, 'coins', amount)
-    const newBalance = await db.coins.getUserBalance(userId)
+    const result = await db.coins.claimDailyReward(userId, 'coins', amount)
 
     security.logSecurityEvent("Daily coins claimed", { userId, amount }, "low")
 
     return NextResponse.json({
       success: true,
       coinsEarned: amount,
-      totalCoins: newBalance,
+      totalCoins: result.newBalance,
     })
   } catch (error: any) {
     logger.error("Daily coins error", error, { endpoint: "/api/coins/daily" })

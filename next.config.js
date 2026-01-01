@@ -1,21 +1,11 @@
 /** @type {import('next').NextConfig} */
 const { withSentryConfig } = require("@sentry/nextjs");
-const path = require("path");
 
 const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  outputFileTracingRoot: path.join(__dirname),
-  webpack: (config, { dev }) => {
-    if (!dev) {
-      config.cache = { type: "memory" };
-    }
-    return config;
-  },
+  outputFileTracingRoot: __dirname,
   experimental: {
     scrollRestoration: true,
   },
@@ -50,5 +40,9 @@ module.exports = withSentryConfig(nextConfig, {
   silent: true,
   widenClientFileUpload: true,
   hideSourceMaps: true,
-  disableLogger: true,
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 })

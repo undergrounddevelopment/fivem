@@ -9,13 +9,12 @@ import { AppWrapper } from "@/components/app-wrapper"
 import { SpinWinNotifications } from "@/components/spin-win-notifications"
 import { ToastContainer } from "@/components/modern-toast"
 import { ErrorBoundary } from "@/components/error-boundary"
-import { ModernParticles } from "@/components/modern-particles"
 import { HolidayBanner } from "@/components/holiday-banner"
 import { SeasonalWrapper } from "@/components/seasonal-wrapper"
 import { LanguageProvider } from "@/components/language-provider"
-
 import { SITE_NAME, SITE_DESCRIPTION, SITE_URL, SITE_LOGO, SEO_KEYWORDS } from "@/lib/constants"
 import Script from "next/script"
+import { ClientSessionProvider } from "@/components/client-session-provider"
 import "./globals.css"
 
 const geist = Geist({
@@ -372,22 +371,24 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           />
         </noscript>
 
-        <AuthProvider>
-          <LanguageProvider>
-            <ErrorBoundary>
-              <SeasonalWrapper>
-                <HolidayBanner />
-                <ModernLayout>
-                  <AppWrapper>
-                    {children}
-                    <SpinWinNotifications />
-                    <ToastContainer />
-                  </AppWrapper>
-                </ModernLayout>
-              </SeasonalWrapper>
-            </ErrorBoundary>
-          </LanguageProvider>
-        </AuthProvider>
+        <ClientSessionProvider>
+          <AuthProvider>
+            <LanguageProvider>
+              <ErrorBoundary>
+                <SeasonalWrapper>
+                  <HolidayBanner />
+                  <ModernLayout>
+                    <AppWrapper>
+                      {children}
+                      <SpinWinNotifications />
+                      <ToastContainer />
+                    </AppWrapper>
+                  </ModernLayout>
+                </SeasonalWrapper>
+              </ErrorBoundary>
+            </LanguageProvider>
+          </AuthProvider>
+        </ClientSessionProvider>
         <Analytics />
         <SpeedInsights />
       </body>

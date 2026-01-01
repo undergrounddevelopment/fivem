@@ -24,39 +24,20 @@ export async function GET() {
 
     const { data: logs, error } = await supabase
       .from("spin_history")
-      .select("id, user_id, discord_id, prize_name, coins_won, created_at")
+      .select(`
+        id,
+        user_id,
+        prize_name,
+        coins_won,
+        created_at,
+        user:users!spin_history_user_id_fkey(username, avatar)
+      `)
       .order("created_at", { ascending: false })
       .limit(50)
 
     if (error) throw error
 
-    const rows: any[] = (logs as any[]) || []
-    const discordIds = Array.from(
-      new Set(
-        rows
-          .map((l: any) => (l.discord_id as string) || (l.user_id as string))
-          .filter(Boolean),
-      ),
-    )
-
-    const { data: users, error: usersError } = discordIds.length
-      ? await supabase.from("users").select("discord_id, username, avatar").in("discord_id", discordIds)
-      : { data: [], error: null }
-
-    if (usersError) throw usersError
-
-    const usersByDiscordId = new Map<string, any>()
-    for (const u of users || []) usersByDiscordId.set(u.discord_id, u)
-
-    const hydrated = rows.map((l: any) => {
-      const did = (l.discord_id as string) || (l.user_id as string)
-      return {
-        ...l,
-        user: did ? usersByDiscordId.get(did) || null : null,
-      }
-    })
-
-    return NextResponse.json({ logs: hydrated })
+    return NextResponse.json({ logs: logs || [] })
   } catch (error) {
     console.error("Spin logs error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

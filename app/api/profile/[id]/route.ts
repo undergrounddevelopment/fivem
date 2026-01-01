@@ -7,20 +7,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const supabase = getSupabaseAdminClient()
 
-    const [{ data: user, error: userError }, { data: ranks, error: ranksError }] = await Promise.all([
-      supabase.from("users").select("*").eq("discord_id", id).single(),
-      supabase.from("forum_ranks").select("*").order('level', { ascending: true })
-    ]);
+    const { data: user, error } = await supabase.from("users").select("*").eq("discord_id", id).single()
 
-    if (userError || !user) {
+    if (error || !user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
-
-    if (ranksError) {
-      logger.error("Could not fetch forum ranks", ranksError);
-    }
-
-    const currentRank = ranks?.find(r => r.level === user.level) || { name: 'Newbie', badge_url: '/badges/rank_1.png' };
 
     // Get user's assets
     const { data: assets } = await supabase
@@ -100,10 +91,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       isBanned: user.is_banned,
       createdAt: user.created_at,
       lastSeen: user.last_seen,
-      bio: user.bio,
-      xp: user.xp,
-      level: user.level,
-      rank: currentRank
     }
 
     const stats = {
