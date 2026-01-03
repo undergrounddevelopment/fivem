@@ -725,7 +725,7 @@ export const assetsQueries = {
         .select(
           `
           *,
-          author:users!assets_author_id_fkey(discord_id, username, avatar, membership)
+          author:users!assets_author_id_fkey(discord_id, username, avatar, membership, xp, level)
         `,
         )
         .eq("id", id)
@@ -832,7 +832,7 @@ export const assetsQueries = {
         .select(
           `
           *,
-          author:users!assets_author_id_fkey(username)
+          author:users!assets_author_id_fkey(username, avatar, membership, xp, level)
         `,
         )
         .eq("status", "active")
@@ -855,7 +855,7 @@ export const assetsQueries = {
         .select(
           `
           *,
-          author:users!assets_author_id_fkey(username)
+          author:users!assets_author_id_fkey(username, avatar, membership, xp, level)
         `,
         )
         .eq("status", "active")

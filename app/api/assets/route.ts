@@ -28,8 +28,10 @@ export async function GET(request: NextRequest) {
       authorData: asset.author ? { 
         username: asset.author.username, 
         avatar: asset.author.avatar, 
-        membership: asset.author.membership 
-      } : { username: 'Unknown', avatar: null, membership: 'member' },
+        membership: asset.author.membership,
+        xp: asset.author.xp ?? 0,
+        level: asset.author.level ?? 1,
+      } : { username: 'Unknown', avatar: null, membership: 'free', xp: 0, level: 1 },
       authorId: asset.author_id,
       isVerified: asset.is_verified !== false,
       isFeatured: asset.is_featured || (asset.downloads || 0) > 10000,

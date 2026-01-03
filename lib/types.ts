@@ -15,18 +15,30 @@ export interface Asset {
   price: "free" | "premium"
   coinPrice: number
   image: string
+  thumbnail?: string
   downloads: number
   rating: number
   author: string
+  authorAvatar?: string | null
+  authorData?: {
+    username: string
+    avatar: string | null
+    membership: Membership
+    xp?: number
+    level?: number
+  }
   authorId: string
   createdAt: string
   updatedAt: string
   tags: string[]
+  likes?: number
+  views?: number
   fileSize?: string
   requirements?: string[]
   changelog?: string
   isVerified: boolean
   isFeatured: boolean
+  trending?: boolean
   virusScanStatus?: "pending" | "clean" | "threat"
   virusScanHash?: string
   downloadLink?: string

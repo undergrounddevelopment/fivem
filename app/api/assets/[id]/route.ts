@@ -25,7 +25,9 @@ export async function GET(
         id: asset.author_id,
         username: asset.author.username || 'Unknown',
         avatar: asset.author.avatar,
-        membership: asset.author.membership || 'member'
+        membership: asset.author.membership || 'free',
+        xp: asset.author.xp ?? 0,
+        level: asset.author.level ?? 1,
       } : null,
       image: asset.thumbnail,
       createdAt: asset.created_at,

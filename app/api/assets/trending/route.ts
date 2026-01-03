@@ -23,12 +23,19 @@ export async function GET(request: NextRequest) {
 
     const formatted = await Promise.all(
       (assets || []).map(async (asset) => {
-        let author: { username: string; avatar: string | null; membership: string; is_banned: boolean } | null = null
+        let author: {
+          username: string
+          avatar: string | null
+          membership: string
+          xp: number | null
+          level: number | null
+          is_banned: boolean
+        } | null = null
         if (asset.author_id) {
           // assets.author_id is UUID matching users.id
           const { data: authorData } = await supabase
             .from("users")
-            .select("username, avatar, membership, is_banned")
+            .select("username, avatar, membership, xp, level, is_banned")
             .eq("id", asset.author_id)
             .single()
           author = authorData
@@ -53,6 +60,13 @@ export async function GET(request: NextRequest) {
           tags: asset.tags,
           author: author?.username || "Unknown",
           authorAvatar: author?.avatar,
+          authorData: {
+            username: author?.username || "Unknown",
+            avatar: author?.avatar || null,
+            membership: author?.membership || "free",
+            xp: author?.xp ?? 0,
+            level: author?.level ?? 1,
+          },
           rating: Math.round(rating * 10) / 10,
           isVerified: asset.is_verified || asset.virus_scan_status === "clean",
           isFeatured: asset.is_featured || asset.downloads > 1000,

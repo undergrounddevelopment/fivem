@@ -3,7 +3,6 @@ import { withSentryConfig } from '@sentry/nextjs'
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: __dirname,
-  turbopack: {},
   output: 'standalone',
   eslint: {
     ignoreDuringBuilds: true,

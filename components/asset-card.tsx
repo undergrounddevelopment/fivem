@@ -32,6 +32,13 @@ interface AssetCardProps {
     changelog?: string
     version?: string
     file_size?: string
+    authorData?: {
+      username?: string
+      avatar?: string | null
+      membership?: string
+      xp?: number
+      level?: number
+    }
     author?: string | {
       username?: string
       avatar?: string
@@ -60,6 +67,30 @@ export const AssetCard = memo(function AssetCard({ asset }: AssetCardProps) {
   
   const handleImageError = useCallback(() => setImageError(true), [])
   const toggleLike = useCallback(() => setIsLiked(prev => !prev), [])
+
+  const authorObj = useMemo(() => {
+    if (typeof asset.author === "object" && asset.author) {
+      return {
+        username: asset.author.username || "Unknown",
+        avatar: asset.author.avatar || null,
+        membership: asset.author.membership || "free",
+        xp: asset.author.xp ?? 0,
+        level: asset.author.level ?? 1,
+      }
+    }
+
+    if (asset.authorData) {
+      return {
+        username: asset.authorData.username || (typeof asset.author === "string" ? asset.author : "Unknown"),
+        avatar: asset.authorData.avatar || null,
+        membership: asset.authorData.membership || "free",
+        xp: asset.authorData.xp ?? 0,
+        level: asset.authorData.level ?? 1,
+      }
+    }
+
+    return null
+  }, [asset.author, asset.authorData])
 
   return (
     <motion.div
@@ -162,26 +193,26 @@ export const AssetCard = memo(function AssetCard({ asset }: AssetCardProps) {
           </p>
 
           {/* Modern XP Bar */}
-          {typeof asset.author === "object" && asset.author.xp && (
+          {authorObj && (authorObj.xp || 0) > 0 && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5">
                   <div className="w-4 h-4 rounded-full bg-gradient-to-br from-primary to-pink-500 ring-1 ring-white/20 overflow-hidden">
-                    {asset.author.avatar && (
-                      <img src={asset.author.avatar} alt="" className="w-full h-full object-cover" />
+                    {authorObj.avatar && (
+                      <img src={authorObj.avatar} alt="" className="w-full h-full object-cover" />
                     )}
                   </div>
                   <span className="font-medium text-foreground text-[11px]">
-                    {asset.author.username || "Unknown"}
+                    {authorObj.username || "Unknown"}
                   </span>
-                  {asset.author.membership === "vip" && (
+                  {authorObj.membership === "vip" && (
                     <Crown className="w-3 h-3 text-primary" />
                   )}
                 </div>
                 <div className="flex items-center gap-1">
                   <Zap className="w-3 h-3 text-primary" />
                   <span className="text-[10px] font-semibold text-primary">
-                    Lv.{asset.author.level || 1}
+                    Lv.{authorObj.level || 1}
                   </span>
                 </div>
               </div>
@@ -191,14 +222,14 @@ export const AssetCard = memo(function AssetCard({ asset }: AssetCardProps) {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] text-muted-foreground">Experience</span>
                   <span className="text-[10px] text-muted-foreground">
-                    {asset.author.xp?.toLocaleString()} XP
+                    {(authorObj.xp || 0).toLocaleString()} XP
                   </span>
                 </div>
                 <div className="relative h-2 bg-black/20 rounded-full overflow-hidden backdrop-blur-sm border border-white/5">
                   <motion.div
                     className="h-full bg-gradient-to-r from-primary via-pink-500 to-purple-500 rounded-full relative"
                     initial={{ width: 0 }}
-                    animate={{ width: `${Math.min((asset.author.xp || 0) / 10000 * 100, 100)}%` }}
+                    animate={{ width: `${Math.min(((authorObj.xp || 0) / 10000) * 100, 100)}%` }}
                     transition={{ duration: 1, ease: "easeOut" }}
                     style={{
                       boxShadow: "0 0 10px rgba(236, 72, 153, 0.5)"
