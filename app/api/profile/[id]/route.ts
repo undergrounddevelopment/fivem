@@ -13,14 +13,26 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    // Get user's assets
+    // Get user's assets (assets.author_id is UUID matching users.id)
     const { data: assets } = await supabase
       .from("assets")
       .select("*")
-      .eq("author_id", id)
+      .eq("author_id", user.id)
       .eq("status", "active")
       .order("created_at", { ascending: false })
       .limit(10)
+
+    // Get user's badges from database
+    const { data: userBadges } = await supabase
+      .from("user_badges")
+      .select("*, badges(*)")
+      .eq("user_id", id)
+
+    // Get all available badges for comparison
+    const { data: allBadges } = await supabase
+      .from("badges")
+      .select("*")
+      .order("min_xp", { ascending: true })
 
     // Get user's downloads with asset info
     const { data: downloads } = await supabase
@@ -56,11 +68,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .order("created_at", { ascending: false })
       .limit(10)
 
-    // Get counts
+    // Get counts (assets use UUID, forum uses discord_id)
     const { count: assetCount } = await supabase
       .from("assets")
       .select("*", { count: "exact", head: true })
-      .eq("author_id", id)
+      .eq("author_id", user.id)
       .eq("status", "active")
 
     const { count: downloadCount } = await supabase
@@ -91,6 +103,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       isBanned: user.is_banned,
       createdAt: user.created_at,
       lastSeen: user.last_seen,
+      xp: user.xp || 0,
+      level: user.level || 1,
+      current_badge: user.current_badge || 'beginner',
     }
 
     const stats = {
@@ -102,6 +117,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       joinedAt: user.created_at,
     }
 
+    // Calculate earned badges based on XP
+    const earnedBadges = (allBadges || []).filter(badge => 
+      (user.xp || 0) >= badge.min_xp && 
+      (!badge.max_xp || (user.xp || 0) <= badge.max_xp)
+    )
+
     return NextResponse.json({
       user: formattedUser,
       assets: assets || [],
@@ -112,6 +133,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       postCount: threadCount || 0,
       likeCount: likeCount || 0,
       points: user.coins || 0,
+      badges: {
+        earned: earnedBadges,
+        equipped: userBadges || [],
+        all: allBadges || [],
+      },
     })
   } catch (error: any) {
     logger.error("Profile error", error, {

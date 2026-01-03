@@ -1,6 +1,54 @@
 "use server"
 
 import { createClient, createAdminClient } from "@/lib/supabase/server"
+import { XP_CONFIG, getLevelFromXP } from "@/lib/xp-badges"
+
+// Helper function to award XP (userId is discord_id for forum)
+async function awardXP(discordId: string, action: keyof typeof XP_CONFIG.rewards) {
+  try {
+    const supabase = createAdminClient()
+    const xpReward = XP_CONFIG.rewards[action]
+    if (!xpReward) return
+
+    // Get current user XP by discord_id
+    const { data: user } = await supabase
+      .from('users')
+      .select('id, discord_id, xp, level')
+      .eq('discord_id', discordId)
+      .single()
+
+    if (!user) return
+
+    // Calculate new XP and level
+    const newXP = (user.xp || 0) + xpReward
+    const levelInfo = getLevelFromXP(newXP)
+
+    // Update user XP and level
+    await supabase
+      .from('users')
+      .update({
+        xp: newXP,
+        level: levelInfo.level,
+        current_badge: levelInfo.title.toLowerCase(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('discord_id', discordId)
+
+    // Log XP transaction
+    await supabase
+      .from('xp_transactions')
+      .insert({
+        user_id: discordId,
+        amount: xpReward,
+        activity_type: action,
+        description: `Earned ${xpReward} XP for ${action.toLowerCase().replace(/_/g, ' ')}`,
+      })
+
+    console.log(`[XP] Awarded ${xpReward} XP to user ${discordId} for ${action}`)
+  } catch (error) {
+    console.error('[XP] Error awarding XP:', error)
+  }
+}
 
 async function getUser() {
   const supabase = await createClient()
@@ -115,6 +163,12 @@ export async function createForumThread(data: { categoryId: string; title: strin
       .single()
 
     if (error) throw error
+
+    // Award XP for creating thread
+    if (thread) {
+      await awardXP(user.id, 'CREATE_THREAD')
+    }
+
     return thread
   } catch (error) {
     console.error("Error creating thread:", error)
@@ -146,6 +200,22 @@ export async function createForumReply(data: { threadId: string; content: string
       .from("forum_threads")
       .update({ updated_at: new Date().toISOString() })
       .eq("id", data.threadId)
+
+    // Award XP for creating reply
+    if (reply) {
+      await awardXP(user.id, 'CREATE_REPLY')
+
+      // Award XP to thread author for receiving reply
+      const { data: thread } = await supabase
+        .from('forum_threads')
+        .select('author_id')
+        .eq('id', data.threadId)
+        .single()
+      
+      if (thread && thread.author_id !== user.id) {
+        await awardXP(thread.author_id, 'RECEIVE_REPLY')
+      }
+    }
 
     return reply
   } catch (error) {

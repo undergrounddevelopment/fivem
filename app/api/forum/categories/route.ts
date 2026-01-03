@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       .order("sort_order", { ascending: true })
 
     if (dbCategories && dbCategories.length > 0) {
-      // Get thread counts for each category - only count approved threads
+      // Get thread counts for each category - count all non-deleted threads
       const categoriesWithCounts = await Promise.all(
         dbCategories.map(async (category) => {
           const { count: threadCount } = await supabase
@@ -29,13 +29,24 @@ export async function GET(request: NextRequest) {
             .select("*", { count: "exact", head: true })
             .eq("category_id", category.id)
             .eq("is_deleted", false)
-            .eq("status", "approved")
 
-          const { count: replyCount } = await supabase
-            .from("forum_replies")
-            .select("*, thread:forum_threads!inner(*)", { count: "exact", head: true })
-            .eq("forum_threads.category_id", category.id)
-            .eq("forum_threads.status", "approved")
+          // Get reply count for threads in this category
+          const { data: threadIds } = await supabase
+            .from("forum_threads")
+            .select("id")
+            .eq("category_id", category.id)
+            .eq("is_deleted", false)
+
+          let replyCount = 0
+          if (threadIds && threadIds.length > 0) {
+            const ids = threadIds.map(t => t.id)
+            const { count } = await supabase
+              .from("forum_replies")
+              .select("*", { count: "exact", head: true })
+              .in("thread_id", ids)
+              .eq("is_deleted", false)
+            replyCount = count || 0
+          }
 
           return {
             id: category.id,
@@ -43,8 +54,9 @@ export async function GET(request: NextRequest) {
             description: category.description,
             icon: category.icon,
             color: category.color,
+            thread_count: threadCount || 0,
             threadCount: threadCount || 0,
-            postCount: (threadCount || 0) + (replyCount || 0),
+            postCount: (threadCount || 0) + replyCount,
           }
         }),
       )

@@ -193,12 +193,13 @@ export default function ForumPage() {
     const fetchStats = async () => {
       try {
         const res = await fetch("/api/stats")
-        const data = await res.json()
+        const json = await res.json()
+        const data = json.data || json
         setStats({
           totalThreads: data.totalThreads || 0,
-          totalPosts: data.totalPosts || 0,
+          totalPosts: (data.totalThreads || 0) + (data.totalPosts || 0),
           onlineUsers: data.onlineUsers || 0,
-          activeToday: Math.floor((data.onlineUsers || 0) * 3.5),
+          activeToday: data.totalUsers || 0,
         })
       } catch (error) {
         console.error("Failed to fetch stats:", error)
@@ -807,7 +808,7 @@ export default function ForumPage() {
                             {contributor.membership === "admin" && <Shield className="h-3.5 w-3.5 text-destructive" />}
                             {contributor.membership === "vip" && <Crown className="h-3.5 w-3.5 text-primary" />}
                           </div>
-                          <p className="text-xs text-muted-foreground">{contributor.points.toLocaleString()} points</p>
+                          <p className="text-xs text-muted-foreground">{contributor.points.toLocaleString()} coins</p>
                         </div>
                       </Link>
                     </motion.div>

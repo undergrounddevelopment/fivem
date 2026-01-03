@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Download, Heart, Star, Eye, Package, Sparkles, Crown } from "lucide-react"
+import { Download, Heart, Star, Eye, Package, Sparkles, Crown, TrendingUp, Zap } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { useState, memo, useCallback, useMemo } from "react"
@@ -25,10 +25,19 @@ interface AssetCardProps {
     coinPrice?: number
     isPremium?: boolean
     category?: string
+    framework?: string
+    tags?: string[]
+    features?: string
+    installation?: string
+    changelog?: string
+    version?: string
+    file_size?: string
     author?: string | {
       username?: string
       avatar?: string
       membership?: string
+      xp?: number
+      level?: number
     }
   }
   variant?: "default" | "compact"
@@ -134,11 +143,11 @@ export const AssetCard = memo(function AssetCard({ asset }: AssetCardProps) {
         <CardContent className="flex-1 p-4 space-y-3 relative z-10">
           {/* Title and price */}
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-bold text-base line-clamp-2 text-foreground group-hover:text-primary transition-colors leading-tight">
+            <h3 className="font-bold text-sm line-clamp-1 text-foreground group-hover:text-primary transition-colors leading-tight">
               {asset.name || asset.title || "Untitled Asset"}
             </h3>
             <span className={cn(
-              "shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold",
+              "shrink-0 px-2 py-1 rounded-lg text-xs font-bold",
               isPremium 
                 ? "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/30" 
                 : "bg-green-500/20 text-green-400 border border-green-500/30"
@@ -147,50 +156,107 @@ export const AssetCard = memo(function AssetCard({ asset }: AssetCardProps) {
             </span>
           </div>
 
-          {/* Description */}
+          {/* Description - Compact */}
           <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-            {asset.description || "High-quality FiveM resource for your server. Enhance your gameplay experience."}
+            {asset.description || "High-quality FiveM resource for your server."}
           </p>
 
-          {/* Stats row */}
-          <div className="flex items-center gap-4 pt-1">
-            <div className="flex items-center gap-1.5 text-xs">
-              <div className="p-1 rounded-md bg-amber-500/10">
-                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+          {/* Modern XP Bar */}
+          {typeof asset.author === "object" && asset.author.xp && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-4 rounded-full bg-gradient-to-br from-primary to-pink-500 ring-1 ring-white/20 overflow-hidden">
+                    {asset.author.avatar && (
+                      <img src={asset.author.avatar} alt="" className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                  <span className="font-medium text-foreground text-[11px]">
+                    {asset.author.username || "Unknown"}
+                  </span>
+                  {asset.author.membership === "vip" && (
+                    <Crown className="w-3 h-3 text-primary" />
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-primary" />
+                  <span className="text-[10px] font-semibold text-primary">
+                    Lv.{asset.author.level || 1}
+                  </span>
+                </div>
               </div>
-              <span className="font-semibold text-foreground">{asset.rating || "4.8"}</span>
+              
+              {/* XP Progress Bar */}
+              <div className="relative">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] text-muted-foreground">Experience</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {asset.author.xp?.toLocaleString()} XP
+                  </span>
+                </div>
+                <div className="relative h-2 bg-black/20 rounded-full overflow-hidden backdrop-blur-sm border border-white/5">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-primary via-pink-500 to-purple-500 rounded-full relative"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min((asset.author.xp || 0) / 10000 * 100, 100)}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    style={{
+                      boxShadow: "0 0 10px rgba(236, 72, 153, 0.5)"
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+                  </motion.div>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Download className="w-3.5 h-3.5" />
-              <span>{formatNumber(asset.downloads)}</span>
+          )}
+
+          {/* Compact Stats Grid */}
+          <div className="grid grid-cols-4 gap-2 pt-2 border-t border-white/5">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-xs">
+                <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                <span className="font-semibold text-foreground">{asset.rating || "4.8"}</span>
+              </div>
+              <span className="text-[9px] text-muted-foreground">Rating</span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Heart className="w-3.5 h-3.5" />
-              <span>{formatNumber(asset.likes)}</span>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                <Download className="w-3 h-3" />
+                <span>{formatNumber(asset.downloads)}</span>
+              </div>
+              <span className="text-[9px] text-muted-foreground">Downloads</span>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                <Heart className="w-3 h-3" />
+                <span>{formatNumber(asset.likes)}</span>
+              </div>
+              <span className="text-[9px] text-muted-foreground">Likes</span>
             </div>
             {asset.views && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Eye className="w-3.5 h-3.5" />
-                <span>{formatNumber(asset.views)}</span>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                  <Eye className="w-3 h-3" />
+                  <span>{formatNumber(asset.views)}</span>
+                </div>
+                <span className="text-[9px] text-muted-foreground">Views</span>
               </div>
             )}
           </div>
 
-          {/* Author info */}
-          {asset.author && (
-            <div className="flex items-center gap-2 pt-2 border-t border-white/5">
-              <div className="w-6 h-6 rounded-full overflow-hidden bg-gradient-to-br from-primary to-pink-500 ring-1 ring-white/20">
-                {typeof asset.author === "object" && asset.author.avatar && (
-                  <img src={asset.author.avatar} alt="" className="w-full h-full object-cover" />
-                )}
-              </div>
-              <span className="text-xs text-muted-foreground">
-                by <span className="text-foreground font-medium">
-                  {typeof asset.author === "string" ? asset.author : (asset.author.username || "Unknown")}
+          {/* Tags - Compact */}
+          {asset.tags && asset.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {asset.tags.slice(0, 2).map((tag, index) => (
+                <span key={index} className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[9px] text-muted-foreground">
+                  {tag}
                 </span>
-              </span>
-              {typeof asset.author === "object" && asset.author.membership === "vip" && (
-                <Crown className="w-3 h-3 text-primary" />
+              ))}
+              {asset.tags.length > 2 && (
+                <span className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[9px] text-muted-foreground">
+                  +{asset.tags.length - 2}
+                </span>
               )}
             </div>
           )}

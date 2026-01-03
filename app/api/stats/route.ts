@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     // Ambil statistik real dari database
     const [
@@ -14,12 +14,12 @@ export async function GET(request: NextRequest) {
       downloadsResult,
       onlineResult
     ] = await Promise.allSettled([
-      supabase.from("users").select("count", { count: "exact" }),
-      supabase.from("assets").select("count", { count: "exact" }).eq("status", "approved"),
-      supabase.from("forum_threads").select("count", { count: "exact" }),
-      supabase.from("forum_replies").select("count", { count: "exact" }),
-      supabase.from("downloads").select("count", { count: "exact" }),
-      supabase.from("users").select("count", { count: "exact" })
+      supabase.from("users").select("*", { count: "exact", head: true }),
+      supabase.from("assets").select("*", { count: "exact", head: true }).in("status", ["active", "pending"]),
+      supabase.from("forum_threads").select("*", { count: "exact", head: true }).eq("is_deleted", false),
+      supabase.from("forum_replies").select("*", { count: "exact", head: true }).eq("is_deleted", false),
+      supabase.from("downloads").select("*", { count: "exact", head: true }),
+      supabase.from("users").select("*", { count: "exact", head: true })
         .gte("last_seen", new Date(Date.now() - 5 * 60 * 1000).toISOString())
     ])
 

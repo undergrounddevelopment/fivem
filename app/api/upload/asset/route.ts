@@ -55,11 +55,16 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseAdminClient()
 
-    const { data: user } = await supabase
+    // Get user UUID from database (session.user.id is discord_id)
+    const { data: user, error: userError } = await supabase
       .from("users")
-      .select("membership, username")
+      .select("id, membership, username")
       .eq("discord_id", session.user.id)
       .single()
+
+    if (userError || !user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
 
     // VIP and admin assets are auto-approved
     const assetStatus = user?.membership === "vip" || user?.membership === "admin" ? "active" : "pending"
@@ -84,7 +89,7 @@ export async function POST(request: NextRequest) {
         thumbnail: thumbnailUrl || `/placeholder.svg?height=400&width=600&query=${encodeURIComponent(title)}`,
         tags: Array.isArray(tags) ? tags.slice(0, 20).map((t: string) => String(t).trim().slice(0, 50)) : [],
         file_size: fileSize || "Unknown",
-        author_id: session.user.id,
+        author_id: user.id, // Use UUID from database, not discord_id
         version: version || "1.0.0",
         status: assetStatus,
         virus_scan_status: "pending",

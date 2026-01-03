@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { db } from "@/lib/db"
+import { assetsQueries } from "@/lib/db/queries"
 
 export async function GET(
   request: Request,
@@ -7,25 +7,25 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const asset = await db.assets.getById(id)
+    const asset = await assetsQueries.getById(id)
 
     if (!asset) {
       return NextResponse.json({ error: "Asset not found" }, { status: 404 })
     }
 
     // Increment views
-    await db.assets.incrementViews(id)
+    await assetsQueries.incrementViews(id)
 
     // Format the asset with author info
     const formattedAsset = {
       ...asset,
       price: asset.coin_price === 0 ? 'free' : 'premium',
       coinPrice: asset.coin_price,
-      author: asset.author_name ? {
+      author: asset.author ? {
         id: asset.author_id,
-        username: asset.author_name,
-        avatar: asset.author_avatar,
-        membership: asset.membership
+        username: asset.author.username || 'Unknown',
+        avatar: asset.author.avatar,
+        membership: asset.author.membership || 'member'
       } : null,
       image: asset.thumbnail,
       createdAt: asset.created_at,

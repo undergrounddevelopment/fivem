@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createAdminClient } from "@/lib/supabase/server"
 
 async function getUser() {
   try {
@@ -131,12 +131,12 @@ export async function getBanners() {
 
 export async function getAssets(category?: string) {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     let query = supabase
       .from("assets")
       .select("*")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
+      .eq("status", "active")
+      .order("downloads", { ascending: false })
       .limit(100)
 
     if (category) {
@@ -144,7 +144,10 @@ export async function getAssets(category?: string) {
     }
 
     const { data, error } = await query
-    if (error) throw error
+    if (error) {
+      console.error("[getAssets] Query error:", error)
+      return []
+    }
     return data || []
   } catch (error) {
     console.error("[getAssets] Error:", error)
@@ -292,7 +295,7 @@ export async function updateUserHeartbeat() {
 
 export async function getPublicAnnouncements() {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { data, error } = await supabase
       .from("announcements")
       .select("*")
@@ -302,12 +305,12 @@ export async function getPublicAnnouncements() {
 
     if (error) {
       console.error("[getPublicAnnouncements] Database error:", error)
-      throw error
+      return []
     }
 
     return data || []
   } catch (error) {
     console.error("[getPublicAnnouncements] Error:", error)
-    throw error
+    return []
   }
 }

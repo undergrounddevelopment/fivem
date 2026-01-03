@@ -13,15 +13,27 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Thread not found" }, { status: 404 })
     }
 
-    // Fetch author
-    let author: { discord_id: string; username: string; avatar: string | null; membership: string } | null = null
+    // Fetch author by discord_id first, then try UUID (backward compatibility)
+    let author: { id?: string; discord_id?: string; username: string; avatar: string | null; membership: string; xp?: number; level?: number; current_badge?: string } | null = null
     if (thread.author_id) {
-      const { data: authorData } = await supabase
+      // Try discord_id match first
+      const { data: authorByDiscord } = await supabase
         .from("users")
-        .select("discord_id, username, avatar, membership")
+        .select("id, discord_id, username, avatar, membership, xp, level, current_badge")
         .eq("discord_id", thread.author_id)
         .single()
-      author = authorData
+      
+      if (authorByDiscord) {
+        author = authorByDiscord
+      } else {
+        // Try UUID match (backward compatibility)
+        const { data: authorByUUID } = await supabase
+          .from("users")
+          .select("id, discord_id, username, avatar, membership, xp, level, current_badge")
+          .eq("id", thread.author_id)
+          .single()
+        author = authorByUUID
+      }
     }
 
     // Fetch category
@@ -43,21 +55,32 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .eq("is_deleted", false)
       .order("created_at", { ascending: true })
 
-    // Fetch reply authors
+    // Fetch reply authors by discord_id first, then try UUID
     const replyAuthorIds = [...new Set((replies || []).map((r) => r.author_id).filter(Boolean))]
     let replyAuthorsMap: Record<string, any> = {}
     if (replyAuthorIds.length > 0) {
-      const { data: replyAuthors } = await supabase
+      // Try discord_id match first
+      const { data: replyAuthorsByDiscord } = await supabase
         .from("users")
-        .select("discord_id, username, avatar, membership")
+        .select("id, discord_id, username, avatar, membership, xp, level, current_badge")
         .in("discord_id", replyAuthorIds)
-      replyAuthorsMap = (replyAuthors || []).reduce(
-        (acc, a) => {
-          acc[a.discord_id] = a
-          return acc
-        },
-        {} as Record<string, any>,
-      )
+      
+      for (const a of replyAuthorsByDiscord || []) {
+        replyAuthorsMap[a.discord_id] = a
+      }
+
+      // For any missing authors, try UUID match
+      const missingIds = replyAuthorIds.filter(id => !replyAuthorsMap[id])
+      if (missingIds.length > 0) {
+        const { data: replyAuthorsByUUID } = await supabase
+          .from("users")
+          .select("id, discord_id, username, avatar, membership, xp, level, current_badge")
+          .in("id", missingIds)
+        
+        for (const a of replyAuthorsByUUID || []) {
+          replyAuthorsMap[a.id] = a
+        }
+      }
     }
 
     // Increment views
@@ -76,10 +99,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       authorId: thread.author_id,
       author: author
         ? {
-            id: author.discord_id,
-            username: author.username,
+            id: author.discord_id || author.id,
+            username: author.username || 'Unknown',
             avatar: author.avatar,
-            membership: author.membership,
+            membership: author.membership || 'member',
           }
         : null,
       replies: (replies || []).map((reply) => {
@@ -90,10 +113,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           authorId: reply.author_id,
           author: replyAuthor
             ? {
-                id: replyAuthor.discord_id,
-                username: replyAuthor.username,
+                id: replyAuthor.discord_id || replyAuthor.id,
+                username: replyAuthor.username || 'Unknown',
                 avatar: replyAuthor.avatar,
-                membership: replyAuthor.membership,
+                membership: replyAuthor.membership || 'member',
               }
             : null,
           likes: reply.likes,

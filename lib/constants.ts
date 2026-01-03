@@ -1,7 +1,7 @@
 import type { FrameworkInfo, Sponsor } from "./types"
 
 // FiveM Tools V7 Logo
-export const SITE_LOGO = "https://r2.fivemanage.com/IKG5gF4pHPjLHEhuHxEh0/Untitleddesign-26.png"
+export const SITE_LOGO = "/logo.gif"
 export const SITE_NAME = "FiveM Tools V7"
 export const SITE_DESCRIPTION =
   "FiveM Tools V7 - #1 FiveM Resource Hub for Free Scripts, MLO Maps, Vehicles, EUP Clothing, Decrypt CFX, FiveM Upvotes, Leak Scripts, QBCore, ESX, QBox Framework Resources. Download Premium FiveM Assets Free!"

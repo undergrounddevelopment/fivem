@@ -10,10 +10,10 @@ export async function GET() {
 
     const { data: users, error } = await supabase
       .from("users")
-      .select("discord_id, username, avatar, membership")
+      .select("discord_id, username, avatar, membership, coins, xp, level")
       .eq("is_banned", false)
-      .order("created_at", { ascending: true })
-      .limit(200)
+      .order("coins", { ascending: false })
+      .limit(50)
 
     if (error) {
       console.error("Top contributors users error:", error)
@@ -53,13 +53,15 @@ export async function GET() {
     const contributors = (users || []).map((u) => {
       const threads = threadCounts[u.discord_id] || 0
       const replies = replyCounts[u.discord_id] || 0
-      const points = threads * 10 + replies * 5
       return {
         id: u.discord_id,
         username: u.username,
         avatar: u.avatar,
         membership: u.membership,
-        points,
+        points: u.coins || 0, // Use actual coins from database
+        coins: u.coins || 0,
+        xp: u.xp || 0,
+        level: u.level || 1,
         threads,
         replies,
         assets: 0,

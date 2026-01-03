@@ -14,11 +14,14 @@ export function RecentAssets() {
   useEffect(() => {
     async function fetchRecent() {
       try {
-        const { getAssets } = await import('@/lib/actions/general')
-        const data = await getAssets()
-        setAssets(data.slice(0, 4) || [])
+        const res = await fetch('/api/assets?limit=4')
+        if (!res.ok) throw new Error('Failed to fetch')
+        const data = await res.json()
+        const assets = data.items || data.assets || []
+        setAssets(assets.slice(0, 4))
       } catch (error) {
         console.error("Failed to fetch recent:", error)
+        setAssets([])
       } finally {
         setIsLoading(false)
       }

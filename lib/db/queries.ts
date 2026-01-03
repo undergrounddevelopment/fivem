@@ -8,15 +8,35 @@ import { createAdminClient } from "@/lib/supabase/server"
 export const forumQueries = {
   getCategories: async () => {
     try {
-      const supabase = await createClient()
-      const { data, error } = await supabase
+      const supabase = createAdminClient()
+      
+      // Get categories
+      const { data: categories, error } = await supabase
         .from("forum_categories")
         .select("*")
         .eq("is_active", true)
         .order("sort_order", { ascending: true })
 
       if (error) throw error
-      return data || []
+      if (!categories) return []
+
+      // Get thread counts for each category
+      const { data: threadCounts } = await supabase
+        .from("forum_threads")
+        .select("category_id")
+        .eq("is_deleted", false)
+
+      // Count threads per category
+      const countMap: Record<string, number> = {}
+      for (const thread of threadCounts || []) {
+        countMap[thread.category_id] = (countMap[thread.category_id] || 0) + 1
+      }
+
+      // Add thread_count to each category
+      return categories.map(cat => ({
+        ...cat,
+        thread_count: countMap[cat.id] || 0
+      }))
     } catch (error) {
       console.error("[forumQueries.getCategories] Error:", error)
       return []
@@ -25,7 +45,7 @@ export const forumQueries = {
 
   getCategoryById: async (id: string) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data, error } = await supabase.from("forum_categories").select("*").eq("id", id).single()
 
       if (error) throw error
@@ -38,16 +58,12 @@ export const forumQueries = {
 
   getThreads: async (categoryId?: string, limit = 20, offset = 0) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
+      
+      // Get threads
       let query = supabase
         .from("forum_threads")
-        .select(
-          `
-          *,
-          author:users!forum_threads_author_id_fkey(id, username, avatar, membership)
-        `,
-        )
-        .eq("status", "approved")
+        .select(`*`)
         .eq("is_deleted", false)
         .order("is_pinned", { ascending: false })
         .order("created_at", { ascending: false })
@@ -57,9 +73,57 @@ export const forumQueries = {
         query = query.eq("category_id", categoryId)
       }
 
-      const { data, error } = await query
+      const { data: threads, error } = await query
       if (error) throw error
-      return data || []
+      if (!threads || threads.length === 0) return []
+
+      // Get unique author IDs (forum_threads.author_id is TEXT matching users.discord_id)
+      const authorIds = [...new Set(threads.map(t => t.author_id).filter(Boolean))]
+      
+      // Fetch authors by discord_id first, then try UUID if not found
+      let authorsMap: Record<string, any> = {}
+      if (authorIds.length > 0) {
+        // Try discord_id match first
+        const { data: authorsByDiscord } = await supabase
+          .from("users")
+          .select("id, discord_id, username, avatar, membership, xp, level, current_badge")
+          .in("discord_id", authorIds)
+        
+        for (const author of authorsByDiscord || []) {
+          authorsMap[author.discord_id] = author
+        }
+
+        // For any missing authors, try UUID match (backward compatibility)
+        const missingIds = authorIds.filter(id => !authorsMap[id])
+        if (missingIds.length > 0) {
+          const { data: authorsByUUID } = await supabase
+            .from("users")
+            .select("id, discord_id, username, avatar, membership, xp, level, current_badge")
+            .in("id", missingIds)
+          
+          for (const author of authorsByUUID || []) {
+            authorsMap[author.id] = author
+          }
+        }
+      }
+
+      // Attach author to each thread
+      return threads.map(thread => {
+        const author = authorsMap[thread.author_id]
+        return {
+          ...thread,
+          author: author ? {
+            id: author.id,
+            discord_id: author.discord_id,
+            username: author.username || 'Unknown',
+            avatar: author.avatar,
+            membership: author.membership || 'free',
+            xp: author.xp || 0,
+            level: author.level || 1,
+            current_badge: author.current_badge || 'beginner'
+          } : null
+        }
+      })
     } catch (error) {
       console.error("[forumQueries.getThreads] Error:", error)
       return []
@@ -68,7 +132,7 @@ export const forumQueries = {
 
   getThreadById: async (id: string) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data, error } = await supabase.from("forum_threads").select("*").eq("id", id).single()
 
       if (error) throw error
@@ -87,7 +151,7 @@ export const forumQueries = {
     images?: string[]
   }) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data: thread, error } = await supabase
         .from("forum_threads")
         .insert({
@@ -119,7 +183,7 @@ export const forumQueries = {
     }>,
   ) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data: thread, error } = await supabase
         .from("forum_threads")
         .update({ ...data, updated_at: new Date().toISOString() })
@@ -137,7 +201,7 @@ export const forumQueries = {
 
   getReplies: async (threadId: string, limit = 50, offset = 0) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data, error } = await supabase
         .from("forum_replies")
         .select("*")
@@ -156,7 +220,7 @@ export const forumQueries = {
 
   createReply: async (data: { thread_id: string; author_id: string; content: string }) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data: reply, error } = await supabase.from("forum_replies").insert(data).select().single()
 
       if (error) throw error
@@ -175,7 +239,7 @@ export const forumQueries = {
 export const coinsQueries = {
   getUserBalance: async (userId: string) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data, error } = await supabase.from("users").select("coins").eq("discord_id", userId).single()
 
       if (error) throw error
@@ -188,7 +252,7 @@ export const coinsQueries = {
 
   getTransactions: async (userId: string, limit = 50, offset = 0) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data, error } = await supabase
         .from("coin_transactions")
         .select("*")
@@ -256,7 +320,7 @@ export const coinsQueries = {
 
   canClaimDaily: async (userId: string, claimType: string) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
 
@@ -298,7 +362,7 @@ export const coinsQueries = {
 export const spinWheelQueries = {
   getPrizes: async () => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data, error } = await supabase
         .from("spin_wheel_prizes")
         .select("*")
@@ -315,7 +379,7 @@ export const spinWheelQueries = {
 
   getHistory: async (userId: string, limit = 50, offset = 0) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data, error } = await supabase
         .from("spin_history")
         .select("*")
@@ -362,7 +426,7 @@ export const spinWheelQueries = {
 
   getTickets: async (userId: string) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data, error } = await supabase
         .from("spin_wheel_tickets")
         .select("*")
@@ -435,7 +499,7 @@ export const spinWheelQueries = {
 export const adminQueries = {
   isAdmin: async (userId: string) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data, error } = await supabase
         .from("users")
         .select("is_admin, membership")
@@ -554,16 +618,11 @@ export const assetsQueries = {
     const { category, framework, search, limit = 100, offset = 0 } = filters || {}
 
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       let query = supabase
         .from("assets")
-        .select(
-          `
-          *,
-          author:users!assets_author_id_fkey(username, avatar, membership)
-        `,
-        )
-        .in("status", ["active", "approved", "published"])
+        .select(`*`)
+        .in("status", ["active", "pending"]) // Include pending to show more assets
 
       if (category && category !== "all") {
         query = query.eq("category", category)
@@ -579,9 +638,48 @@ export const assetsQueries = {
 
       query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1)
 
-      const { data, error } = await query
-      if (error) throw error
-      return data || []
+      const { data: assets, error } = await query
+      if (error) {
+        console.error("[assetsQueries.getAll] Query error:", error)
+        throw error
+      }
+      console.log("[assetsQueries.getAll] Found assets:", assets?.length || 0)
+      if (!assets || assets.length === 0) return []
+
+      // Get unique author IDs (these are UUIDs matching users.id)
+      const authorIds = [...new Set(assets.map(a => a.author_id).filter(Boolean))]
+      
+      // Fetch authors by id (UUID primary key) - assets.author_id is UUID
+      let authorsMap: Record<string, any> = {}
+      if (authorIds.length > 0) {
+        const { data: authors } = await supabase
+          .from("users")
+          .select("id, discord_id, username, avatar, membership, xp, level, current_badge")
+          .in("id", authorIds)
+        
+        for (const author of authors || []) {
+          authorsMap[author.id] = author
+        }
+      }
+
+      // Attach author to each asset
+      return assets.map(asset => {
+        const author = authorsMap[asset.author_id]
+        return {
+          ...asset,
+          author: author ? {
+            id: author.id,
+            discord_id: author.discord_id,
+            username: author.username || 'Unknown',
+            avatar: author.avatar,
+            membership: author.membership || 'free',
+            xp: author.xp || 0,
+            level: author.level || 1
+          } : null,
+          author_name: author?.username || 'Unknown',
+          author_avatar: author?.avatar || null
+        }
+      })
     } catch (error) {
       console.error("[assetsQueries.getAll] Error:", error)
       return []
@@ -592,11 +690,11 @@ export const assetsQueries = {
     const { category, framework, search } = filters || {}
 
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       let query = supabase
         .from("assets")
         .select("*", { count: "exact", head: true })
-        .in("status", ["active", "approved", "published"])
+        .in("status", ["active", "pending"])
 
       if (category && category !== "all") {
         query = query.eq("category", category)
@@ -621,7 +719,7 @@ export const assetsQueries = {
 
   getById: async (id: string) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data, error } = await supabase
         .from("assets")
         .select(
@@ -655,7 +753,7 @@ export const assetsQueries = {
     author_id: string
   }) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data: asset, error } = await supabase
         .from("assets")
         .insert({
@@ -728,7 +826,7 @@ export const assetsQueries = {
 
   getRecent: async (limit = 6) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data, error } = await supabase
         .from("assets")
         .select(
@@ -751,7 +849,7 @@ export const assetsQueries = {
 
   getTrending: async (limit = 6) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       const { data, error } = await supabase
         .from("assets")
         .select(

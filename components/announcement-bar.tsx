@@ -27,8 +27,10 @@ export function AnnouncementBar() {
 
   const fetchAnnouncements = useCallback(async () => {
     try {
-      const { getPublicAnnouncements } = await import("@/lib/actions/general")
-      const data = await getPublicAnnouncements()
+      const res = await fetch('/api/announcements')
+      if (!res.ok) throw new Error('Failed to fetch')
+      const json = await res.json()
+      const data = json.data || json || []
       setAnnouncements(Array.isArray(data) ? data : [])
       setError(false)
     } catch (err) {

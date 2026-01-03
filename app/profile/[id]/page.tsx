@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CoinIcon } from "@/components/coin-icon"
+import { BadgesDisplay, LevelBadge } from "@/components/badges-display"
+import { getLevelFromXP } from "@/lib/xp-badges"
 import {
   ArrowLeft,
   MessageSquare,
@@ -18,6 +20,8 @@ import {
   MapPin,
   Car,
   Shirt,
+  Trophy,
+  Zap,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -37,6 +41,9 @@ interface ProfileData {
     isBanned: boolean
     createdAt: string
     lastSeen: string
+    xp: number
+    level: number
+    current_badge: string
   }
   assets: Array<{
     id: string
@@ -65,6 +72,20 @@ interface ProfileData {
   postCount: number
   likeCount: number
   points: number
+  badges?: {
+    earned: Array<{
+      id: string
+      name: string
+      description: string
+      image_url: string
+      min_xp: number
+      max_xp?: number
+      color: string
+      tier: number
+    }>
+    equipped: Array<any>
+    all: Array<any>
+  }
 }
 
 export default function ProfilePage() {
@@ -74,7 +95,7 @@ export default function ProfilePage() {
   const [data, setData] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<"posts" | "assets">("posts")
+  const [activeTab, setActiveTab] = useState<"posts" | "assets" | "badges">("posts")
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -216,6 +237,18 @@ export default function ProfilePage() {
                     <CoinIcon size="xs" />
                     {points || 0} coins
                   </span>
+                  <span className="flex items-center gap-1">
+                    <Zap className="h-4 w-4 text-primary" />
+                    {user.xp || 0} XP
+                  </span>
+                </div>
+                {/* Level Badge */}
+                <div className="mt-3">
+                  <LevelBadge 
+                    level={user.level || 1} 
+                    title={getLevelFromXP(user.xp || 0).title} 
+                    size="md" 
+                  />
                 </div>
               </div>
               <Link href={`/messages?to=${user.discordId}`}>
@@ -301,6 +334,15 @@ export default function ProfilePage() {
                   >
                     Uploaded Assets ({assets.length})
                   </button>
+                  <button
+                    onClick={() => setActiveTab("badges")}
+                    className={`font-semibold transition-colors flex items-center gap-1 ${
+                      activeTab === "badges" ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Trophy className="h-4 w-4" />
+                    Badges & XP
+                  </button>
                 </div>
 
                 {activeTab === "posts" && (
@@ -360,6 +402,88 @@ export default function ProfilePage() {
                         </Link>
                       ))
                     )}
+                  </div>
+                )}
+
+                {activeTab === "badges" && (
+                  <div className="space-y-6">
+                    {/* XP Progress */}
+                    <div className="glass rounded-2xl p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                            <Trophy className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-lg">Level {user.level || 1}</h3>
+                            <p className="text-sm text-muted-foreground">{user.current_badge || 'Beginner'}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-primary">{(user.xp || 0).toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">Total XP</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Badges from Database */}
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                        <Star className="h-5 w-5 text-primary" />
+                        Badges ({data?.badges?.earned?.length || 0} / {data?.badges?.all?.length || 0})
+                      </h3>
+                      <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+                        {(data?.badges?.all || []).map((badge) => {
+                          const isEarned = (data?.badges?.earned || []).some(b => b.id === badge.id)
+                          return (
+                            <div
+                              key={badge.id}
+                              className={`relative p-3 rounded-xl border-2 transition-all ${
+                                isEarned 
+                                  ? 'border-primary/50 bg-primary/10' 
+                                  : 'border-border/30 bg-secondary/20 opacity-40 grayscale'
+                              }`}
+                            >
+                              <div className="flex flex-col items-center gap-2">
+                                <img
+                                  src={badge.image_url || '/badges/badge1.png'}
+                                  alt={badge.name}
+                                  className="h-12 w-12 rounded-full object-cover"
+                                />
+                                <p className="text-xs font-medium text-center">{badge.name}</p>
+                                <p className="text-[10px] text-muted-foreground">{badge.min_xp} XP</p>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* XP Activity Guide */}
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                        <Zap className="h-5 w-5 text-yellow-500" />
+                        Earn XP
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {[
+                          { action: "Create Thread", xp: 50, icon: "📝" },
+                          { action: "Post Reply", xp: 20, icon: "💬" },
+                          { action: "Upload Asset", xp: 100, icon: "📦" },
+                          { action: "Receive Like", xp: 10, icon: "❤️" },
+                          { action: "Daily Login", xp: 10, icon: "🌟" },
+                          { action: "Asset Downloaded", xp: 15, icon: "⬇️" },
+                        ].map((item) => (
+                          <div key={item.action} className="flex items-center gap-2 p-3 rounded-xl bg-secondary/30">
+                            <span className="text-xl">{item.icon}</span>
+                            <div>
+                              <p className="text-sm font-medium">{item.action}</p>
+                              <p className="text-xs text-primary font-bold">+{item.xp} XP</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

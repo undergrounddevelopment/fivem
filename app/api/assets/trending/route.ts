@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseAdminClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { security } from "@/lib/security"
 
 export async function GET(request: NextRequest) {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = getSupabaseAdminClient()
+    const supabase = createAdminClient()
 
     const { data: assets, error } = await supabase
       .from("assets")
@@ -23,12 +23,13 @@ export async function GET(request: NextRequest) {
 
     const formatted = await Promise.all(
       (assets || []).map(async (asset) => {
-        let author = null
+        let author: { username: string; avatar: string | null; membership: string; is_banned: boolean } | null = null
         if (asset.author_id) {
+          // assets.author_id is UUID matching users.id
           const { data: authorData } = await supabase
             .from("users")
             .select("username, avatar, membership, is_banned")
-            .eq("discord_id", asset.author_id)
+            .eq("id", asset.author_id)
             .single()
           author = authorData
         }

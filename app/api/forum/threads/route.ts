@@ -29,15 +29,16 @@ export async function GET(request: NextRequest) {
       views: t.views || 0,
       likes: t.likes || 0,
       replies: t.replies_count || 0,
+      replies_count: t.replies_count || 0,
       images: t.images || [],
       created_at: t.created_at,
       updated_at: t.updated_at,
-      author: t.author_username ? {
-        id: t.user_id,
-        username: t.author_username,
-        avatar: t.author_avatar,
-        membership: t.author_membership
-      } : null
+      author: t.author ? {
+        id: t.author.id || t.author_id,
+        username: t.author.username || 'Unknown',
+        avatar: t.author.avatar,
+        membership: t.author.membership || 'member'
+      } : { id: t.author_id, username: 'Unknown', avatar: null, membership: 'member' }
     }))
 
     return NextResponse.json({
