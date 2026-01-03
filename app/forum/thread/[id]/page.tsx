@@ -1,10 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
+import { useRealtimeReplies } from "@/hooks/use-realtime";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { formatDistanceToNow } from "date-fns";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   MessageSquare,
@@ -29,8 +34,17 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Zap,
+  Activity,
+  RefreshCw,
+  Bell,
+  Hash,
+  Heart,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 
 interface Author {
@@ -72,15 +86,22 @@ export default function ThreadPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const { toast } = useToast();
+  const threadId = params?.id as string;
+
+  // Realtime replies hook
+  const { replies: realtimeReplies, loading: repliesLoading, refetch: refetchReplies } = useRealtimeReplies(threadId);
 
   const [thread, setThread] = useState<ThreadData | null>(null);
   const [loading, setLoading] = useState(true);
   const [replyContent, setReplyContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // Fetch thread data
   useEffect(() => {
     const fetchThread = async () => {
       try {
@@ -103,6 +124,54 @@ export default function ThreadPage() {
       fetchThread();
     }
   }, [params?.id, router]);
+
+  // Realtime subscription for replies
+  useEffect(() => {
+    if (!threadId) return;
+
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    
+    const channel = supabase
+      .channel(`thread-replies:${threadId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "forum_replies",
+          filter: `thread_id=eq.${threadId}`,
+        },
+        () => {
+          setLastUpdate(new Date());
+          refetchReplies();
+        }
+      )
+      .subscribe((status) => {
+        setIsConnected(status === "SUBSCRIBED");
+      });
+
+    return () => {
+      if (supabase) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [threadId, refetchReplies]);
+
+  // Sync realtime replies with thread state
+  useEffect(() => {
+    if (realtimeReplies && realtimeReplies.length > 0 && thread) {
+      setThread((prev) =>
+        prev
+          ? {
+              ...prev,
+              replies: realtimeReplies,
+              repliesCount: realtimeReplies.length,
+            }
+          : null
+      );
+    }
+  }, [realtimeReplies]);
 
   const handleSubmitReply = async () => {
     if (!session) {
@@ -426,122 +495,173 @@ export default function ThreadPage() {
         </div>
       </div>
 
+      {/* Realtime Status Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`mb-6 p-3 rounded-xl border flex items-center justify-between ${
+          isConnected 
+            ? "bg-green-500/5 border-green-500/20" 
+            : "bg-yellow-500/5 border-yellow-500/20"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div className={`h-2 w-2 rounded-full ${isConnected ? "bg-green-500" : "bg-yellow-500 animate-pulse"}`} />
+          <span className="text-sm font-medium">
+            {isConnected ? "Real-time replies active" : "Connecting..."}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            Last update: {formatDistanceToNow(lastUpdate, { addSuffix: true })}
+          </span>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => refetchReplies()}
+          className="gap-2 text-xs"
+        >
+          <RefreshCw className="h-3 w-3" />
+          Refresh
+        </Button>
+      </motion.div>
+
       {/* Replies */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary" />
-            Replies ({thread.replies.length})
-          </h2>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="text-muted-foreground">
-              Oldest
-            </Button>
-            <Button variant="ghost" size="sm" className="text-primary">
-              Newest
-            </Button>
+      <Card className="mb-6 overflow-hidden border-border/50">
+        <div className="p-4 border-b border-border/50 bg-gradient-to-r from-cyan-500/10 to-blue-500/5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-cyan-400" />
+              Replies ({thread.replies.length})
+            </h2>
+            <div className="flex items-center gap-2">
+              {repliesLoading && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+              <Badge variant="outline" className="text-xs gap-1">
+                <Activity className="h-3 w-3" />
+                Real-time
+              </Badge>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-4">
-          {thread.replies.length > 0 ? (
-            thread.replies.map((reply) => (
-              <div key={reply.id} className="glass rounded-2xl p-5">
-                <div className="flex gap-4">
-                  <div className="shrink-0">
-                    <img
-                      src={
-                        reply.author?.avatar ||
-                        "/placeholder.svg?height=44&width=44&query=user avatar"
-                      }
-                      alt={reply.author?.username || "User"}
-                      className="h-11 w-11 rounded-xl object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground">
-                          {reply.author?.username || "Unknown"}
-                        </span>
-                        {reply.author?.membership === "vip" && (
-                          <Badge className="bg-primary/20 text-primary text-[10px] px-1.5 py-0">
-                            VIP
-                          </Badge>
-                        )}
-                        {reply.author?.membership === "admin" && (
-                          <Badge className="bg-destructive/20 text-destructive text-[10px] px-1.5 py-0">
-                            Admin
-                          </Badge>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(reply.createdAt).toLocaleDateString()}
-                        </span>
-                        {reply.isEdited && (
-                          <span className="text-[10px] text-muted-foreground">
-                            (edited)
-                          </span>
-                        )}
+        <CardContent className="p-4">
+          <div className="space-y-4">
+            <AnimatePresence>
+              {thread.replies.length > 0 ? (
+                thread.replies.map((reply: ReplyData, index: number) => (
+                  <motion.div 
+                    key={reply.id} 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="rounded-2xl p-5 bg-muted/20 border border-transparent hover:border-primary/20 transition-all"
+                  >
+                    <div className="flex gap-4">
+                      <div className="shrink-0">
+                        <div className="h-11 w-11 rounded-xl overflow-hidden bg-gradient-to-br from-primary/50 to-purple-500/50">
+                          {reply.author?.avatar ? (
+                            <Image
+                              src={reply.author.avatar}
+                              alt={reply.author?.username || "User"}
+                              width={44}
+                              height={44}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-white font-bold">
+                              {reply.author?.username?.[0]?.toUpperCase() || "U"}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        >
-                          <Flag className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-foreground">
+                              {reply.author?.username || "Unknown"}
+                            </span>
+                            {reply.author?.membership === "vip" && (
+                              <Badge className="bg-primary/20 text-primary text-[10px] px-1.5 py-0 gap-0.5">
+                                <Crown className="h-3 w-3" />
+                                VIP
+                              </Badge>
+                            )}
+                            {reply.author?.membership === "admin" && (
+                              <Badge className="bg-destructive/20 text-destructive text-[10px] px-1.5 py-0 gap-0.5">
+                                <Shield className="h-3 w-3" />
+                                Admin
+                              </Badge>
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
+                            </span>
+                            {reply.isEdited && (
+                              <span className="text-[10px] text-muted-foreground italic">
+                                (edited)
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
+                            >
+                              <Flag className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-foreground text-[15px] leading-relaxed mb-4 whitespace-pre-wrap">
+                          {reply.content}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 gap-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          >
+                            <Heart className="h-3.5 w-3.5" />
+                            {reply.likes || 0}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 gap-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
+                          >
+                            <Reply className="h-3.5 w-3.5" />
+                            Reply
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                    <p className="text-foreground text-[15px] leading-relaxed mb-4">
-                      {reply.content}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 gap-1.5 rounded-full text-muted-foreground hover:text-foreground"
-                      >
-                        <ThumbsUp className="h-3.5 w-3.5" />
-                        {reply.likes}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 gap-1.5 rounded-full text-muted-foreground hover:text-foreground"
-                      >
-                        <ThumbsDown className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 gap-1.5 rounded-full text-muted-foreground hover:text-primary"
-                      >
-                        <Reply className="h-3.5 w-3.5" />
-                        Reply
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="glass rounded-2xl p-8 text-center">
-              <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">
-                No replies yet. Be the first to reply!
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+                  </motion.div>
+                ))
+              ) : (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="rounded-2xl p-12 text-center bg-muted/10"
+                >
+                  <MessageSquare className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No replies yet</h3>
+                  <p className="text-muted-foreground">
+                    Be the first to share your thoughts!
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Reply Form */}
       {!thread.isLocked ? (

@@ -110,6 +110,13 @@ const adminNavItems = [
     badge: null,
   },
   {
+    title: "Database Status",
+    href: "/admin/database-status",
+    icon: Database,
+    color: "from-violet-500 to-purple-500",
+    badge: "Live",
+  },
+  {
     title: "Settings",
     href: "/admin/settings",
     icon: Settings,

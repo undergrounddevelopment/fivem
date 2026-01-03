@@ -1,7 +1,6 @@
 "use server"
 
-import { db } from "@/lib/db"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createAdminClient } from "@/lib/supabase/server"
 
 async function getUser() {
   const supabase = await createClient()
@@ -12,144 +11,311 @@ async function getUser() {
 }
 
 export async function getForumCategories() {
-  const result = await db.query(
-    `SELECT 
-      c.*,
-      COUNT(DISTINCT t.id) as thread_count,
-      COUNT(DISTINCT r.id) as post_count
-    FROM forum_categories c
-    LEFT JOIN forum_threads t ON c.id = t.category_id AND t.status = 'approved'
-    LEFT JOIN forum_replies r ON t.id = r.thread_id
-    GROUP BY c.id
-    ORDER BY c.display_order ASC`,
-  )
-  return result.rows
+  try {
+    const supabase = await createAdminClient()
+    const { data, error } = await supabase
+      .from("forum_categories")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+    
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error("Error fetching categories:", error)
+    return []
+  }
 }
 
 export async function getForumThreads(categoryId?: string, limit = 50) {
-  const query = categoryId
-    ? "SELECT t.*, u.username, u.avatar, (SELECT COUNT(*) FROM forum_replies WHERE thread_id = t.id) as reply_count FROM forum_threads t JOIN users u ON t.author_id = u.discord_id WHERE t.category_id = $1 ORDER BY t.pinned DESC, t.updated_at DESC LIMIT $2"
-    : "SELECT t.*, u.username, u.avatar, (SELECT COUNT(*) FROM forum_replies WHERE thread_id = t.id) as reply_count FROM forum_threads t JOIN users u ON t.author_id = u.discord_id ORDER BY t.pinned DESC, t.updated_at DESC LIMIT $1"
+  try {
+    const supabase = await createAdminClient()
+    let query = supabase
+      .from("forum_threads")
+      .select(`
+        *,
+        author:users!forum_threads_author_id_fkey(discord_id, username, avatar, membership)
+      `)
+      .eq("status", "approved")
+      .eq("is_deleted", false)
+      .order("is_pinned", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(limit)
 
-  const params = categoryId ? [categoryId, limit] : [limit]
-  const result = await db.query(query, params)
-  return result.rows
+    if (categoryId) {
+      query = query.eq("category_id", categoryId)
+    }
+
+    const { data, error } = await query
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error("Error fetching threads:", error)
+    return []
+  }
 }
 
 export async function getForumThread(threadId: string) {
-  const result = await db.query(
-    "SELECT t.*, u.username, u.avatar FROM forum_threads t JOIN users u ON t.author_id = u.discord_id WHERE t.id = $1",
-    [threadId],
-  )
-  return result.rows[0] || null
+  try {
+    const supabase = await createAdminClient()
+    const { data, error } = await supabase
+      .from("forum_threads")
+      .select(`
+        *,
+        author:users!forum_threads_author_id_fkey(discord_id, username, avatar, membership)
+      `)
+      .eq("id", threadId)
+      .single()
+
+    if (error) throw error
+    return data
+  } catch (error) {
+    console.error("Error fetching thread:", error)
+    return null
+  }
 }
 
 export async function getForumReplies(threadId: string) {
-  const result = await db.query(
-    "SELECT r.*, u.username, u.avatar, u.membership FROM forum_replies r JOIN users u ON r.author_id = u.discord_id WHERE r.thread_id = $1 ORDER BY r.created_at ASC",
-    [threadId],
-  )
-  return result.rows
+  try {
+    const supabase = await createAdminClient()
+    const { data, error } = await supabase
+      .from("forum_replies")
+      .select(`
+        *,
+        author:users!forum_replies_author_id_fkey(discord_id, username, avatar, membership)
+      `)
+      .eq("thread_id", threadId)
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: true })
+
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error("Error fetching replies:", error)
+    return []
+  }
 }
 
 export async function createForumThread(data: { categoryId: string; title: string; content: string }) {
   const user = await getUser()
   if (!user) throw new Error("Unauthorized")
 
-  const result = await db.query(
-    "INSERT INTO forum_threads (category_id, author_id, title, content) VALUES ($1, $2, $3, $4) RETURNING *",
-    [data.categoryId, user.id, data.title, data.content],
-  )
+  try {
+    const supabase = await createAdminClient()
+    const { data: thread, error } = await supabase
+      .from("forum_threads")
+      .insert({
+        category_id: data.categoryId,
+        author_id: user.id,
+        title: data.title,
+        content: data.content,
+        status: "pending",
+      })
+      .select()
+      .single()
 
-  return result.rows[0]
+    if (error) throw error
+    return thread
+  } catch (error) {
+    console.error("Error creating thread:", error)
+    throw new Error("Failed to create thread")
+  }
 }
 
 export async function createForumReply(data: { threadId: string; content: string }) {
   const user = await getUser()
   if (!user) throw new Error("Unauthorized")
 
-  const result = await db.query(
-    "INSERT INTO forum_replies (thread_id, author_id, content) VALUES ($1, $2, $3) RETURNING *",
-    [data.threadId, user.id, data.content],
-  )
+  try {
+    const supabase = await createAdminClient()
+    
+    const { data: reply, error } = await supabase
+      .from("forum_replies")
+      .insert({
+        thread_id: data.threadId,
+        author_id: user.id,
+        content: data.content,
+      })
+      .select()
+      .single()
 
-  // Update thread updated_at
-  await db.query("UPDATE forum_threads SET updated_at = NOW() WHERE id = $1", [data.threadId])
+    if (error) throw error
 
-  return result.rows[0]
+    // Update thread updated_at
+    await supabase
+      .from("forum_threads")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", data.threadId)
+
+    return reply
+  } catch (error) {
+    console.error("Error creating reply:", error)
+    throw new Error("Failed to create reply")
+  }
 }
 
 export async function deleteForumThread(threadId: string) {
   const user = await getUser()
   if (!user) throw new Error("Unauthorized")
 
-  // Check if user is author or admin
-  const thread = await db.query("SELECT author_id FROM forum_threads WHERE id = $1", [threadId])
+  try {
+    const supabase = await createAdminClient()
 
-  if (!thread.rows[0]) throw new Error("Thread not found")
+    // Check if user is author or admin
+    const { data: thread } = await supabase
+      .from("forum_threads")
+      .select("author_id")
+      .eq("id", threadId)
+      .single()
 
-  const isAdmin = await db.query("SELECT is_admin FROM users WHERE discord_id = $1", [user.id])
+    if (!thread) throw new Error("Thread not found")
 
-  if (thread.rows[0].author_id !== user.id && !isAdmin.rows[0]?.is_admin) {
-    throw new Error("Unauthorized")
+    const { data: userData } = await supabase
+      .from("users")
+      .select("is_admin")
+      .eq("discord_id", user.id)
+      .single()
+
+    const threadData = thread as { author_id: string }
+    const userAdminData = userData as { is_admin: boolean } | null
+
+    if (threadData.author_id !== user.id && !userAdminData?.is_admin) {
+      throw new Error("Unauthorized")
+    }
+
+    await supabase
+      .from("forum_threads")
+      .update({ is_deleted: true })
+      .eq("id", threadId)
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error deleting thread:", error)
+    throw error
   }
-
-  await db.query("DELETE FROM forum_threads WHERE id = $1", [threadId])
-  return { success: true }
 }
 
 export async function deleteForumReply(replyId: string) {
   const user = await getUser()
   if (!user) throw new Error("Unauthorized")
 
-  const reply = await db.query("SELECT author_id FROM forum_replies WHERE id = $1", [replyId])
+  try {
+    const supabase = await createAdminClient()
 
-  if (!reply.rows[0]) throw new Error("Reply not found")
+    const { data: reply } = await supabase
+      .from("forum_replies")
+      .select("author_id")
+      .eq("id", replyId)
+      .single()
 
-  const isAdmin = await db.query("SELECT is_admin FROM users WHERE discord_id = $1", [user.id])
+    if (!reply) throw new Error("Reply not found")
 
-  if (reply.rows[0].author_id !== user.id && !isAdmin.rows[0]?.is_admin) {
-    throw new Error("Unauthorized")
+    const { data: userData } = await supabase
+      .from("users")
+      .select("is_admin")
+      .eq("discord_id", user.id)
+      .single()
+
+    const replyData = reply as { author_id: string }
+    const userAdminData = userData as { is_admin: boolean } | null
+
+    if (replyData.author_id !== user.id && !userAdminData?.is_admin) {
+      throw new Error("Unauthorized")
+    }
+
+    await supabase
+      .from("forum_replies")
+      .update({ is_deleted: true })
+      .eq("id", replyId)
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error deleting reply:", error)
+    throw error
   }
-
-  await db.query("DELETE FROM forum_replies WHERE id = $1", [replyId])
-  return { success: true }
 }
 
 export async function getOnlineUsers() {
-  const result = await db.query(`
-    SELECT 
-      discord_id as id,
-      username,
-      avatar,
-      membership,
-      true as is_online
-    FROM users
-    WHERE last_seen > NOW() - INTERVAL '5 minutes'
-    ORDER BY last_seen DESC
-    LIMIT 20
-  `)
-  return result.rows
+  try {
+    const supabase = await createAdminClient()
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+
+    const { data, error } = await supabase
+      .from("users")
+      .select("discord_id, username, avatar, membership")
+      .eq("is_banned", false)
+      .gte("last_seen", fiveMinutesAgo)
+      .order("last_seen", { ascending: false })
+      .limit(20)
+
+    if (error) throw error
+    return (data || []).map(u => ({
+      id: u.discord_id,
+      username: u.username,
+      avatar: u.avatar,
+      membership: u.membership,
+      is_online: true,
+    }))
+  } catch (error) {
+    console.error("Error fetching online users:", error)
+    return []
+  }
 }
 
 export async function getTopContributors() {
-  const result = await db.query(`
-    SELECT 
-      u.discord_id as id,
-      u.username,
-      u.avatar,
-      u.membership,
-      COUNT(DISTINCT t.id) as threads,
-      COUNT(DISTINCT r.id) as replies,
-      0 as assets,
-      (COUNT(DISTINCT t.id) * 10 + COUNT(DISTINCT r.id) * 5) as points
-    FROM users u
-    LEFT JOIN forum_threads t ON u.discord_id = t.author_id
-    LEFT JOIN forum_replies r ON u.discord_id = r.author_id
-    GROUP BY u.discord_id, u.username, u.avatar, u.membership
-    HAVING COUNT(DISTINCT t.id) > 0 OR COUNT(DISTINCT r.id) > 0
-    ORDER BY points DESC
-    LIMIT 10
-  `)
-  return result.rows
+  try {
+    const supabase = await createAdminClient()
+
+    // Get users with their thread and reply counts
+    const { data: users } = await supabase
+      .from("users")
+      .select("discord_id, username, avatar, membership")
+      .eq("is_banned", false)
+      .limit(100)
+
+    if (!users || users.length === 0) return []
+
+    const ids = users.map(u => u.discord_id)
+
+    const { data: threads } = await supabase
+      .from("forum_threads")
+      .select("author_id")
+      .in("author_id", ids)
+      .eq("is_deleted", false)
+
+    const { data: replies } = await supabase
+      .from("forum_replies")
+      .select("author_id")
+      .in("author_id", ids)
+      .eq("is_deleted", false)
+
+    const threadCounts: Record<string, number> = {}
+    const replyCounts: Record<string, number> = {}
+
+    for (const t of threads || []) {
+      threadCounts[t.author_id] = (threadCounts[t.author_id] || 0) + 1
+    }
+
+    for (const r of replies || []) {
+      replyCounts[r.author_id] = (replyCounts[r.author_id] || 0) + 1
+    }
+
+    const contributors = users.map(u => ({
+      id: u.discord_id,
+      username: u.username,
+      avatar: u.avatar,
+      membership: u.membership,
+      threads: threadCounts[u.discord_id] || 0,
+      replies: replyCounts[u.discord_id] || 0,
+      points: (threadCounts[u.discord_id] || 0) * 10 + (replyCounts[u.discord_id] || 0) * 5,
+    }))
+
+    return contributors
+      .filter(c => c.points > 0)
+      .sort((a, b) => b.points - a.points)
+      .slice(0, 10)
+  } catch (error) {
+    console.error("Error fetching top contributors:", error)
+    return []
+  }
 }

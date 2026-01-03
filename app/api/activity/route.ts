@@ -17,31 +17,33 @@ export async function GET() {
     const userIds = [...new Set((activities || []).map((a) => a.user_id).filter(Boolean))]
 
     // Fetch users separately
-    let usersMap: Record<string, {discord_id: string; username: string; avatar: string}> = {}
+    let usersMap: Record<string, {id: string; username: string; avatar: string}> = {}
     if (userIds.length > 0) {
       const { data: users } = await supabase
         .from("users")
-        .select("discord_id, username, avatar")
-        .in("discord_id", userIds)
+        .select("id, username, avatar")
+        .in("id", userIds)
 
       usersMap = (users || []).reduce(
         (acc, user) => {
-          acc[user.discord_id] = user
+          acc[user.id] = user
           return acc
         },
-        {} as Record<string, {discord_id: string; username: string; avatar: string}>,
+        {} as Record<string, {id: string; username: string; avatar: string}>,
       )
     }
 
-    const formattedActivities = (activities || []).map((activity) => {
+    const formattedActivities = (activities || []).map((activity: any) => {
       const user = usersMap[activity.user_id]
       return {
         id: activity.id,
         userId: activity.user_id,
         type: activity.type,
-        action: activity.action,
-        targetId: activity.target_id,
+        description: activity.description || activity.action || `${activity.type} activity`,
+        action: activity.action || activity.type,
+        targetId: activity.target_id || null,
         createdAt: activity.created_at,
+        metadata: activity.metadata || {},
         user: user
           ? {
               username: user.username,

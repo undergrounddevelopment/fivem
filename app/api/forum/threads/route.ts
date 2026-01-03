@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { forumQueries } from '@/lib/db/queries'
 
 // GET /api/forum/threads - Get all threads
 export async function GET(request: NextRequest) {
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const calculatedOffset = (page - 1) * limit
 
-    const rawThreads = await db.forum.getThreads(categoryId || undefined, limit, calculatedOffset)
+    const rawThreads = await forumQueries.getThreads(categoryId || undefined, limit, calculatedOffset)
 
     // Transform threads to include author object
     const threads = rawThreads.map((t: any) => ({
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const thread = await db.forum.createThread({
+    const thread = await forumQueries.createThread({
       title,
       content,
       category_id,
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: thread[0],
+      data: thread,
     })
   } catch (error) {
     console.error('Error creating thread:', error)

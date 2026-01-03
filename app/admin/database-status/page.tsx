@@ -1,144 +1,278 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, XCircle, RefreshCw, Database } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { CheckCircle2, XCircle, AlertCircle, Loader2, RefreshCw, Database, Zap } from "lucide-react"
+
+interface TableStatus {
+  exists: boolean
+  columns?: string[]
+  columnCount?: number
+  error?: string
+  code?: string
+}
+
+interface AnalysisResult {
+  timestamp: string
+  tables: Record<string, TableStatus>
+  summary: {
+    total: number
+    existing: number
+    missing: number
+    errors: number
+  }
+  fixes: Array<{
+    type: string
+    table: string
+    sql: string
+  }>
+}
 
 export default function DatabaseStatusPage() {
-  const [status, setStatus] = useState<{config?: {url: string; hasAnonKey: boolean; hasServiceKey: boolean}; tables?: Record<string, {exists: boolean; count: number; error?: string}>} | null>(null)
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
   const [loading, setLoading] = useState(true)
-  const [setupRunning, setSetupRunning] = useState(false)
+  const [applying, setApplying] = useState(false)
+  const [sqlScript, setSqlScript] = useState<string>("")
+  const [autoRefresh, setAutoRefresh] = useState(true)
 
-  const checkStatus = async () => {
-    setLoading(true)
+  const fetchAnalysis = async () => {
     try {
-      const response = await fetch("/api/verify-db")
-      const data = await response.json()
-      setStatus(data)
+      setLoading(true)
+      const res = await fetch("/api/admin/database/analyze")
+      const data = await res.json()
+      setAnalysis(data)
     } catch (error) {
-      console.error("Failed to check database status:", error)
+      console.error("Failed to fetch analysis:", error)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
-  const runSetup = async () => {
-    setSetupRunning(true)
+  const applyFixes = async () => {
     try {
-      const response = await fetch("/api/auto-setup-db")
-      const data = await response.json()
-
-      if (data.success) {
-        alert("Database setup completed successfully!")
-        await checkStatus()
-      } else {
-        alert(`Setup failed: ${data.message}\n\n${data.instructions || ""}`)
+      setApplying(true)
+      const res = await fetch("/api/admin/database/apply-fixes", {
+        method: "POST"
+      })
+      const data = await res.json()
+      
+      if (data.sqlScript) {
+        setSqlScript(data.sqlScript)
       }
+      
+      // Refresh analysis after applying
+      setTimeout(() => {
+        fetchAnalysis()
+      }, 2000)
     } catch (error) {
-      alert(`Setup error: ${error instanceof Error ? error.message : "Unknown error"}`)
+      console.error("Failed to apply fixes:", error)
+    } finally {
+      setApplying(false)
     }
-    setSetupRunning(false)
   }
 
   useEffect(() => {
-    checkStatus()
-  }, [])
+    fetchAnalysis()
+
+    if (autoRefresh) {
+      const interval = setInterval(fetchAnalysis, 10000) // Refresh every 10 seconds
+      return () => clearInterval(interval)
+    }
+  }, [autoRefresh])
+
+  if (loading && !analysis) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Database className="h-8 w-8" />
-            Database Status
+            Database Status - Real-time
           </h1>
-          <p className="text-muted-foreground mt-1">Monitor and manage database tables</p>
+          <p className="text-muted-foreground mt-2">
+            Last updated: {analysis?.timestamp ? new Date(analysis.timestamp).toLocaleString() : 'Never'}
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={checkStatus} disabled={loading} variant="outline">
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+          <Button
+            variant={autoRefresh ? "default" : "outline"}
+            onClick={() => setAutoRefresh(!autoRefresh)}
+          >
+            {autoRefresh ? "Auto Refresh: ON" : "Auto Refresh: OFF"}
+          </Button>
+          <Button onClick={fetchAnalysis} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={runSetup} disabled={setupRunning}>
-            <Database className="h-4 w-4 mr-2" />
-            {setupRunning ? "Running Setup..." : "Run Auto Setup"}
+          <Button onClick={applyFixes} disabled={applying} variant="default">
+            <Zap className="h-4 w-4 mr-2" />
+            {applying ? "Applying..." : "Apply Fixes"}
           </Button>
         </div>
       </div>
 
-      {status && (
-        <>
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Connection Status</CardTitle>
-              <CardDescription>Supabase connection configuration</CardDescription>
+      {/* Summary */}
+      {analysis && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">Total Tables</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">URL:</span>
-                  <Badge variant="secondary">{status.config?.url}</Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Anon Key:</span>
-                  <Badge variant={status.config?.hasAnonKey ? "default" : "destructive"}>
-                    {status.config?.hasAnonKey ? "✓ Set" : "✗ Missing"}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Service Key:</span>
-                  <Badge variant={status.config?.hasServiceKey ? "default" : "destructive"}>
-                    {status.config?.hasServiceKey ? "✓ Set" : "✗ Missing"}
-                  </Badge>
-                </div>
-              </div>
+              <div className="text-2xl font-bold">{analysis.summary.total}</div>
             </CardContent>
           </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(status.tables || {}).map(([tableName, tableInfo]) => (
-              <Card key={tableName}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">{tableName}</CardTitle>
-                    {tableInfo.exists ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-red-500" />
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Status:</span>
-                      <Badge variant={tableInfo.exists ? "default" : "destructive"}>
-                        {tableInfo.exists ? "Exists" : "Missing"}
-                      </Badge>
-                    </div>
-                    {tableInfo.exists && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Rows:</span>
-                        <Badge variant="secondary">{tableInfo.count}</Badge>
-                      </div>
-                    )}
-                    {tableInfo.error && <div className="text-xs text-red-500 mt-2">{tableInfo.error}</div>}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                Existing
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{analysis.summary.existing}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <XCircle className="h-4 w-4 text-red-500" />
+                Missing
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{analysis.summary.missing}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-yellow-500" />
+                Fixes Needed
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-600">{analysis.fixes.length}</div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
-      {!status && !loading && (
+      {/* Fixes Alert */}
+      {analysis && analysis.fixes.length > 0 && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <div className="flex items-center justify-between">
+              <span>
+                {analysis.fixes.length} fix{analysis.fixes.length > 1 ? 'es' : ''} needed. 
+                Click "Apply Fixes" to generate SQL script.
+              </span>
+              <Button size="sm" onClick={applyFixes} disabled={applying}>
+                Apply Now
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* SQL Script */}
+      {sqlScript && (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            Failed to load database status. Click Refresh to try again.
+          <CardHeader>
+            <CardTitle>Generated SQL Script</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-muted p-4 rounded-lg font-mono text-sm max-h-96 overflow-auto">
+              <pre>{sqlScript}</pre>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <Button
+                onClick={() => {
+                  navigator.clipboard.writeText(sqlScript)
+                  alert("SQL script copied to clipboard!")
+                }}
+              >
+                Copy to Clipboard
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const blob = new Blob([sqlScript], { type: 'text/plain' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `database-fix-${Date.now()}.sql`
+                  a.click()
+                }}
+              >
+                Download SQL File
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              Execute this SQL in Supabase SQL Editor: Dashboard → SQL Editor → Paste → Run
+            </p>
           </CardContent>
         </Card>
       )}
+
+      {/* Tables List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tables Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {analysis && Object.entries(analysis.tables).map(([tableName, status]) => (
+              <div
+                key={tableName}
+                className="flex items-center justify-between p-4 border rounded-lg"
+              >
+                <div className="flex items-center gap-3">
+                  {status.exists ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <XCircle className="h-5 w-5 text-red-500" />
+                  )}
+                  <div>
+                    <div className="font-medium">{tableName}</div>
+                    {status.exists ? (
+                      <div className="text-sm text-muted-foreground">
+                        {status.columnCount || 0} columns
+                        {status.columns && status.columns.length > 0 && (
+                          <span className="ml-2">
+                            ({status.columns.slice(0, 5).join(', ')}
+                            {status.columns.length > 5 ? '...' : ''})
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-red-500">
+                        {status.error || 'Table not found'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Badge variant={status.exists ? "default" : "destructive"}>
+                  {status.exists ? "OK" : "Missing"}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

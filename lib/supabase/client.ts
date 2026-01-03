@@ -5,7 +5,14 @@ let supabaseClient: ReturnType<typeof createBrowserClient> | null = null
 
 // PRODUCTION-READY SUPABASE CLIENT
 export function createClient() {
+  // Return cached client if exists
   if (supabaseClient) return supabaseClient
+
+  // Check if we're in browser environment
+  if (typeof window === 'undefined') {
+    console.warn("[Supabase Client] ⚠️ Called on server side, returning null")
+    return null as any
+  }
 
   const url = CONFIG.supabase.url
   const anonKey = CONFIG.supabase.anonKey
@@ -13,7 +20,7 @@ export function createClient() {
   if (!url || !anonKey) {
     console.error("[Supabase Client] ❌ CRITICAL: Missing configuration")
     console.error("URL:", url ? "✅" : "❌", "Key:", anonKey ? "✅" : "❌")
-    throw new Error("Supabase configuration is required")
+    return null as any
   }
 
   console.log("[Supabase Client] ✅ Initializing with URL:", url)
@@ -45,9 +52,6 @@ export function createClient() {
         console.log("[Supabase Client] ✅ Connection test successful")
       }
     })
-    .catch(err => {
-      console.error("[Supabase Client] ❌ Connection error:", err)
-    })
 
   return supabaseClient
 }
@@ -56,6 +60,7 @@ export function createClient() {
 export async function testConnection() {
   try {
     const client = createClient()
+    if (!client) return { success: false, error: "Client not initialized" }
     const { data, error } = await client.from('users').select('count').limit(1)
     return { success: !error, error: error?.message }
   } catch (err) {
@@ -65,4 +70,8 @@ export async function testConnection() {
 
 // Aliases for backward compatibility
 export const getSupabaseBrowserClient = createClient
-export const supabase = createClient()
+
+// Lazy initialization - don't create client at module load time
+export function getSupabase() {
+  return createClient()
+}

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Fetch author
-    let author = null
+    let author: { discord_id: string; username: string; avatar: string | null; membership: string } | null = null
     if (thread.author_id) {
       const { data: authorData } = await supabase
         .from("users")
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Fetch category
-    let category = null
+    let category: { id: string; name: string; color: string } | null = null
     if (thread.category_id) {
       const { data: categoryData } = await supabase
         .from("forum_categories")
@@ -71,8 +71,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       title: thread.title,
       content: thread.content,
       categoryId: thread.category_id,
-      category: category?.name || "General",
-      categoryColor: category?.color || "#3b82f6",
+      category: category ? category.name : "General",
+      categoryColor: category ? category.color : "#3b82f6",
       authorId: thread.author_id,
       author: author
         ? {

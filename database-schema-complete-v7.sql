@@ -250,6 +250,290 @@ CREATE TABLE IF NOT EXISTS notifications (
     data JSONB DEFAULT '{}',
     read BOOLEAN DEFAULT FALSE,
     priority VARCHAR(20) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+    action_url TEXT,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Activities (Enhanced)
+CREATE TABLE IF NOT EXISTS activities (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(100) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    metadata JSONB DEFAULT '{}',
+    is_public BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Downloads (Enhanced)
+CREATE TABLE IF NOT EXISTS downloads (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    asset_id UUID REFERENCES assets(id) ON DELETE CASCADE,
+    ip_address INET,
+    user_agent TEXT,
+    download_method VARCHAR(50) DEFAULT 'direct',
+    coins_spent INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Coin Transactions (Enhanced)
+CREATE TABLE IF NOT EXISTS coin_transactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('earn', 'spend', 'admin_add', 'admin_remove')),
+    amount INTEGER NOT NULL,
+    description TEXT NOT NULL,
+    reference_type VARCHAR(50),
+    reference_id UUID,
+    balance_before INTEGER NOT NULL,
+    balance_after INTEGER NOT NULL,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =============================================
+-- GAMIFICATION TABLES
+-- =============================================
+
+-- Spin Wheel Prizes
+CREATE TABLE IF NOT EXISTS spin_wheel_prizes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('coins', 'asset', 'membership', 'custom')),
+    value INTEGER NOT NULL,
+    probability DECIMAL(5,4) NOT NULL CHECK (probability >= 0 AND probability <= 1),
+    color VARCHAR(7) DEFAULT '#3b82f6',
+    icon VARCHAR(100),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Spin Wheel Tickets
+CREATE TABLE IF NOT EXISTS spin_wheel_tickets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    tickets INTEGER DEFAULT 0,
+    last_earned TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    UNIQUE(user_id)
+);
+
+-- Spin Wheel History
+CREATE TABLE IF NOT EXISTS spin_wheel_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    prize_id UUID REFERENCES spin_wheel_prizes(id) ON DELETE SET NULL,
+    prize_name VARCHAR(255) NOT NULL,
+    prize_value INTEGER NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =============================================
+-- CONTENT TABLES
+-- =============================================
+
+-- Announcements
+CREATE TABLE IF NOT EXISTS announcements (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    type VARCHAR(50) DEFAULT 'info' CHECK (type IN ('info', 'warning', 'success', 'error')),
+    priority INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    show_until TIMESTAMP WITH TIME ZONE,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Banners
+CREATE TABLE IF NOT EXISTS banners (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    image_url TEXT NOT NULL,
+    link_url TEXT,
+    position VARCHAR(50) DEFAULT 'hero' CHECK (position IN ('hero', 'sidebar', 'footer')),
+    order_index INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    show_from TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    show_until TIMESTAMP WITH TIME ZONE,
+    click_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Testimonials
+CREATE TABLE IF NOT EXISTS testimonials (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+    is_featured BOOLEAN DEFAULT FALSE,
+    is_approved BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =============================================
+-- INDEXES FOR PERFORMANCE
+-- =============================================
+
+-- Users indexes
+CREATE INDEX IF NOT EXISTS idx_users_discord_id ON users(discord_id);
+CREATE INDEX IF NOT EXISTS idx_users_membership ON users(membership);
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
+CREATE INDEX IF NOT EXISTS idx_users_last_seen ON users(last_seen);
+
+-- Assets indexes
+CREATE INDEX IF NOT EXISTS idx_assets_category ON assets(category);
+CREATE INDEX IF NOT EXISTS idx_assets_framework ON assets(framework);
+CREATE INDEX IF NOT EXISTS idx_assets_status ON assets(status);
+CREATE INDEX IF NOT EXISTS idx_assets_creator_id ON assets(creator_id);
+CREATE INDEX IF NOT EXISTS idx_assets_created_at ON assets(created_at);
+CREATE INDEX IF NOT EXISTS idx_assets_downloads ON assets(downloads DESC);
+CREATE INDEX IF NOT EXISTS idx_assets_rating ON assets(rating DESC);
+
+-- Forum indexes
+CREATE INDEX IF NOT EXISTS idx_forum_threads_category_id ON forum_threads(category_id);
+CREATE INDEX IF NOT EXISTS idx_forum_threads_author_id ON forum_threads(author_id);
+CREATE INDEX IF NOT EXISTS idx_forum_threads_created_at ON forum_threads(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_forum_replies_thread_id ON forum_replies(thread_id);
+CREATE INDEX IF NOT EXISTS idx_forum_replies_author_id ON forum_replies(author_id);
+
+-- Notifications indexes
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
+
+-- Activities indexes
+CREATE INDEX IF NOT EXISTS idx_activities_user_id ON activities(user_id);
+CREATE INDEX IF NOT EXISTS idx_activities_type ON activities(type);
+CREATE INDEX IF NOT EXISTS idx_activities_created_at ON activities(created_at DESC);
+
+-- Security indexes
+CREATE INDEX IF NOT EXISTS idx_security_events_type ON security_events(type);
+CREATE INDEX IF NOT EXISTS idx_security_events_severity ON security_events(severity);
+CREATE INDEX IF NOT EXISTS idx_security_events_created_at ON security_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_admin_actions_admin_id ON admin_actions(admin_id);
+CREATE INDEX IF NOT EXISTS idx_admin_actions_created_at ON admin_actions(created_at DESC);
+
+-- =============================================
+-- TRIGGERS FOR AUTO-UPDATES
+-- =============================================
+
+-- Update timestamps trigger function
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Apply triggers to tables with updated_at
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_assets_updated_at BEFORE UPDATE ON assets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_forum_categories_updated_at BEFORE UPDATE ON forum_categories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_forum_threads_updated_at BEFORE UPDATE ON forum_threads FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_forum_replies_updated_at BEFORE UPDATE ON forum_replies FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_announcements_updated_at BEFORE UPDATE ON announcements FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_user_presence_updated_at BEFORE UPDATE ON user_presence FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_firewall_rules_updated_at BEFORE UPDATE ON firewall_rules FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_spin_wheel_tickets_updated_at BEFORE UPDATE ON spin_wheel_tickets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =============================================
+-- VIEWS FOR COMMON QUERIES
+-- =============================================
+
+-- Popular assets view
+CREATE OR REPLACE VIEW popular_assets AS
+SELECT 
+    a.*,
+    u.username as creator_name,
+    u.avatar as creator_avatar
+FROM assets a
+JOIN users u ON a.creator_id = u.id
+WHERE a.status = 'approved' AND a.deleted_at IS NULL
+ORDER BY a.downloads DESC, a.rating DESC;
+
+-- User stats view
+CREATE OR REPLACE VIEW user_stats AS
+SELECT 
+    u.id,
+    u.username,
+    u.avatar,
+    u.membership,
+    u.coins,
+    u.reputation,
+    COUNT(DISTINCT a.id) as assets_count,
+    COUNT(DISTINCT ft.id) as threads_count,
+    COUNT(DISTINCT fr.id) as replies_count,
+    SUM(a.downloads) as total_downloads
+FROM users u
+LEFT JOIN assets a ON u.id = a.creator_id AND a.deleted_at IS NULL
+LEFT JOIN forum_threads ft ON u.id = ft.author_id AND ft.deleted_at IS NULL
+LEFT JOIN forum_replies fr ON u.id = fr.author_id AND fr.deleted_at IS NULL
+GROUP BY u.id, u.username, u.avatar, u.membership, u.coins, u.reputation;
+
+-- =============================================
+-- INITIAL DATA SETUP
+-- =============================================
+
+-- Insert default forum categories
+INSERT INTO forum_categories (id, name, description, icon, color, order_index) VALUES
+('550e8400-e29b-41d4-a716-446655440001', 'General Discussion', 'General discussions about FiveM', 'chat', '#3b82f6', 1),
+('550e8400-e29b-41d4-a716-446655440002', 'Script Releases', 'Share your FiveM scripts', 'code', '#10b981', 2),
+('550e8400-e29b-41d4-a716-446655440003', 'MLO Releases', 'Share your MLO creations', 'building', '#f59e0b', 3),
+('550e8400-e29b-41d4-a716-446655440004', 'Vehicle Releases', 'Share vehicle mods', 'car', '#ef4444', 4),
+('550e8400-e29b-41d4-a716-446655440005', 'Support & Help', 'Get help with FiveM issues', 'help-circle', '#8b5cf6', 5),
+('550e8400-e29b-41d4-a716-446655440006', 'Showcase', 'Show off your server', 'image', '#ec4899', 6)
+ON CONFLICT (id) DO NOTHING;
+
+-- Insert default spin wheel prizes
+INSERT INTO spin_wheel_prizes (name, type, value, probability, color, icon) VALUES
+('50 Coins', 'coins', 50, 0.3, '#10b981', 'coins'),
+('100 Coins', 'coins', 100, 0.25, '#3b82f6', 'coins'),
+('200 Coins', 'coins', 200, 0.2, '#f59e0b', 'coins'),
+('500 Coins', 'coins', 500, 0.15, '#ef4444', 'coins'),
+('1000 Coins', 'coins', 1000, 0.08, '#8b5cf6', 'coins'),
+('VIP 1 Month', 'membership', 30, 0.02, '#ec4899', 'crown')
+ON CONFLICT DO NOTHING;
+
+-- =============================================
+-- SECURITY POLICIES (RLS)
+-- =============================================
+
+-- Enable RLS on sensitive tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_actions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE security_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE firewall_rules ENABLE ROW LEVEL SECURITY;
+
+-- Basic RLS policies (can be customized based on your auth system)
+CREATE POLICY "Users can view their own data" ON users FOR SELECT USING (auth.uid()::text = discord_id);
+CREATE POLICY "Admins can view all admin actions" ON admin_actions FOR SELECT USING (EXISTS(SELECT 1 FROM users WHERE discord_id = auth.uid()::text AND is_admin = true));
+CREATE POLICY "Admins can view security events" ON security_events FOR SELECT USING (EXISTS(SELECT 1 FROM users WHERE discord_id = auth.uid()::text AND is_admin = true));
+
+-- =============================================
+-- COMPLETION MESSAGE
+-- =============================================
+
+-- Database schema is now complete!
+-- Total tables: 15 core + 6 admin/security + 4 real-time = 25 tables
+-- Features: Admin panel, Security monitoring, Real-time presence, Enhanced forum, Gamification
+-- Ready for production use with FiveM Tools V7XISTS notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(100) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    data JSONB DEFAULT '{}',
+    read BOOLEAN DEFAULT FALSE,
+    priority VARCHAR(20) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
     expires_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

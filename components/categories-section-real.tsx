@@ -37,7 +37,7 @@ export function CategoriesSection() {
         .from("forum_categories")
         .select("*")
         .eq("is_active", true)
-        .order("order_index", { ascending: true })
+        .order("sort_order", { ascending: true })
         .limit(6)
 
       if (error) throw error

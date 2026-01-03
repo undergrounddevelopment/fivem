@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Trophy, X } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
 interface WinNotification {
   id: string
@@ -16,7 +16,13 @@ export function SpinWinNotifications() {
   const [notifications, setNotifications] = useState<WinNotification[]>([])
 
   useEffect(() => {
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
+    
+    // Guard against null supabase client
+    if (!supabase) {
+      console.warn("[SpinWinNotifications] Supabase client not available")
+      return
+    }
 
     // Subscribe to new spin wins
     const channel = supabase
@@ -29,7 +35,7 @@ export function SpinWinNotifications() {
           table: 'spin_history',
         },
         async (payload) => {
-          const spin = payload.new
+          const spin = payload.new as any
           
           // Fetch user info
           const { data: user } = await supabase
@@ -59,7 +65,9 @@ export function SpinWinNotifications() {
       .subscribe()
 
     return () => {
-      supabase.removeChannel(channel)
+      if (supabase) {
+        supabase.removeChannel(channel)
+      }
     }
   }, [])
 

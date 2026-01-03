@@ -64,6 +64,8 @@ export function useRealtimeNotifications(userId: string | undefined) {
     if (!userId) return
 
     const supabase = getSupabaseBrowserClient()
+    if (!supabase) return
+    
     let channel: RealtimeChannel | null = null
 
     try {
@@ -90,7 +92,7 @@ export function useRealtimeNotifications(userId: string | undefined) {
     const interval = setInterval(fetchNotifications, 60000)
 
     return () => {
-      if (channel) {
+      if (channel && supabase) {
         supabase.removeChannel(channel)
       }
       clearInterval(interval)
@@ -127,7 +129,8 @@ export function useRealtimeThreads(categoryId?: string) {
 
   const fetchThreads = useCallback(async () => {
     try {
-      const url = categoryId ? `/api/forum/threads?categoryId=${categoryId}` : "/api/forum/threads"
+      // API uses 'category' param, not 'categoryId'
+      const url = categoryId ? `/api/forum/threads?category=${categoryId}` : "/api/forum/threads"
       const res = await fetch(url)
       const data = await res.json()
       setThreads(data.threads || [])
@@ -142,6 +145,8 @@ export function useRealtimeThreads(categoryId?: string) {
     fetchThreads()
 
     const supabase = getSupabaseBrowserClient()
+    if (!supabase) return
+    
     let channel: RealtimeChannel | null = null
 
     try {
@@ -164,7 +169,7 @@ export function useRealtimeThreads(categoryId?: string) {
     }
 
     return () => {
-      if (channel) {
+      if (channel && supabase) {
         supabase.removeChannel(channel)
       }
     }
@@ -204,6 +209,8 @@ export function useRealtimeAssets(filters?: { category?: string; framework?: str
     fetchAssets()
 
     const supabase = getSupabaseBrowserClient()
+    if (!supabase) return
+    
     let channel: RealtimeChannel | null = null
 
     try {
@@ -226,7 +233,7 @@ export function useRealtimeAssets(filters?: { category?: string; framework?: str
     }
 
     return () => {
-      if (channel) {
+      if (channel && supabase) {
         supabase.removeChannel(channel)
       }
     }
@@ -260,6 +267,8 @@ export function useRealtimeMessages(userId: string | undefined, otherUserId?: st
     if (!userId) return
 
     const supabase = getSupabaseBrowserClient()
+    if (!supabase) return
+    
     let channel: RealtimeChannel | null = null
 
     try {
@@ -286,7 +295,7 @@ export function useRealtimeMessages(userId: string | undefined, otherUserId?: st
     }
 
     return () => {
-      if (channel) {
+      if (channel && supabase) {
         supabase.removeChannel(channel)
       }
     }
@@ -315,6 +324,8 @@ export function useRealtimeActivity() {
     fetchActivity()
 
     const supabase = getSupabaseBrowserClient()
+    if (!supabase) return
+    
     let channel: RealtimeChannel | null = null
 
     try {
@@ -339,7 +350,7 @@ export function useRealtimeActivity() {
     const interval = setInterval(fetchActivity, 60000)
 
     return () => {
-      if (channel) {
+      if (channel && supabase) {
         supabase.removeChannel(channel)
       }
       clearInterval(interval)
@@ -371,6 +382,8 @@ export function useRealtimeReplies(threadId: string) {
     fetchReplies()
 
     const supabase = getSupabaseBrowserClient()
+    if (!supabase) return
+    
     let channel: RealtimeChannel | null = null
 
     try {
@@ -394,7 +407,7 @@ export function useRealtimeReplies(threadId: string) {
     }
 
     return () => {
-      if (channel) {
+      if (channel && supabase) {
         supabase.removeChannel(channel)
       }
     }

@@ -5,6 +5,7 @@
   "scripts": {
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build",
     "deploy:prod": "vercel --prod",
+    "deploy:now": "powershell -ExecutionPolicy Bypass -File ./deploy-vercel-now.ps1",
     "dev": "next dev",
     "lint": "next lint",
     "monitor": "node scripts/monitor-performance.js",
@@ -19,7 +20,9 @@
     "validate:env": "node -e \"const { validateConfig } = require('./lib/config.ts'); console.log('Config valid:', validateConfig())\"",
     "check:all": "npm run validate:env && npm run verify:db",
     "db:seed": "node scripts/seed.ts",
-    "db:check": "node scripts/check-database.js"
+    "db:check": "node scripts/check-database.js",
+    "analyze:supabase": "node scripts/analyze-supabase-direct.mjs",
+    "db:check-fix": "node scripts/auto-check-and-fix-database.mjs"
   },
   "dependencies": {
     "@auth/core": "latest",
@@ -74,7 +77,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.4",
-    "date-fns": "^4.1.0",
+    "date-fns": "^3.6.0",
     "dotenv": "17.2.3",
     "embla-carousel-react": "^8.5.1",
     "express": "latest",
@@ -112,6 +115,12 @@
     "vue-router": "latest",
     "zod": "^3.24.1",
     "zustand": "^5.0.9"
+  },
+  "pnpm": {
+    "overrides": {
+      "date-fns": "^3.6.0"
+    },
+    "shamefully-hoist": true
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",

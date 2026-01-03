@@ -33,33 +33,24 @@ export function ActivityFeed() {
 
   const fetchActivities = async () => {
     try {
-      const { createClient } = await import("@/lib/supabase/client")
-      const supabase = createClient()
+      const res = await fetch("/api/activity")
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
       
-      const { data, error } = await supabase
-        .from("activities")
-        .select(`
-          *,
-          users:user_id (
-            username,
-            avatar
-          )
-        `)
-        .order("created_at", { ascending: false })
-        .limit(10)
-
-      if (error) throw error
+      const data = await res.json()
       
-      const formattedActivities = (data || []).map(activity => ({
+      // Format activities to match ActivityItem interface
+      const formattedActivities = (data || []).map((activity: any) => ({
         id: activity.id,
         type: activity.type,
-        description: activity.description,
-        user: activity.users ? {
-          username: activity.users.username,
-          avatar: activity.users.avatar
+        description: activity.description || activity.action || `${activity.type} activity`,
+        user: activity.user ? {
+          username: activity.user.username,
+          avatar: activity.user.avatar
         } : undefined,
-        created_at: activity.created_at,
-        metadata: activity.metadata
+        created_at: activity.createdAt || activity.created_at,
+        metadata: activity.metadata || {}
       }))
       
       setActivities(formattedActivities)
