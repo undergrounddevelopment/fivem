@@ -174,25 +174,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           id="google-consent-mode"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              
-              gtag('consent', 'default', {
-                'ad_storage': 'denied',
-                'ad_user_data': 'denied',
-                'ad_personalization': 'denied',
-                'analytics_storage': 'denied',
-                'regions': ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'GB', 'IS', 'LI', 'NO', 'CH']
-              });
-              
-              gtag('consent', 'default', {
-                'ad_storage': 'granted',
-                'ad_user_data': 'granted',
-                'ad_personalization': 'granted',
-                'analytics_storage': 'granted'
-              });
-            `,
+            __html: "(function(){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{'ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied','analytics_storage':'denied','regions':['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB','IS','LI','NO','CH']});gtag('consent','default',{'ad_storage':'granted','ad_user_data':'granted','ad_personalization':'granted','analytics_storage':'granted'});})();"
           }}
         />
 
@@ -201,20 +183,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           id="google-analytics"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', 'G-30YPXMETSE', {
-                  page_path: window.location.pathname,
-                  cookie_flags: 'SameSite=None;Secure',
-                  anonymize_ip: true,
-                  allow_google_signals: true,
-                  send_page_view: true
-                });
-              } catch(e) { console.error('Analytics error:', e); }
-            `,
+            __html: "try{window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-30YPXMETSE',{page_path:window.location.pathname,cookie_flags:'SameSite=None;Secure',anonymize_ip:true,allow_google_signals:true,send_page_view:true});}catch(e){console.error('Analytics error:',e);}"
           }}
         />
 

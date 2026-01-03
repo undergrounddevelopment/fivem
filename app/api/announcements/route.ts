@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createAdminClient } from "@/lib/supabase/server"
+import { getSupabaseAdminClient } from "@/lib/supabase/server"
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createAdminClient()
+    const supabase = getSupabaseAdminClient()
     
     const { data: announcements, error } = await supabase
       .from("announcements")
