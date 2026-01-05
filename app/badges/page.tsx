@@ -27,34 +27,47 @@ export default function BadgesPage() {
 
   useEffect(() => {
     const fetchUserStats = async () => {
-      if (!session?.user) return
+      if (!session?.user) {
+        setLoading(false)
+        return
+      }
 
       try {
+        const userId = (session.user as any).discord_id || session.user.id
+        
         const [xpRes, profileRes] = await Promise.all([
-          fetch(`/api/xp/stats`),
-          fetch(`/api/profile/${session.user.id}/stats`)
+          fetch(`/api/xp/stats?userId=${userId}`),
+          fetch(`/api/profile/${userId}/stats`)
         ])
 
-        if (xpRes.ok && profileRes.ok) {
-          const [xpData, profileData] = await Promise.all([
-            xpRes.json(),
-            profileRes.json()
-          ])
+        const xpData = xpRes.ok ? await xpRes.json() : { xp: 0, badgeTier: 1 }
+        const profileData = profileRes.ok ? await profileRes.json() : {}
 
-          setUserStats({
-            level: xpData.level || 1,
-            xp: xpData.xp || 0,
-            posts: profileData.totalPosts || 0,
-            threads: profileData.totalThreads || 0,
-            likes_received: profileData.likeCount || 0,
-            assets: profileData.totalUploads || 0,
-            asset_downloads: profileData.totalDownloads || 0,
-            membership: 'member',
-            created_at: new Date().toISOString()
-          })
-        }
+        setUserStats({
+          level: xpData.badgeTier || 1,
+          xp: xpData.xp || 0,
+          posts: profileData.posts || 0,
+          threads: profileData.posts || 0,
+          likes_received: profileData.likesReceived || 0,
+          assets: profileData.assets || 0,
+          asset_downloads: profileData.downloads || 0,
+          membership: (session.user as any).membership || 'member',
+          created_at: new Date().toISOString()
+        })
       } catch (error) {
         console.error('Failed to fetch user stats:', error)
+        // Set default stats on error
+        setUserStats({
+          level: 1,
+          xp: 0,
+          posts: 0,
+          threads: 0,
+          likes_received: 0,
+          assets: 0,
+          asset_downloads: 0,
+          membership: 'member',
+          created_at: new Date().toISOString()
+        })
       } finally {
         setLoading(false)
       }

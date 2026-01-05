@@ -8,7 +8,7 @@ export const SITE_DESCRIPTION =
 export const SITE_URL = "https://www.fivemtools.net"
 
 export const SEO_KEYWORDS = [
-  // Primary Keywords
+  // Primary Keywords - Global FiveM
   "fivem",
   "fivem scripts",
   "fivem mlo",
@@ -22,8 +22,10 @@ export const SEO_KEYWORDS = [
   "fivem fakeplayer",
   "fivem bot upvote",
   "fivem server boost",
+  "fivem resources download",
+  "fivem assets free",
 
-  // Script Keywords
+  // Script Keywords - International
   "fivem scripts free",
   "fivem scripts leak",
   "fivem scripts download",
@@ -34,8 +36,13 @@ export const SEO_KEYWORDS = [
   "fivem lua scripts",
   "fivem resources",
   "fivem resource hub",
+  "fivem script gratis",
+  "fivem script kostenlos",
+  "fivem скрипты",
+  "fivem 脚本",
+  "fivem スクリプト",
 
-  // MLO Keywords
+  // MLO Keywords - Global
   "fivem mlo free",
   "fivem mlo leak",
   "fivem mlo download",
@@ -44,8 +51,11 @@ export const SEO_KEYWORDS = [
   "fivem mlo pack",
   "gta v mlo",
   "fivem ymap",
+  "fivem mlo gratis",
+  "fivem карты",
+  "fivem 地图",
 
-  // Vehicle Keywords
+  // Vehicle Keywords - International
   "fivem vehicles",
   "fivem cars",
   "fivem vehicle pack",
@@ -53,6 +63,10 @@ export const SEO_KEYWORDS = [
   "fivem addon vehicles",
   "gta v vehicles fivem",
   "fivem vehicle leak",
+  "fivem coches",
+  "fivem voitures",
+  "fivem машины",
+  "fivem 车辆",
 
   // Clothing Keywords
   "fivem eup",
@@ -63,6 +77,8 @@ export const SEO_KEYWORDS = [
   "fivem outfit",
   "fivem uniform",
   "fivem eup leak",
+  "fivem ropa",
+  "fivem vêtements",
 
   // Framework Keywords
   "qbcore",
@@ -73,8 +89,9 @@ export const SEO_KEYWORDS = [
   "esx free",
   "qbox free",
   "fivem roleplay",
+  "fivem rp server",
 
-  // Tool Keywords
+  // Tool Keywords - Global
   "fivem decrypt tool",
   "cfx v7 decrypt",
   "fivem decryptor",
@@ -84,15 +101,31 @@ export const SEO_KEYWORDS = [
   "fivem ranking boost",
   "fivem fake players",
   "fivem player bot",
+  "fivem server list boost",
+
+  // Regional Keywords
+  "fivem indonesia",
+  "fivem brasil",
+  "fivem español",
+  "fivem deutsch",
+  "fivem français",
+  "fivem русский",
+  "fivem 中文",
+  "fivem 日本語",
+  "fivem 한국어",
+  "fivem türkçe",
+  "fivem العربية",
 
   // Community Keywords
   "fivem community",
   "fivem forum",
   "fivem discord",
-  "fivem indonesia",
   "fivem server",
   "fivem roleplay server",
   "fivem rp",
+  "best fivem scripts",
+  "top fivem resources",
+  "fivem premium free",
 
   // GTA Keywords
   "gta v",
@@ -102,7 +135,9 @@ export const SEO_KEYWORDS = [
   "gta v fivem",
   "grand theft auto v",
   "rockstar games",
-]
+  "gta online",
+  "gta rp",
+].join(", ")
 
 // Discord Links
 export const DISCORD_LINKS = {
