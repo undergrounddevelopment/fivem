@@ -36,13 +36,21 @@ export function DailySpinTicket({
     message: string
   } | null>(null)
   const [countdown, setCountdown] = useState("")
+  const [mounted, setMounted] = useState(false)
 
+  // Prevent hydration mismatch
   useEffect(() => {
-    if (user) {
+    setMounted(true)
+  }, [])
+
+  // Don't fetch data until mounted
+  useEffect(() => {
+    if (user && mounted) {
       fetchStatus()
     }
-  }, [user])
+  }, [user, mounted])
 
+  
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
     

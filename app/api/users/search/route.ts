@@ -10,7 +10,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     const { data: userData } = await supabase.from("users").select("role").eq("discord_id", session.user.id).single()
 

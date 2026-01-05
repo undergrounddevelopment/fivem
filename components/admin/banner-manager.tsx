@@ -24,6 +24,8 @@ import {
   RefreshCw,
   Calendar,
 } from "lucide-react"
+import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 
 interface Banner {
   id: string
@@ -74,9 +76,28 @@ export function BannerManager({ onUpdate }: BannerManagerProps) {
 
   useEffect(() => {
     fetchBanners()
-    // Realtime polling every 10 seconds
-    const interval = setInterval(fetchBanners, 10000)
-    return () => clearInterval(interval)
+    const supabase = getSupabaseBrowserClient()
+    let channel: RealtimeChannel | null = null
+
+    if (supabase) {
+      try {
+        channel = supabase
+          .channel("admin-banners")
+          .on("postgres_changes", { event: "*", schema: "public", table: "banners" }, () => {
+            fetchBanners()
+          })
+          .subscribe()
+      } catch (error) {
+        console.error("Failed to subscribe to banners (admin):", error)
+      }
+    }
+
+    // Fallback polling
+    const interval = setInterval(fetchBanners, 30000)
+    return () => {
+      if (channel && supabase) supabase.removeChannel(channel)
+      clearInterval(interval)
+    }
   }, [fetchBanners])
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -21,7 +21,8 @@ export async function GET() {
       .from("forum_threads")
       .select(`
         *,
-        category:forum_categories(id, name, color)
+        category:forum_categories(id, name, color),
+        author:users!forum_threads_author_id_fkey(discord_id, username, avatar, membership)
       `)
       .eq("status", "pending")
       .order("created_at", { ascending: false })

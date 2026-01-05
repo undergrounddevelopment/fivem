@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
@@ -14,15 +14,43 @@ export function DailyCoinsButton() {
   const [showModal, setShowModal] = useState(false)
   const [isClaiming, setIsClaiming] = useState(false)
   const [result, setResult] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Show static button during SSR
+  if (!mounted) {
+    return (
+      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+        <Button
+          disabled
+          className="w-full rounded-xl gap-2 glow relative overflow-hidden group shimmer"
+          style={{ background: 'linear-gradient(90deg, var(--primary), var(--accent))', color: 'white' }}
+        >
+          <Gift className="h-4 w-4 relative z-10" />
+          <span className="relative z-10">Daily Coins</span>
+          <Sparkles className="h-3 w-3 relative z-10 animate-pulse" />
+        </Button>
+      </motion.div>
+    )
+  }
 
   const handleClaim = async () => {
     if (!user) return
 
     setIsClaiming(true)
     try {
-      const { claimDailyCoins } = await import('@/lib/actions/user')
-      const data = await claimDailyCoins()
-      setResult({ success: true, coinsAdded: data.amount })
+      const res = await fetch("/api/coins/daily", { method: "POST" })
+      const data = await res.json()
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || "Failed to claim coins")
+      }
+
+      setResult({ success: true, coinsAdded: data.coinsEarned, newBalance: data.totalCoins })
 
       await refreshSession()
       setTimeout(() => {

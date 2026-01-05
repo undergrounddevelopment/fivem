@@ -87,7 +87,8 @@ export function Sidebar() {
 
   useEffect(() => {
     fetchStats()
-    const interval = setInterval(fetchStats, 30000)
+    // Update stats every 15 seconds for realtime online users
+    const interval = setInterval(fetchStats, 15000)
     return () => clearInterval(interval)
   }, [fetchStats])
 

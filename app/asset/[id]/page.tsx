@@ -5,11 +5,12 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import { FormattedText } from "@/components/formatted-text"
-import { 
-  Download, Star, Eye, Package, Sparkles, FileText, History, 
+import { Download, Star, Eye, Package, Sparkles, FileText, History, 
   ArrowLeft, Heart, Share2, Shield, Crown, CheckCircle, Clock,
-  Users, Zap, ExternalLink, Copy, Check, Coins, Loader2
+  Users, Zap, ExternalLink, Copy, Check, Coins, Loader2, MessageSquare
 } from "lucide-react"
 import { CoinIcon, COIN_ICON_URL } from "@/components/coin-icon"
 import Image from "next/image"
@@ -45,67 +46,105 @@ export default function AssetDetailPage() {
   const [isLiked, setIsLiked] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [showCommentDialog, setShowCommentDialog] = useState(false)
+  const [comment, setComment] = useState("")
+  const [submittingComment, setSubmittingComment] = useState(false)
 
   useEffect(() => {
     if (params?.id) {
+      setLoading(true)
       fetch(`/api/assets/${params.id}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Not found')
+          return res.json()
+        })
         .then(data => {
-          setAsset(data.asset)
+          if (data.asset) {
+            setAsset(data.asset)
+          } else {
+            setAsset(null)
+          }
           setLoading(false)
         })
-        .catch(() => setLoading(false))
+        .catch(err => {
+          console.error('Fetch error:', err)
+          setAsset(null)
+          setLoading(false)
+        })
     }
   }, [params?.id])
 
   const handleDownload = async () => {
-    console.log('Download clicked', { session, params })
-    
     if (!session) {
-      console.log('No session, showing login toast')
       toast.error("Login Required", {
-        description: "You must be logged in to download assets. Please login with Discord to continue.",
+        description: "Please login with Discord to download.",
         duration: 5000,
       })
       return
     }
     
-    console.log('Starting download...')
     setDownloading(true)
-    
     try {
-      const url = `/api/download/${params?.id}`
-      console.log('Fetching:', url)
-      
-      const res = await fetch(url, { 
+      const res = await fetch(`/api/download/${params?.id}`, { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: session.user.id })
       })
       
-      console.log('Response status:', res.status)
       const data = await res.json()
-      console.log('Response data:', data)
+      
+      if (res.status === 403 && data.error === 'Comment required') {
+        setDownloading(false)
+        setShowCommentDialog(true)
+        toast.info("Comment Required", {
+          description: "Please leave a comment to download this free asset"
+        })
+        return
+      }
       
       if (res.ok && data.downloadUrl) {
-        console.log('Opening download:', data.downloadUrl)
         window.open(data.downloadUrl, "_blank")
-        toast.success("Download Started!", {
-          description: data.coinsSpent ? `You spent ${data.coinsSpent} coins` : "Enjoy your download!"
-        })
+        toast.success("Download Started!")
       } else {
-        console.error('Download failed:', data)
         toast.error("Download Failed", {
-          description: data.error || "Something went wrong. Please try again."
+          description: data.error || "Please try again."
         })
       }
     } catch (error) {
       console.error("Download error:", error)
-      toast.error("Download Failed", {
-        description: "Network error. Please check your connection."
-      })
+      toast.error("Download Failed")
     } finally {
       setDownloading(false)
+    }
+  }
+
+  const handleSubmitComment = async () => {
+    if (!comment.trim()) {
+      toast.error("Please write a comment")
+      return
+    }
+
+    setSubmittingComment(true)
+    try {
+      const res = await fetch(`/api/assets/${params?.id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ comment: comment.trim() })
+      })
+
+      if (res.ok) {
+        toast.success("Comment posted!")
+        setShowCommentDialog(false)
+        setComment("")
+        // Retry download
+        handleDownload()
+      } else {
+        toast.error("Failed to post comment")
+      }
+    } catch (error) {
+      toast.error("Failed to post comment")
+    } finally {
+      setSubmittingComment(false)
     }
   }
 
@@ -154,6 +193,14 @@ export default function AssetDetailPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      <CommentDialog 
+        open={showCommentDialog}
+        onOpenChange={setShowCommentDialog}
+        comment={comment}
+        setComment={setComment}
+        onSubmit={handleSubmitComment}
+        submitting={submittingComment}
+      />
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
         <Link href="/assets" className="hover:text-primary transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/5">
@@ -454,5 +501,62 @@ export default function AssetDetailPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Comment Dialog Component
+function CommentDialog({ 
+  open, 
+  onOpenChange, 
+  comment, 
+  setComment, 
+  onSubmit, 
+  submitting 
+}: { 
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  comment: string
+  setComment: (comment: string) => void
+  onSubmit: () => void
+  submitting: boolean
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            Leave a Comment
+          </DialogTitle>
+          <DialogDescription>
+            Please share your thoughts about this asset before downloading
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <Textarea
+            placeholder="Write your comment here... (minimum 3 characters)"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={4}
+            className="resize-none"
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button onClick={onSubmit} disabled={submitting || comment.trim().length < 3}>
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Posting...
+                </>
+              ) : (
+                "Post & Download"
+              )}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

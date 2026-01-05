@@ -10,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     const { data: userData } = await supabase.from("users").select("role").eq("discord_id", session.user.id).single()
 
@@ -74,9 +74,9 @@ export async function GET() {
     if (userIds.length > 0) {
       const { data: users } = await supabase
         .from("users")
-        .select("id, name, username, avatar, discord_id")
-        .in("discord_id", userIds)
-      userMap = new Map(users?.map((u) => [u.discord_id, u]) || [])
+        .select("id, username, avatar, discord_id")
+        .in("id", userIds)
+      userMap = new Map(users?.map((u) => [u.id, u]) || [])
     }
 
     const recentSpinsWithUsers =

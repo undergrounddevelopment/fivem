@@ -230,7 +230,7 @@ export function TestimonialsSection() {
       {/* View more indicator */}
       {testimonials.length > 6 && (
         <div className="text-center mt-6">
-          <p className="text-sm text-[var(--textDim)">And {testimonials.length - 6} more happy customers...</p>
+          <p className="text-sm text-[var(--textDim)]">And {testimonials.length - 6} more happy customers...</p>
         </div>
       )}
     </div>

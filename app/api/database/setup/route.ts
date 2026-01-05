@@ -10,7 +10,7 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     // Check if user is admin
     const { data: user } = await supabase
@@ -26,7 +26,7 @@ export async function POST() {
     // Verify all essential tables exist
     const tables = ["users", "announcements", "banners", "messages", "assets", "testimonials", "forum_threads"]
 
-    const results = []
+    const results: Array<{ table: string; status: "ok" | "error"; count?: number; error?: string }> = []
     for (const table of tables) {
       try {
         const { count, error } = await supabase.from(table).select("*", { count: "exact", head: true })
@@ -59,7 +59,7 @@ export async function POST() {
 
 export async function GET() {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     // Get basic statistics
     const stats = {

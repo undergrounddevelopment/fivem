@@ -3,6 +3,11 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export interface Database {
   public: {
     Tables: {
+      [key: string]: {
+        Row: any
+        Insert: any
+        Update: any
+      }
       users: {
         Row: {
           id: string
@@ -21,6 +26,7 @@ export interface Database {
           created_at: string
           updated_at: string
           last_seen: string
+          [key: string]: any
         }
         Insert: {
           id?: string
@@ -39,6 +45,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           last_seen?: string
+          [key: string]: any
         }
         Update: {
           id?: string
@@ -57,6 +64,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           last_seen?: string
+          [key: string]: any
         }
       }
       assets: {
@@ -80,6 +88,7 @@ export interface Database {
           author_id: string
           created_at: string
           updated_at: string
+          [key: string]: any
         }
         Insert: {
           id?: string
@@ -101,6 +110,7 @@ export interface Database {
           author_id: string
           created_at?: string
           updated_at?: string
+          [key: string]: any
         }
         Update: {
           id?: string
@@ -122,6 +132,7 @@ export interface Database {
           author_id?: string
           created_at?: string
           updated_at?: string
+          [key: string]: any
         }
       }
       downloads: {

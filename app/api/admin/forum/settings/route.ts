@@ -11,7 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     const { data: user } = await supabase
       .from("users")
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     const { data: user } = await supabase
       .from("users")
@@ -103,7 +103,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     const { data: user } = await supabase
       .from("users")
@@ -160,7 +160,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     const { data: user } = await supabase
       .from("users")

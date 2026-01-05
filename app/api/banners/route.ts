@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/server"
 
 export async function GET(request: Request) {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
     const { searchParams } = new URL(request.url)
     const position = searchParams.get("position")
     const all = searchParams.get("all")
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     // Check if user is admin
     const { data: user } = await supabase
@@ -83,7 +83,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     // Check if user is admin
     const { data: user } = await supabase
@@ -122,7 +122,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     // Check if user is admin
     const { data: user } = await supabase

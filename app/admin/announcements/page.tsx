@@ -58,7 +58,7 @@ export default async function AdminAnnouncementsPage() {
                   <div>
                     <span className="font-medium text-foreground">{announcement.title}</span>
                     <p className="text-sm text-muted-foreground truncate max-w-md">
-                      {announcement.content}
+                      {announcement.message || announcement.content}
                     </p>
                   </div>
                 </td>

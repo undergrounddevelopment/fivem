@@ -1,4 +1,7 @@
+"use client"
+
 import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
@@ -37,9 +40,16 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, animated = true, style, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, animated = true, style, ...props }, ref) => {
     const buttonClasses = cn(buttonVariants({ variant, size, className }))
     const defaultStyle = variant === "default" ? { background: "var(--primary)", ...style } : style
+
+    // When asChild is true, render Slot to pass props to child element
+    if (asChild) {
+      return (
+        <Slot className={buttonClasses} style={defaultStyle} ref={ref} {...props} />
+      )
+    }
 
     if (animated) {
       const { onDrag, onDragStart, onDragEnd, ...motionProps } = props as any

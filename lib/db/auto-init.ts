@@ -9,7 +9,7 @@ export async function ensureTablesExist() {
   if (isInitialized) return true
 
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     // Check if banners table exists by trying to select from it
     const { error: bannersError } = await supabase.from("banners").select("id").limit(1)
@@ -38,7 +38,7 @@ export async function ensureTablesExist() {
 
 export async function getTableStatus() {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     const tables = [
       "users",

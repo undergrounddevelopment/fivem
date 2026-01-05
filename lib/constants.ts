@@ -5,7 +5,7 @@ export const SITE_LOGO = "/logo.gif"
 export const SITE_NAME = "FiveM Tools V7"
 export const SITE_DESCRIPTION =
   "FiveM Tools V7 - #1 FiveM Resource Hub for Free Scripts, MLO Maps, Vehicles, EUP Clothing, Decrypt CFX, FiveM Upvotes, Leak Scripts, QBCore, ESX, QBox Framework Resources. Download Premium FiveM Assets Free!"
-export const SITE_URL = "https://fivemtools.net"
+export const SITE_URL = "https://www.fivemtools.net"
 
 export const SEO_KEYWORDS = [
   // Primary Keywords
@@ -195,7 +195,7 @@ export const ADMIN_DISCORD_ID = "1047719075322810378"
 
 export const DISCORD_CONFIG = {
   clientId: "1445650115447754933",
-  redirectUri: `${SITE_URL}/api/auth/callback`,
+  redirectUri: `${SITE_URL}/api/auth/callback/discord`,
   scope: "identify email guilds",
 }
 

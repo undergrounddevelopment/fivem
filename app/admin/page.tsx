@@ -127,18 +127,20 @@ export default async function AdminDashboard() {
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{user.username}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{user.username}</p>
+                        <Badge 
+                          variant={user.is_admin ? "default" : "secondary"}
+                          className="text-xs"
+                        >
+                          {user.is_admin ? "Admin" : user.membership || "Free"}
+                        </Badge>
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         {new Date(user.created_at).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  <Badge 
-                    variant={user.is_admin ? "default" : "secondary"}
-                    className="text-xs"
-                  >
-                    {user.is_admin ? "Admin" : user.membership || "Free"}
-                  </Badge>
                 </div>
               ))}
             </div>
@@ -178,21 +180,23 @@ export default async function AdminDashboard() {
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium truncate max-w-[200px]">{asset.title}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium truncate max-w-[200px]">{asset.title}</p>
+                        <Badge 
+                          variant={
+                            asset.status === "active" || asset.status === "approved" ? "default" :
+                            asset.status === "pending" ? "secondary" : "destructive"
+                          }
+                          className="text-xs"
+                        >
+                          {asset.status}
+                        </Badge>
+                      </div>
                       <p className="text-xs text-muted-foreground capitalize">
                         {asset.category} • {asset.coin_price || 0} coins
                       </p>
                     </div>
                   </div>
-                  <Badge 
-                    variant={
-                      asset.status === "active" || asset.status === "approved" ? "default" :
-                      asset.status === "pending" ? "secondary" : "destructive"
-                    }
-                    className="text-xs"
-                  >
-                    {asset.status}
-                  </Badge>
                 </div>
               ))}
             </div>

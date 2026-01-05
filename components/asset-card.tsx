@@ -48,9 +48,10 @@ interface AssetCardProps {
     }
   }
   variant?: "default" | "compact"
+  showAuthorXPBar?: boolean
 }
 
-export const AssetCard = memo(function AssetCard({ asset }: AssetCardProps) {
+export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = false }: AssetCardProps) {
   const [imageError, setImageError] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   
@@ -193,7 +194,7 @@ export const AssetCard = memo(function AssetCard({ asset }: AssetCardProps) {
           </p>
 
           {/* Modern XP Bar */}
-          {authorObj && (authorObj.xp || 0) > 0 && (
+          {showAuthorXPBar && authorObj && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5">

@@ -9,7 +9,7 @@ async function verifyAdmin() {
     return { error: "Unauthorized", status: 401 }
   }
 
-  const supabase = await createAdminClient()
+  const supabase = createAdminClient()
   const { data: userData } = await supabase.from("users").select("id, role").eq("discord_id", session.user.id).single()
 
   if (!userData?.role || !["admin", "owner", "vip"].includes(userData.role)) {

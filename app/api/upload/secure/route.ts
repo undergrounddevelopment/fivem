@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    const supabase = createAdminClient()
 
     const formData = await request.formData()
     const file = formData.get("file") as File
@@ -16,13 +18,13 @@ export async function POST(request: Request) {
     const requireAdmin = formData.get("requireAdmin") === "true"
 
     if (requireAdmin) {
-      const { data: profile } = await supabase
-        .from("profiles")
+      const { data: user } = await supabase
+        .from("users")
         .select("is_admin")
-        .eq("id", user.id)
+        .eq("discord_id", session.user.id)
         .single()
 
-      if (!profile?.is_admin) {
+      if (!user?.is_admin) {
         return NextResponse.json({ error: "Admin access required" }, { status: 403 })
       }
     }
@@ -43,7 +45,7 @@ export async function POST(request: Request) {
     }
 
     const fileExt = file.name.split(".").pop()
-    const fileName = `${type}/${user.id}/${Date.now()}.${fileExt}`
+    const fileName = `${type}/${session.user.id}/${Date.now()}.${fileExt}`
 
     const { data, error } = await supabase.storage
       .from("uploads")

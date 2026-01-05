@@ -169,7 +169,7 @@ export const xpQueries = {
       // Get all badges
       const badges = await xpQueries.getBadges()
       const currentBadge = badges.find((b) => b.id === user.current_badge)
-      const nextBadge = badges.find((b) => b.tier === (currentBadge?.tier || 0) + 1)
+      const nextBadge = badges.find((b) => b.tier === (currentBadge?.tier || 0) + 1) || null
 
       // Calculate progress
       const xpForNextBadge = nextBadge ? nextBadge.minXp - user.xp : 0

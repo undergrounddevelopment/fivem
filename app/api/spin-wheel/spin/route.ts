@@ -114,8 +114,7 @@ export async function POST() {
       user_id: userId,
       prize_id: winner.id,
       prize_name: winner.name,
-      prize_type: winner.type,
-      prize_value: winner.value,
+      coins_won: winner.type === 'coins' ? (winner.value || 0) : 0,
     })
 
     // ============================================

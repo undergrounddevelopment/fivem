@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     const formatted = await Promise.all(
       (assets || []).map(async (asset) => {
-        let author = null
+        let author: any = null
         if (asset.author_id) {
           const { data: authorData } = await supabase
             .from("users")

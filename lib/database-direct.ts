@@ -37,29 +37,51 @@ export async function updateUser(id: string, updates: any) {
 // Assets
 export async function getAssets() {
   const supabase = createAdminClient()
-  const { data, error } = await supabase
-    .from('assets')
-    .select(`
-      *,
-      users(username, avatar)
-    `)
-    .order('created_at', { ascending: false })
-  if (error) throw error
-  return data
+  // Try creator_id (v7 schema) first, fall back to basic query if FK doesn't exist
+  try {
+    const { data, error } = await supabase
+      .from('assets')
+      .select(`
+        *,
+        users:users!assets_creator_id_fkey(username, avatar)
+      `)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data
+  } catch {
+    // Fallback: get assets without join
+    const { data, error } = await supabase
+      .from('assets')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data
+  }
 }
 
 export async function getAssetById(id: string) {
   const supabase = createAdminClient()
-  const { data, error } = await supabase
-    .from('assets')
-    .select(`
-      *,
-      users(username, avatar)
-    `)
-    .eq('id', id)
-    .single()
-  if (error) throw error
-  return data
+  try {
+    const { data, error } = await supabase
+      .from('assets')
+      .select(`
+        *,
+        users:users!assets_creator_id_fkey(username, avatar)
+      `)
+      .eq('id', id)
+      .single()
+    if (error) throw error
+    return data
+  } catch {
+    // Fallback: get asset without join
+    const { data, error } = await supabase
+      .from('assets')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (error) throw error
+    return data
+  }
 }
 
 export async function createAsset(asset: any) {

@@ -3,11 +3,13 @@
   "version": "7.0.0",
   "private": true,
   "scripts": {
-    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
+    "build:webpack": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
     "deploy:prod": "vercel --prod",
     "deploy:now": "powershell -ExecutionPolicy Bypass -File ./deploy-vercel-now.ps1",
-    "dev": "next dev",
-    "lint": "next lint",
+    "dev": "next dev --webpack",
+    "lint": "cross-env ESLINT_USE_FLAT_CONFIG=false eslint \"app/**/*.{js,jsx,ts,tsx}\" \"components/**/*.{js,jsx,ts,tsx}\" \"lib/**/*.{js,jsx,ts,tsx}\" \"hooks/**/*.{js,jsx,ts,tsx}\"",
+    "typecheck": "tsc --noEmit",
     "monitor": "node scripts/monitor-performance.js",
     "start": "next start",
     "test": "vitest",
@@ -17,12 +19,16 @@
     "test:ui": "vitest --ui",
     "setup:complete": "node -e \"console.log('🚀 Running complete setup...'); require('./lib/database-complete-setup.ts').setupCompleteDatabase().then(r => console.log('✅ Setup complete:', r))\"",
     "verify:db": "node -e \"require('./lib/database-complete-setup.ts').verifyDatabaseConnection().then(r => console.log('Database status:', r))\"",
-    "validate:env": "node -e \"const { validateConfig } = require('./lib/config.ts'); console.log('Config valid:', validateConfig())\"",
+    "validate:env": "node validate-system.js",
     "check:all": "npm run validate:env && npm run verify:db",
-    "db:seed": "node scripts/seed.ts",
+    "db:seed": "tsx scripts/seed.ts",
     "db:check": "node scripts/check-database.js",
     "analyze:supabase": "node scripts/analyze-supabase-direct.mjs",
     "db:check-fix": "node scripts/auto-check-and-fix-database.mjs"
+    ,
+    "db:apply:akamai": "node scripts/apply-akamai-sql.js",
+    "fix:assets": "node fix-assets-scripts.js",
+    "deploy:prod": "deploy-production-now.bat"
   },
   "dependencies": {
     "@auth/core": "latest",
@@ -139,6 +145,7 @@
     "eslint-config-next": "^15.1.3",
     "jsdom": "^27.4.0",
     "postcss": "^8",
+    "tsx": "^4.19.2",
     "typescript": "^5",
     "vitest": "^4.0.16"
   }

@@ -4,6 +4,21 @@ import { SUPABASE_CONFIG } from "@/lib/supabase/config"
 
 export async function GET() {
   try {
+    if (!SUPABASE_CONFIG.url || !SUPABASE_CONFIG.serviceRoleKey) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Missing Supabase service configuration",
+          config: {
+            url: SUPABASE_CONFIG.url,
+            hasAnonKey: !!SUPABASE_CONFIG.anonKey,
+            hasServiceKey: !!SUPABASE_CONFIG.serviceRoleKey,
+          },
+        },
+        { status: 500 },
+      )
+    }
+
     const supabase = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.serviceRoleKey, {
       auth: {
         persistSession: false,

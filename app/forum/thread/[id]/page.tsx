@@ -4,10 +4,26 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeReplies } from "@/hooks/use-realtime";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -89,14 +105,26 @@ export default function ThreadPage() {
   const threadId = params?.id as string;
 
   // Realtime replies hook
-  const { replies: realtimeReplies, loading: repliesLoading, refetch: refetchReplies } = useRealtimeReplies(threadId);
+  const {
+    replies: realtimeReplies,
+    loading: repliesLoading,
+    refetch: refetchReplies,
+    isConnected,
+    lastUpdate,
+  } = useRealtimeReplies(threadId);
 
   const [thread, setThread] = useState<ThreadData | null>(null);
   const [loading, setLoading] = useState(true);
   const [replyContent, setReplyContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [isSaved, setIsSaved] = useState(false);
+  const [likingThread, setLikingThread] = useState(false);
+  const [likingReplyIds, setLikingReplyIds] = useState<Record<string, boolean>>({});
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{ type: "thread" | "reply"; id: string } | null>(null);
+  const [reportReason, setReportReason] = useState<string>("spam");
+  const [reportDescription, setReportDescription] = useState<string>("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -125,53 +153,206 @@ export default function ThreadPage() {
     }
   }, [params?.id, router]);
 
-  // Realtime subscription for replies
   useEffect(() => {
     if (!threadId) return;
+    if (typeof window === "undefined") return;
 
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase) return;
-    
-    const channel = supabase
-      .channel(`thread-replies:${threadId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "forum_replies",
-          filter: `thread_id=eq.${threadId}`,
-        },
-        () => {
-          setLastUpdate(new Date());
-          refetchReplies();
-        }
-      )
-      .subscribe((status) => {
-        setIsConnected(status === "SUBSCRIBED");
-      });
-
-    return () => {
-      if (supabase) {
-        supabase.removeChannel(channel);
-      }
-    };
-  }, [threadId, refetchReplies]);
+    try {
+      const key = `saved_threads:${session?.user?.id || "anon"}`;
+      const raw = window.localStorage.getItem(key);
+      const savedIds = raw ? (JSON.parse(raw) as string[]) : [];
+      setIsSaved(Array.isArray(savedIds) ? savedIds.includes(threadId) : false);
+    } catch {
+      setIsSaved(false);
+    }
+  }, [threadId, session?.user?.id]);
 
   // Sync realtime replies with thread state
   useEffect(() => {
-    if (realtimeReplies && realtimeReplies.length > 0 && thread) {
-      setThread((prev) =>
-        prev
-          ? {
-              ...prev,
-              replies: realtimeReplies,
-              repliesCount: realtimeReplies.length,
-            }
-          : null
-      );
+    if (repliesLoading) return;
+    
+    // Only update if we have replies data
+    if (realtimeReplies.length === 0 && repliesLoading) return;
+
+    setThread((prev) => {
+      if (!prev) return null;
+      // Only update if replies actually changed
+      if (prev.replies === realtimeReplies) return prev;
+      return {
+        ...prev,
+        replies: realtimeReplies,
+        repliesCount: realtimeReplies.length,
+      };
+    });
+  }, [realtimeReplies, repliesLoading]); // Removed 'thread' from deps to prevent infinite loop
+
+  const handleShare = async () => {
+    try {
+      const url = typeof window !== "undefined" ? window.location.href : "";
+      if (!url) return;
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Copied", description: "Thread link copied to clipboard" });
+    } catch {
+      toast({
+        title: "Copy failed",
+        description: "Unable to copy link automatically",
+        variant: "destructive",
+      });
     }
-  }, [realtimeReplies]);
+  };
+
+  const toggleLike = async (targetType: "thread" | "reply", targetId: string) => {
+    if (!session?.user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to like content",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (targetType === "thread") {
+      if (likingThread) return;
+      setLikingThread(true);
+    } else {
+      if (likingReplyIds[targetId]) return;
+      setLikingReplyIds((prev) => ({ ...prev, [targetId]: true }));
+    }
+
+    try {
+      const res = await fetch("/api/likes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetId, targetType }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to update like");
+      }
+
+      const liked = Boolean(data?.liked);
+
+      if (targetType === "thread") {
+        setThread((prev) =>
+          prev
+            ? {
+                ...prev,
+                likes: Math.max(0, (prev.likes || 0) + (liked ? 1 : -1)),
+              }
+            : prev,
+        );
+      } else {
+        setThread((prev) =>
+          prev
+            ? {
+                ...prev,
+                replies: prev.replies.map((r) =>
+                  r.id === targetId
+                    ? { ...r, likes: Math.max(0, (r.likes || 0) + (liked ? 1 : -1)) }
+                    : r,
+                ),
+              }
+            : prev,
+        );
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update like",
+        variant: "destructive",
+      });
+    } finally {
+      if (targetType === "thread") {
+        setLikingThread(false);
+      } else {
+        setLikingReplyIds((prev) => ({ ...prev, [targetId]: false }));
+      }
+    }
+  };
+
+  const openReport = (type: "thread" | "reply", id: string) => {
+    if (!session?.user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to report content",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setReportTarget({ type, id });
+    setReportReason("spam");
+    setReportDescription("");
+    setReportOpen(true);
+  };
+
+  const toggleSave = () => {
+    if (!threadId) return;
+    if (typeof window === "undefined") return;
+
+    try {
+      const key = `saved_threads:${session?.user?.id || "anon"}`;
+      const raw = window.localStorage.getItem(key);
+      const savedIds = raw ? (JSON.parse(raw) as string[]) : [];
+
+      const next = Array.isArray(savedIds) ? [...savedIds] : [];
+
+      const idx = next.indexOf(threadId);
+      const willSave = idx === -1;
+      if (willSave) next.push(threadId);
+      else next.splice(idx, 1);
+
+      window.localStorage.setItem(key, JSON.stringify(next));
+      setIsSaved(willSave);
+      toast({
+        title: willSave ? "Saved" : "Removed",
+        description: willSave ? "Thread saved locally." : "Thread removed from saved list.",
+      });
+    } catch {
+      toast({
+        title: "Save failed",
+        description: "Unable to save this thread in your browser.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const submitReport = async () => {
+    if (!reportTarget) return;
+    if (reportSubmitting) return;
+
+    setReportSubmitting(true);
+    try {
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: reportTarget.type,
+          targetId: reportTarget.id,
+          reason: reportReason,
+          description: reportDescription || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to submit report");
+      }
+
+      setReportOpen(false);
+      setReportTarget(null);
+      toast({ title: "Report submitted", description: "Thanks for helping keep the forum clean." });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to submit report",
+        variant: "destructive",
+      });
+    } finally {
+      setReportSubmitting(false);
+    }
+  };
 
   const handleSubmitReply = async () => {
     if (!session) {
@@ -226,6 +407,8 @@ export default function ThreadPage() {
             }
           : null,
       );
+
+      refetchReplies();
 
       setReplyContent("");
       toast({
@@ -336,14 +519,25 @@ export default function ThreadPage() {
               variant="ghost"
               size="sm"
               className="h-9 gap-1.5 text-muted-foreground hover:text-primary hover:bg-white/5 rounded-xl"
+              onClick={toggleSave}
             >
-              <Bookmark className="h-4 w-4" />
-              <span className="hidden sm:inline">Save</span>
+              <Bookmark className={`h-4 w-4 ${isSaved ? "text-primary" : ""}`} />
+              <span className="hidden sm:inline">{isSaved ? "Saved" : "Save"}</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 gap-1.5 text-muted-foreground hover:text-red-400 hover:bg-white/5 rounded-xl"
+              onClick={() => openReport("thread", thread.id)}
+            >
+              <Flag className="h-4 w-4" />
+              <span className="hidden sm:inline">Report</span>
             </Button>
             <Button
               variant="ghost"
               size="sm"
               className="h-9 gap-1.5 text-muted-foreground hover:text-primary hover:bg-white/5 rounded-xl"
+              onClick={handleShare}
             >
               <Share2 className="h-4 w-4" />
               <span className="hidden sm:inline">Share</span>
@@ -468,6 +662,8 @@ export default function ThreadPage() {
                   variant="ghost"
                   size="sm"
                   className="h-9 gap-1.5 rounded-full bg-secondary/50 hover:bg-secondary"
+                  onClick={() => toggleLike("thread", thread.id)}
+                  disabled={likingThread}
                 >
                   <ThumbsUp className="h-4 w-4" />
                   <span className="font-medium">{thread.likes}</span>
@@ -608,6 +804,7 @@ export default function ThreadPage() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
+                              onClick={() => openReport("reply", reply.id)}
                             >
                               <Flag className="h-4 w-4" />
                             </Button>
@@ -628,6 +825,8 @@ export default function ThreadPage() {
                             variant="ghost"
                             size="sm"
                             className="h-8 gap-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            onClick={() => toggleLike("reply", reply.id)}
+                            disabled={Boolean(likingReplyIds[reply.id])}
                           >
                             <Heart className="h-3.5 w-3.5" />
                             {reply.likes || 0}
@@ -801,6 +1000,55 @@ export default function ThreadPage() {
           )}
         </div>
       )}
+
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Report Content</DialogTitle>
+            <DialogDescription>
+              Select a reason and optionally add details. Abuse of reports may result in restrictions.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Reason</Label>
+              <Select value={reportReason} onValueChange={setReportReason}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="spam">Spam</SelectItem>
+                  <SelectItem value="harassment">Harassment</SelectItem>
+                  <SelectItem value="hate">Hate Speech</SelectItem>
+                  <SelectItem value="nsfw">NSFW</SelectItem>
+                  <SelectItem value="scam">Scam / Fraud</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Details (optional)</Label>
+              <Textarea
+                value={reportDescription}
+                onChange={(e) => setReportDescription(e.target.value)}
+                placeholder="Add context to help moderators review faster..."
+                className="min-h-24"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" className="bg-transparent" onClick={() => setReportOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={submitReport} disabled={reportSubmitting || !reportTarget}>
+              {reportSubmitting ? "Submitting..." : "Submit Report"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

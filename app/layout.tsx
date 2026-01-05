@@ -13,7 +13,6 @@ import { HolidayBanner } from "@/components/holiday-banner"
 import { SeasonalWrapper } from "@/components/seasonal-wrapper"
 import { LanguageProvider } from "@/components/language-provider"
 import { SITE_NAME, SITE_DESCRIPTION, SITE_URL, SITE_LOGO, SEO_KEYWORDS } from "@/lib/constants"
-import Script from "next/script"
 import { ClientSessionProvider } from "@/components/client-session-provider"
 import "./globals.css"
 
@@ -156,32 +155,32 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`dark ${geist.variable} ${geistMono.variable} ${manrope.variable}`}>
-      <head>
-        <Script
+    <html lang="en" suppressHydrationWarning className={`dark ${geist.variable} ${geistMono.variable} ${manrope.variable}`}>
+      <head suppressHydrationWarning>
+        <script
           id="gtm-script"
-          strategy="afterInteractive"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-N3GV4T4M');
-              } catch(e) { console.error('GTM error:', e); }
-            `,
+            __html: "try{(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-N3GV4T4M');}catch(e){console.error('GTM error:',e);}"
           }}
         />
 
-        <Script
+        <script
           id="google-consent-mode"
-          strategy="beforeInteractive"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: "(function(){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{'ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied','analytics_storage':'denied','regions':['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB','IS','LI','NO','CH']});gtag('consent','default',{'ad_storage':'granted','ad_user_data':'granted','ad_personalization':'granted','analytics_storage':'granted'});})();"
           }}
         />
 
-        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-30YPXMETSE" strategy="afterInteractive" />
-        <Script
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-30YPXMETSE"
+          suppressHydrationWarning
+        />
+        <script
           id="google-analytics"
-          strategy="afterInteractive"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: "try{window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-30YPXMETSE',{page_path:window.location.pathname,cookie_flags:'SameSite=None;Secure',anonymize_ip:true,allow_google_signals:true,send_page_view:true});}catch(e){console.error('Analytics error:',e);}"
           }}
@@ -189,6 +188,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
         <script
           type="application/ld+json"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
@@ -216,6 +216,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
         <script
           type="application/ld+json"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
@@ -238,6 +239,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
         <script
           type="application/ld+json"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
@@ -264,6 +266,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="preconnect" href="https://r2.fivemanage.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
         <script
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -282,6 +285,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           }}
         />
         <script
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -329,7 +333,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           }}
         />
       </head>
-      <body className="font-sans antialiased scrollbar-thin">
+      <body className="font-sans antialiased scrollbar-thin" suppressHydrationWarning>
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-N3GV4T4M"

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/server"
+import { hasPgConnection, pgPool } from "@/lib/db/postgres"
 
 // ============================================
 // FORUM QUERIES
@@ -618,18 +619,94 @@ export const assetsQueries = {
     const { category, framework, search, limit = 100, offset = 0 } = filters || {}
 
     try {
+      if (hasPgConnection && pgPool) {
+        const where: string[] = ["a.status = ANY($1)"]
+        const params: any[] = [["pending", "active", "approved", "featured"]]; // Updated to include 'pending' status
+
+        if (category && category !== "all") {
+          params.push(category)
+          where.push(`LOWER(a.category) = LOWER($${params.length})`)
+        }
+
+        if (framework && framework !== "all") {
+          params.push(framework)
+          where.push(`LOWER(a.framework) = LOWER($${params.length})`)
+        }
+
+        if (search) {
+          const like = `%${search}%`
+          params.push(like)
+          params.push(like)
+          where.push(`(a.title ILIKE $${params.length - 1} OR a.description ILIKE $${params.length})`)
+        }
+
+        params.push(limit)
+        params.push(offset)
+
+        const sql = `
+          SELECT
+            a.*,
+            u.id AS author_user_id,
+            u.discord_id AS author_discord_id,
+            u.username AS author_username,
+            u.avatar AS author_avatar,
+            u.membership AS author_membership,
+            u.xp AS author_xp,
+            u.level AS author_level
+          FROM assets a
+          LEFT JOIN users u ON u.id = a.creator_id
+          WHERE ${where.join(" AND ")}
+          ORDER BY a.created_at DESC
+          LIMIT $${params.length - 1} OFFSET $${params.length}
+        `
+
+        const res = await pgPool.query(sql, params)
+        const rows = res.rows || []
+
+        if (rows.length > 0) {
+          return rows.map((asset: any) => {
+            const tags = Array.isArray(asset.tags) ? asset.tags : asset.tags ? [asset.tags] : []
+            const author = asset.author_user_id
+              ? {
+                  id: asset.author_user_id,
+                  discord_id: asset.author_discord_id,
+                  username: asset.author_username || "Unknown",
+                  avatar: asset.author_avatar,
+                  membership: asset.author_membership || "free",
+                  xp: asset.author_xp || 0,
+                  level: asset.author_level || 1,
+                }
+              : null
+
+            return {
+              ...asset,
+              tags,
+              author,
+              // Compatibility fields (codebase expects these)
+              author_id: asset.creator_id,
+              download_link: asset.download_url,
+              thumbnail: asset.thumbnail_url,
+              author_name: author?.username || "Unknown",
+              author_avatar: author?.avatar || null,
+            }
+          })
+        }
+
+        console.warn("[assetsQueries.getAll] No rows found via Postgres, falling back to Supabase")
+      }
+
       const supabase = createAdminClient()
+      
       let query = supabase
         .from("assets")
         .select(`*`)
-        .in("status", ["active", "pending"]) // Include pending to show more assets
 
       if (category && category !== "all") {
-        query = query.eq("category", category)
+        query = query.ilike("category", `%${category}%`)
       }
 
       if (framework && framework !== "all") {
-        query = query.eq("framework", framework)
+        query = query.ilike("framework", `%${framework}%`)
       }
 
       if (search) {
@@ -644,6 +721,7 @@ export const assetsQueries = {
         throw error
       }
       console.log("[assetsQueries.getAll] Found assets:", assets?.length || 0)
+      console.log("[assetsQueries.getAll] Asset statuses:", assets?.map(a => a.status))
       if (!assets || assets.length === 0) return []
 
       // Get unique author IDs (these are UUIDs matching users.id)
@@ -690,18 +768,55 @@ export const assetsQueries = {
     const { category, framework, search } = filters || {}
 
     try {
+      if (hasPgConnection && pgPool) {
+        const where: string[] = ["status = ANY($1)"]
+        const params: any[] = [["pending", "active", "approved", "featured"]]; // Updated to include 'pending' status
+
+        if (category && category !== "all") {
+          params.push(category)
+          where.push(`category = $${params.length}`)
+        }
+
+        if (framework && framework !== "all") {
+          params.push(framework)
+          where.push(`framework = $${params.length}`)
+        }
+
+        if (search) {
+          const like = `%${search}%`
+          params.push(like)
+          params.push(like)
+          where.push(`(title ILIKE $${params.length - 1} OR description ILIKE $${params.length})`)
+        }
+
+        const res = await pgPool.query(
+          `
+            SELECT COUNT(*) AS total
+            FROM assets
+            WHERE ${where.join(" AND ")}
+          `,
+          params,
+        )
+        const total = Number(res.rows?.[0]?.total || 0)
+        if (total > 0) {
+          return total
+        }
+
+        console.warn("[assetsQueries.getCount] Postgres returned 0, falling back to Supabase")
+      }
+
       const supabase = createAdminClient()
       let query = supabase
         .from("assets")
-        .select("*", { count: "exact", head: true })
-        .in("status", ["active", "pending"])
+        // Use non-head select to reliably get count; head:true returned null in prod
+        .select("id", { count: "exact" })
 
       if (category && category !== "all") {
-        query = query.eq("category", category)
+        query = query.ilike("category", `%${category}%`)
       }
 
       if (framework && framework !== "all") {
-        query = query.eq("framework", framework)
+        query = query.ilike("framework", `%${framework}%`)
       }
 
       if (search) {
@@ -719,20 +834,88 @@ export const assetsQueries = {
 
   getById: async (id: string) => {
     try {
+      if (hasPgConnection && pgPool) {
+        const res = await pgPool.query(
+          `
+            SELECT
+              a.*,
+              u.discord_id AS author_discord_id,
+              u.username AS author_username,
+              u.avatar AS author_avatar,
+              u.membership AS author_membership,
+              u.xp AS author_xp,
+              u.level AS author_level
+            FROM assets a
+            LEFT JOIN users u ON u.id = a.creator_id
+            WHERE a.id = $1
+            LIMIT 1
+          `,
+          [id],
+        )
+
+        const row = res.rows?.[0]
+        if (row) {
+          const tags = Array.isArray(row.tags) ? row.tags : row.tags ? [row.tags] : []
+          return {
+            ...row,
+            tags,
+            // Compatibility fields
+            author_id: row.creator_id,
+            download_link: row.download_url,
+            thumbnail: row.thumbnail_url,
+            author: row.creator_id
+              ? {
+                  id: row.creator_id,
+                  discord_id: row.author_discord_id,
+                  username: row.author_username || "Unknown",
+                  avatar: row.author_avatar,
+                  membership: row.author_membership || "free",
+                  xp: row.author_xp || 0,
+                  level: row.author_level || 1,
+                }
+              : null,
+          }
+        }
+
+        console.warn("[assetsQueries.getById] Asset not in Postgres, falling back to Supabase", { id })
+      }
+
       const supabase = createAdminClient()
       const { data, error } = await supabase
         .from("assets")
         .select(
           `
           *,
-          author:users!assets_author_id_fkey(discord_id, username, avatar, membership, xp, level)
+          author:users!assets_author_id_fkey(id, discord_id, username, avatar_url, membership, xp, level)
         `,
         )
         .eq("id", id)
         .single()
 
       if (error) throw error
-      return data
+      if (!data) return null
+
+      const tags = Array.isArray(data.tags) ? data.tags : data.tags ? [data.tags] : []
+      const author = data.author
+        ? {
+            id: data.author.id,
+            discord_id: data.author.discord_id,
+            username: data.author.username || "Unknown",
+            avatar: data.author.avatar_url,
+            membership: data.author.membership || "free",
+            xp: data.author.xp || 0,
+            level: data.author.level || 1,
+          }
+        : null
+
+      return {
+        ...data,
+        tags,
+        author,
+        author_id: data.creator_id || data.author_id,
+        download_link: data.download_link || (data as any).download_url,
+        thumbnail: data.thumbnail || (data as any).thumbnail_url,
+      }
     } catch (error) {
       console.error("[assetsQueries.getById] Error:", error)
       return null
@@ -753,6 +936,54 @@ export const assetsQueries = {
     author_id: string
   }) => {
     try {
+      if (hasPgConnection && pgPool) {
+        const res = await pgPool.query(
+          `
+            INSERT INTO assets (
+              title,
+              description,
+              category,
+              framework,
+              version,
+              coin_price,
+              thumbnail_url,
+              download_url,
+              file_size,
+              tags,
+              creator_id,
+              status
+            ) VALUES (
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12
+            )
+            RETURNING *
+          `,
+          [
+            data.title,
+            data.description,
+            data.category,
+            data.framework || "standalone",
+            data.version || "1.0.0",
+            data.coin_price || 0,
+            data.thumbnail || null,
+            data.download_link || null,
+            data.file_size || null,
+            data.tags || [],
+            data.author_id,
+            (data as any).status || "pending",
+          ],
+        )
+
+        const row = res.rows?.[0]
+        if (!row) return null
+        return {
+          ...row,
+          // Compatibility fields
+          author_id: row.creator_id,
+          download_link: row.download_url,
+          thumbnail: row.thumbnail_url,
+        }
+      }
+
       const supabase = createAdminClient()
       const { data: asset, error } = await supabase
         .from("assets")
@@ -782,6 +1013,50 @@ export const assetsQueries = {
 
   update: async (id: string, data: any) => {
     try {
+      if (hasPgConnection && pgPool) {
+        const allowed = [
+          "title",
+          "description",
+          "category",
+          "framework",
+          "version",
+          "coin_price",
+          "thumbnail_url",
+          "download_url",
+          "file_size",
+          "tags",
+          "status",
+          "is_verified",
+          "is_featured",
+          "virus_scan_status",
+          "downloads",
+        ]
+
+        const keys = Object.keys(data || {}).filter((k) => allowed.includes(k))
+        if (keys.length === 0) return null
+
+        const sets: string[] = []
+        const params: any[] = []
+        for (const k of keys) {
+          params.push(data[k])
+          sets.push(`${k} = $${params.length}`)
+        }
+        params.push(id)
+
+        const res = await pgPool.query(
+          `UPDATE assets SET ${sets.join(", ")}, updated_at = NOW() WHERE id = $${params.length} RETURNING *`,
+          params,
+        )
+        const row = res.rows?.[0]
+        if (!row) return null
+        return {
+          ...row,
+          author_id: row.creator_id,
+          download_link: row.download_url,
+          thumbnail: row.thumbnail_url,
+        }
+      }
+
       const supabase = createAdminClient()
       const { data: asset, error } = await supabase
         .from("assets")
@@ -800,10 +1075,32 @@ export const assetsQueries = {
 
   incrementViews: async (id: string) => {
     try {
-      const supabase = createAdminClient()
-      const { error } = await supabase.rpc("increment_views", { asset_id: id })
+      if (hasPgConnection && pgPool) {
+        // Not all schemas have a views column; ignore failures.
+        try {
+          await pgPool.query("UPDATE assets SET views = COALESCE(views, 0) + 1 WHERE id = $1", [id])
+        } catch {
+          // ignore
+        }
+        return true
+      }
 
-      if (error) throw error
+      const supabase = createAdminClient()
+      const { data: current, error: fetchError } = await supabase
+        .from("assets")
+        .select("views")
+        .eq("id", id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      const newViews = (current?.views || 0) + 1
+      const { error: updateError } = await supabase
+        .from("assets")
+        .update({ views: newViews })
+        .eq("id", id)
+
+      if (updateError) throw updateError
       return true
     } catch (error) {
       console.error("[assetsQueries.incrementViews] Error:", error)
@@ -813,6 +1110,11 @@ export const assetsQueries = {
 
   incrementDownloads: async (id: string) => {
     try {
+      if (hasPgConnection && pgPool) {
+        await pgPool.query("UPDATE assets SET downloads = COALESCE(downloads, 0) + 1 WHERE id = $1", [id])
+        return true
+      }
+
       const supabase = createAdminClient()
       const { error } = await supabase.rpc("increment_downloads", { asset_id: id })
 
@@ -826,6 +1128,43 @@ export const assetsQueries = {
 
   getRecent: async (limit = 6) => {
     try {
+      if (hasPgConnection && pgPool) {
+        const res = await pgPool.query(
+          `
+            SELECT
+              a.*,
+              u.username AS author_username,
+              u.avatar AS author_avatar,
+              u.membership AS author_membership,
+              u.xp AS author_xp,
+              u.level AS author_level
+            FROM assets a
+            LEFT JOIN users u ON u.id = a.creator_id
+            WHERE a.status = 'approved'
+            ORDER BY a.created_at DESC
+            LIMIT $1
+          `,
+          [limit],
+        )
+        return (res.rows || []).map((row: any) => ({
+          ...row,
+          tags: Array.isArray(row.tags) ? row.tags : row.tags ? [row.tags] : [],
+          author_id: row.creator_id,
+          download_link: row.download_url,
+          thumbnail: row.thumbnail_url,
+          author: row.creator_id
+            ? {
+                id: row.creator_id,
+                username: row.author_username || "Unknown",
+                avatar: row.author_avatar,
+                membership: row.author_membership || "free",
+                xp: row.author_xp || 0,
+                level: row.author_level || 1,
+              }
+            : null,
+        }))
+      }
+
       const supabase = createAdminClient()
       const { data, error } = await supabase
         .from("assets")
@@ -849,6 +1188,43 @@ export const assetsQueries = {
 
   getTrending: async (limit = 6) => {
     try {
+      if (hasPgConnection && pgPool) {
+        const res = await pgPool.query(
+          `
+            SELECT
+              a.*,
+              u.username AS author_username,
+              u.avatar AS author_avatar,
+              u.membership AS author_membership,
+              u.xp AS author_xp,
+              u.level AS author_level
+            FROM assets a
+            LEFT JOIN users u ON u.id = a.creator_id
+            WHERE a.status = 'approved'
+            ORDER BY a.downloads DESC
+            LIMIT $1
+          `,
+          [limit],
+        )
+        return (res.rows || []).map((row: any) => ({
+          ...row,
+          tags: Array.isArray(row.tags) ? row.tags : row.tags ? [row.tags] : [],
+          author_id: row.creator_id,
+          download_link: row.download_url,
+          thumbnail: row.thumbnail_url,
+          author: row.creator_id
+            ? {
+                id: row.creator_id,
+                username: row.author_username || "Unknown",
+                avatar: row.author_avatar,
+                membership: row.author_membership || "free",
+                xp: row.author_xp || 0,
+                level: row.author_level || 1,
+              }
+            : null,
+        }))
+      }
+
       const supabase = createAdminClient()
       const { data, error } = await supabase
         .from("assets")

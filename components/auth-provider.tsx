@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isAdmin, setIsAdmin] = useState<boolean>(false)
-  const { data: sessionData, status } = useSession({
+  const { data: sessionData, status, update } = useSession({
     required: false,
     onUnauthenticated() {
       // Handle unauthenticated state gracefully
@@ -57,14 +57,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      const res = await fetch("/api/auth/csrf", { method: "GET" })
-      const data = await res.json()
-      setUser(data.user)
+      if (typeof update === "function") {
+        await update()
+      } else {
+        // Fallback for older next-auth versions
+        await fetch("/api/auth/session", { cache: "no-store" })
+      }
       return true
     } catch {
       return false
     }
-  }, [])
+  }, [update])
 
   useEffect(() => {
     if (status === "loading") {

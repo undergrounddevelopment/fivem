@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users } from 'lucide-react'
 import Image from 'next/image'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 interface OnlineUser {
   discord_id: string
@@ -29,8 +31,28 @@ export function OnlineUsers() {
     }
 
     fetchOnline()
+    const supabase = getSupabaseBrowserClient()
+    let channel: RealtimeChannel | null = null
+
+    if (supabase) {
+      try {
+        channel = supabase
+          .channel('online-users')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
+            fetchOnline()
+          })
+          .subscribe()
+      } catch (error) {
+        console.error('Failed to subscribe to online users:', error)
+      }
+    }
+
+    // Fallback polling
     const interval = setInterval(fetchOnline, 30000)
-    return () => clearInterval(interval)
+    return () => {
+      if (channel && supabase) supabase.removeChannel(channel)
+      clearInterval(interval)
+    }
   }, [])
 
   return (

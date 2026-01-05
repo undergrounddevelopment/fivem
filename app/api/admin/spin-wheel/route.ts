@@ -1,19 +1,29 @@
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
 export const dynamic = 'force-dynamic'
 
+// Helper to check admin status
+async function checkAdmin(supabase: any, discordId: string): Promise<boolean> {
+  const { data } = await supabase.from("users").select("is_admin").eq("discord_id", discordId).single()
+  return data?.is_admin === true
+}
+
 // GET - Fetch all prizes for admin
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
+    
+    if (!await checkAdmin(supabase, session.user.id)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
     const { data: prizes, error } = await supabase
       .from("spin_wheel_prizes")
@@ -49,8 +59,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const supabase = createAdminClient()
+    
+    if (!await checkAdmin(supabase, session.user.id)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const body = await request.json()
@@ -59,8 +75,6 @@ export async function POST(request: Request) {
     if (!name || value === undefined || probability === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
-
-    const supabase = await createClient()
 
     const { data: prize, error } = await supabase
       .from("spin_wheel_prizes")
@@ -90,8 +104,14 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const supabase = createAdminClient()
+    
+    if (!await checkAdmin(supabase, session.user.id)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const body = await request.json()
@@ -100,8 +120,6 @@ export async function PUT(request: Request) {
     if (!id) {
       return NextResponse.json({ error: "Prize ID required" }, { status: 400 })
     }
-
-    const supabase = await createClient()
 
     const { data: prize, error } = await supabase
       .from("spin_wheel_prizes")
@@ -127,8 +145,14 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const supabase = createAdminClient()
+    
+    if (!await checkAdmin(supabase, session.user.id)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -137,8 +161,6 @@ export async function DELETE(request: Request) {
     if (!id) {
       return NextResponse.json({ error: "Prize ID required" }, { status: 400 })
     }
-
-    const supabase = await createClient()
 
     const { error } = await supabase
       .from("spin_wheel_prizes")

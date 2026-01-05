@@ -1,7 +1,9 @@
 "use server"
 
-import { createClient, createAdminClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { XP_CONFIG, getLevelFromXP } from "@/lib/xp-badges"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 // Helper function to award XP (userId is discord_id for forum)
 async function awardXP(discordId: string, action: keyof typeof XP_CONFIG.rewards) {
@@ -51,16 +53,16 @@ async function awardXP(discordId: string, action: keyof typeof XP_CONFIG.rewards
 }
 
 async function getUser() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  return user
+  // Use NextAuth session instead of Supabase Auth
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return null
+  // Return user object with id as discord_id for compatibility
+  return { id: session.user.id }
 }
 
 export async function getForumCategories() {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
     const { data, error } = await supabase
       .from("forum_categories")
       .select("*")
@@ -77,7 +79,7 @@ export async function getForumCategories() {
 
 export async function getForumThreads(categoryId?: string, limit = 50) {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
     let query = supabase
       .from("forum_threads")
       .select(`
@@ -105,7 +107,7 @@ export async function getForumThreads(categoryId?: string, limit = 50) {
 
 export async function getForumThread(threadId: string) {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
     const { data, error } = await supabase
       .from("forum_threads")
       .select(`
@@ -125,7 +127,7 @@ export async function getForumThread(threadId: string) {
 
 export async function getForumReplies(threadId: string) {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
     const { data, error } = await supabase
       .from("forum_replies")
       .select(`
@@ -149,12 +151,23 @@ export async function createForumThread(data: { categoryId: string; title: strin
   if (!user) throw new Error("Unauthorized")
 
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
+    const discordId = user.id
+
+    // Look up user UUID from discord_id (v7 schema uses UUID for author_id)
+    const { data: dbUser } = await supabase
+      .from("users")
+      .select("id")
+      .eq("discord_id", discordId)
+      .single()
+
+    if (!dbUser) throw new Error("User not found in database")
+
     const { data: thread, error } = await supabase
       .from("forum_threads")
       .insert({
         category_id: data.categoryId,
-        author_id: user.id,
+        author_id: dbUser.id,
         title: data.title,
         content: data.content,
         status: "pending",
@@ -166,7 +179,7 @@ export async function createForumThread(data: { categoryId: string; title: strin
 
     // Award XP for creating thread
     if (thread) {
-      await awardXP(user.id, 'CREATE_THREAD')
+      await awardXP(discordId, 'CREATE_THREAD')
     }
 
     return thread
@@ -181,13 +194,23 @@ export async function createForumReply(data: { threadId: string; content: string
   if (!user) throw new Error("Unauthorized")
 
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
+    const discordId = user.id
+
+    // Look up user UUID from discord_id (v7 schema uses UUID for author_id)
+    const { data: dbUser } = await supabase
+      .from("users")
+      .select("id")
+      .eq("discord_id", discordId)
+      .single()
+
+    if (!dbUser) throw new Error("User not found in database")
     
     const { data: reply, error } = await supabase
       .from("forum_replies")
       .insert({
         thread_id: data.threadId,
-        author_id: user.id,
+        author_id: dbUser.id,
         content: data.content,
       })
       .select()
@@ -201,19 +224,37 @@ export async function createForumReply(data: { threadId: string; content: string
       .update({ updated_at: new Date().toISOString() })
       .eq("id", data.threadId)
 
+    // Increment replies count
+    const { data: currentThread } = await supabase
+      .from("forum_threads")
+      .select("replies")
+      .eq("id", data.threadId)
+      .single()
+    
+    if (currentThread) {
+      await supabase
+        .from("forum_threads")
+        .update({ replies: (currentThread.replies || 0) + 1 })
+        .eq("id", data.threadId)
+    }
+
     // Award XP for creating reply
     if (reply) {
-      await awardXP(user.id, 'CREATE_REPLY')
+      await awardXP(discordId, 'CREATE_REPLY')
 
       // Award XP to thread author for receiving reply
       const { data: thread } = await supabase
         .from('forum_threads')
-        .select('author_id')
+        .select('author_id, users!forum_threads_author_id_fkey(discord_id)')
         .eq('id', data.threadId)
         .single()
       
-      if (thread && thread.author_id !== user.id) {
-        await awardXP(thread.author_id, 'RECEIVE_REPLY')
+      if (thread && thread.author_id !== dbUser.id) {
+        // Get thread author's discord_id for XP
+        const authorDiscordId = (thread as any).users?.discord_id
+        if (authorDiscordId) {
+          await awardXP(authorDiscordId, 'RECEIVE_REPLY')
+        }
       }
     }
 
@@ -229,7 +270,7 @@ export async function deleteForumThread(threadId: string) {
   if (!user) throw new Error("Unauthorized")
 
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     // Check if user is author or admin
     const { data: thread } = await supabase
@@ -270,7 +311,7 @@ export async function deleteForumReply(replyId: string) {
   if (!user) throw new Error("Unauthorized")
 
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     const { data: reply } = await supabase
       .from("forum_replies")
@@ -307,7 +348,7 @@ export async function deleteForumReply(replyId: string) {
 
 export async function getOnlineUsers() {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
 
     const { data, error } = await supabase
@@ -334,7 +375,7 @@ export async function getOnlineUsers() {
 
 export async function getTopContributors() {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     // Get users with their thread and reply counts
     const { data: users } = await supabase

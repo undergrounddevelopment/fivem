@@ -381,15 +381,15 @@ export function ForumManagement() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="flex items-center justify-between">
                   <span>Pinned</span>
-                  <Switch checked={thread.isPinned} readOnly />
+                  <Switch checked={thread.isPinned} disabled />
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Locked</span>
-                  <Switch checked={thread.isLocked} readOnly />
+                  <Switch checked={thread.isLocked} disabled />
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Deleted</span>
-                  <Switch checked={thread.isDeleted} readOnly />
+                  <Switch checked={thread.isDeleted} disabled />
                 </div>
               </div>
               

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function GET() {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     
     const { data: banners, error } = await supabase
       .from("banners")
@@ -16,26 +18,27 @@ export async function GET() {
     return NextResponse.json({ banners: banners || [] })
   } catch (error) {
     console.error("Banners fetch error:", error)
-    return NextResponse.json({ error: "Failed to fetch banners" }, { status: 500 })
+    return NextResponse.json({ banners: [] })
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
+    const supabase = createAdminClient()
+    
+    // Check if user is admin
+    const { data: user } = await supabase
+      .from("users")
       .select("is_admin")
-      .eq("id", user.id)
+      .eq("discord_id", session.user.id)
       .single()
 
-    if (!profile?.is_admin) {
+    if (!user?.is_admin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -72,20 +75,21 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
+    const supabase = createAdminClient()
+    
+    // Check if user is admin
+    const { data: user } = await supabase
+      .from("users")
       .select("is_admin")
-      .eq("id", user.id)
+      .eq("discord_id", session.user.id)
       .single()
 
-    if (!profile?.is_admin) {
+    if (!user?.is_admin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -114,20 +118,21 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
+    const supabase = createAdminClient()
+    
+    // Check if user is admin
+    const { data: user } = await supabase
+      .from("users")
       .select("is_admin")
-      .eq("id", user.id)
+      .eq("discord_id", session.user.id)
       .single()
 
-    if (!profile?.is_admin) {
+    if (!user?.is_admin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

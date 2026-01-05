@@ -18,12 +18,14 @@ export function StatsSection() {
         const data = await res.json()
         
         if (mounted) {
+          // Use real data from API response
+          const statsData = data.data || data
           setStats({
-            totalMembers: data.users || 0,
-            totalAssets: data.assets || 0,
-            totalDownloads: data.downloads || 0,
-            totalPosts: data.posts || 0,
-            onlineUsers: Math.floor((data.users || 0) * 0.05)
+            totalMembers: statsData.totalUsers || statsData.users || 0,
+            totalAssets: statsData.totalAssets || statsData.assets || 0,
+            totalDownloads: statsData.totalDownloads || statsData.downloads || 0,
+            totalPosts: statsData.totalPosts || statsData.posts || 0,
+            onlineUsers: statsData.onlineUsers || 1 // Real online users count from database
           })
         }
       } catch (error) {
@@ -32,7 +34,8 @@ export function StatsSection() {
     }
     
     fetchStats()
-    const interval = setInterval(fetchStats, 30000)
+    // Update stats every 15 seconds for realtime online users
+    const interval = setInterval(fetchStats, 15000)
     
     return () => {
       mounted = false

@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useSession } from "next-auth/react"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 
 interface RealtimeEvent {
   id: string
@@ -44,6 +46,7 @@ interface OnlineUser {
 }
 
 export function RealtimeSystem() {
+  const { data: session } = useSession()
   const [events, setEvents] = useState<RealtimeEvent[]>([])
   const [liveStats, setLiveStats] = useState<LiveStats | null>(null)
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
@@ -52,6 +55,7 @@ export function RealtimeSystem() {
   const [showNotifications, setShowNotifications] = useState(false)
   const supabase = createClient()
   const eventSourceRef = useRef<EventSource | null>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
     initializeRealtime()
@@ -59,6 +63,30 @@ export function RealtimeSystem() {
       cleanup()
     }
   }, [])
+
+  useEffect(() => {
+    const trackPresence = async () => {
+      const channel = channelRef.current
+      if (!channel) return
+      if (!session?.user?.id) return
+      try {
+        await channel.track({
+          user_id: session.user.id,
+          username: session.user.name || "User",
+          avatar: session.user.image || "/placeholder-user.jpg",
+          status: "online",
+          timestamp: new Date().toISOString(),
+          current_page: typeof window !== "undefined" ? window.location.pathname : undefined,
+        })
+      } catch (error) {
+        console.error("Presence track error:", error)
+      }
+    }
+
+    if (isConnected) {
+      trackPresence()
+    }
+  }, [isConnected, session?.user?.id])
 
   const initializeRealtime = async () => {
     try {
@@ -91,14 +119,9 @@ export function RealtimeSystem() {
           }
         })
 
-      // Track user presence
-      await channel.track({
-        user_id: "current-user-id", // Replace with actual user ID
-        username: "Current User", // Replace with actual username
-        avatar: "/placeholder-user.jpg", // Replace with actual avatar
-        status: "online",
-        timestamp: new Date().toISOString()
-      })
+      channelRef.current = channel
+
+      // Presence tracking happens in effect when session is available
 
       // Initialize Server-Sent Events for additional real-time data
       initializeSSE()
@@ -117,7 +140,7 @@ export function RealtimeSystem() {
       eventSourceRef.current.close()
     }
 
-    eventSourceRef.current = new EventSource("/api/realtime/events")
+    eventSourceRef.current = new EventSource("/api/realtime/stream")
     
     eventSourceRef.current.onopen = () => {
       console.log("SSE connection opened")
@@ -496,7 +519,21 @@ export function RealtimeSystem() {
                 }`} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{user.username}</p>
+                <div className="flex items-center gap-2 min-w-0">
+                  <p className="font-medium text-sm truncate">{user.username}</p>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] leading-3 px-1.5 py-0 ${
+                      user.status === "online"
+                        ? "text-green-400 border-green-500/30"
+                        : user.status === "away"
+                          ? "text-yellow-400 border-yellow-500/30"
+                          : "text-red-400 border-red-500/30"
+                    }`}
+                  >
+                    {user.status.toUpperCase()}
+                  </Badge>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {user.current_page || 'Active'}
                 </p>

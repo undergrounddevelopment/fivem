@@ -5,13 +5,19 @@ import { generateLinkvertiseUrl } from '@/lib/linkvertise';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
+  let assetId: string | undefined
+  let sessionUserId: string | undefined
+
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { assetId } = await req.json();
+    sessionUserId = (session.user as any)?.id
+
+    const body = await req.json();
+    assetId = body?.assetId
     const supabase = await createClient();
 
     const { data: settings } = await supabase
@@ -27,7 +33,7 @@ export async function POST(req: NextRequest) {
           contexts: {
             linkvertise: {
               assetId,
-              userId: session.user.id,
+              userId: sessionUserId,
               action: 'generateLink'
             }
           }
@@ -50,7 +56,7 @@ export async function POST(req: NextRequest) {
         contexts: {
           linkvertise: {
             assetId,
-            userId: session?.user?.id,
+            userId: sessionUserId,
             action: 'generateLink'
           }
         }

@@ -1,5 +1,7 @@
 // Export Supabase clients
 import { createClient, createAdminClient } from "./supabase/server"
+import queryModules from "./db/queries"
+import sql from "./db/postgres"
 
 export { createClient, createAdminClient }
 
@@ -17,34 +19,18 @@ export async function getAdminDb() {
 }
 
 export const db = {
-  // Query modules from lib/db/queries.ts
-  coins: async () => {
-    const { coinsQueries } = await import("./db/queries")
-    return coinsQueries
-  },
-  forum: async () => {
-    const { forumQueries } = await import("./db/queries")
-    return forumQueries
-  },
-  spinWheel: async () => {
-    const { spinWheelQueries } = await import("./db/queries")
-    return spinWheelQueries
-  },
-  admin: async () => {
-    const { adminQueries } = await import("./db/queries")
-    return adminQueries
-  },
-  assets: async () => {
-    const { assetsQueries } = await import("./db/queries")
-    return assetsQueries
-  },
-
+  ...queryModules,
   // Direct query method for PostgreSQL-style queries
-  query: async (sql: string, params?: any[]) => {
-    console.warn("[db.query] Direct SQL queries not supported. Use Supabase client methods instead.")
-    return { rows: [], rowCount: 0 }
+  query: async (text: string, params: any[] = []) => {
+    try {
+      const rows = await (sql as any).unsafe(text, params)
+      return { rows: rows || [], rowCount: Array.isArray(rows) ? rows.length : 0 }
+    } catch (error) {
+      console.error("[db.query] Error:", error)
+      return { rows: [], rowCount: 0 }
+    }
   },
-}
+} as const
 
 // Legacy database helper functions
 export async function getAssets(category?: string) {

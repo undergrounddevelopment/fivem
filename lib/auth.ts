@@ -61,7 +61,7 @@ function getProviders() {
 
 export const authOptions: NextAuthOptions = {
   providers: getProviders(),
-  secret: CONFIG.auth.secret,
+  secret: CONFIG.auth.secret || undefined,
   debug: process.env.NODE_ENV === 'development',
   logger: {
     error: (code, metadata) => console.error(`[NextAuth Error] ${code}:`, metadata),
@@ -111,9 +111,10 @@ export const authOptions: NextAuthOptions = {
               .update({
                 username: sanitizeInput((profile as any).username),
                 email: token.email,
-                avatar_url: avatarUrl,
+                avatar: avatarUrl,
+                membership: isAdminUser ? "admin" : (existingUser.membership || "free"),
                 is_admin: isAdminUser || existingUser.is_admin,
-                role: isAdminUser ? "admin" : existingUser.role,
+                role: isAdminUser ? "admin" : (existingUser.role || "member"),
                 updated_at: new Date().toISOString(),
               })
               .eq("discord_id", discordId)
@@ -134,12 +135,13 @@ export const authOptions: NextAuthOptions = {
                 discord_id: discordId,
                 username: sanitizeInput((profile as any).username),
                 email: token.email,
-                avatar_url: avatarUrl,
+                avatar: avatarUrl,
                 coins: isAdminUser ? CONFIG.features.adminCoins : CONFIG.features.newUserCoins,
                 xp: 0,
                 level: 1,
                 is_admin: isAdminUser,
-                role: isAdminUser ? "admin" : "user",
+                membership: isAdminUser ? "admin" : "free",
+                role: isAdminUser ? "admin" : "member",
               })
               .select()
               .single()
@@ -161,7 +163,7 @@ export const authOptions: NextAuthOptions = {
 
           token.discordId = dbUser.discord_id
           token.coins = dbUser.coins
-          token.membership = dbUser.role
+          token.membership = dbUser.membership || (dbUser.is_admin ? "admin" : "free")
           token.isAdmin = dbUser.is_admin
           token.xp = dbUser.xp
           token.level = dbUser.level
@@ -189,13 +191,13 @@ export const authOptions: NextAuthOptions = {
           if (supabase) {
             const { data: dbUser } = await supabase
               .from("users")
-              .select("coins, role, is_admin, xp, level")
+              .select("coins, membership, role, is_admin, xp, level")
               .eq("discord_id", token.discordId as string)
               .single()
 
             if (dbUser) {
               token.coins = dbUser.coins
-              token.membership = dbUser.role
+              token.membership = dbUser.membership || (dbUser.is_admin ? "admin" : "free")
               token.isAdmin = dbUser.is_admin
               token.xp = dbUser.xp
               token.level = dbUser.level
@@ -209,13 +211,30 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async session({ session, token }) {
-      if (token.discordId) {
-        session.user.id = token.discordId as string
-        session.user.coins = token.coins as number
-        session.user.membership = token.membership as string
-        session.user.isAdmin = token.isAdmin as boolean
-        session.user.xp = token.xp as number
-        session.user.level = token.level as number
+      // Guard against unexpected session shapes so /api/auth/session never crashes.
+      if (!(session as any).user) {
+        ;(session as any).user = {}
+      }
+
+      const discordId = (token.discordId as string | undefined) || (token.sub as string | undefined)
+      if (discordId) {
+        ;(session as any).user.id = discordId
+      }
+
+      if (token.coins !== undefined) {
+        ;(session as any).user.coins = token.coins as number
+      }
+      if (token.membership !== undefined) {
+        ;(session as any).user.membership = token.membership as string
+      }
+      if (token.isAdmin !== undefined) {
+        ;(session as any).user.isAdmin = token.isAdmin as boolean
+      }
+      if (token.xp !== undefined) {
+        ;(session as any).user.xp = token.xp as number
+      }
+      if (token.level !== undefined) {
+        ;(session as any).user.level = token.level as number
       }
       return session
     },

@@ -52,15 +52,24 @@ export async function createClient() {
 export function createAdminClient() {
   const url = CONFIG.supabase.url
   const serviceKey = CONFIG.supabase.serviceKey
+  const anonKey = CONFIG.supabase.anonKey
 
-  if (!url || !serviceKey) {
-    console.error("[Supabase Admin] ❌ Service role key missing!")
-    throw new Error("Supabase admin client requires service role key")
+  if (!url) {
+    console.error("[Supabase Admin] ❌ Missing Supabase URL")
+    throw new Error("Supabase admin client requires SUPABASE_URL")
   }
 
-  console.log("[Supabase Admin] ✅ Creating admin client with service role")
-  
-  return createSupabaseClient(url, serviceKey, {
+  const key = serviceKey || anonKey
+  if (!key) {
+    console.error("[Supabase Admin] ❌ No Supabase credentials available")
+    throw new Error("Supabase admin client requires SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY")
+  }
+
+  if (!serviceKey) {
+    console.warn("[Supabase Admin] ⚠️ Service role key missing, falling back to anon key (read-only access)")
+  }
+
+  return createSupabaseClient(url, key, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

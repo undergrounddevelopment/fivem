@@ -2,11 +2,11 @@
 -- FIVEM TOOLS V7 - FULL DATABASE EXPORT
 -- Generated: 2025-01-01
 -- Database: PostgreSQL (Supabase)
--- Password: cba3nFp4y4pEemqa
+-- Password: [REDACTED]
 -- =====================================================
 
 -- Connection String:
--- postgresql://postgres.linnqtixdfjwbrixitrb:cba3nFp4y4pEemqa@aws-1-us-east-1.pooler.supabase.com:6543/postgres
+-- [REDACTED]
 
 -- =====================================================
 -- TABLE STRUCTURES

@@ -1,9 +1,16 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient, createClient } from "@/lib/supabase/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 async function getUser() {
+  const session = await getServerSession(authOptions)
+  if (session?.user?.id) {
+    return { id: session.user.id }
+  }
+
   const supabase = await createClient()
   const {
     data: { user },
@@ -12,74 +19,68 @@ async function getUser() {
 }
 
 export async function getSpinPrizes() {
-  const result = await db.query("SELECT * FROM spin_wheel_prizes WHERE is_active = true ORDER BY probability DESC")
-  return result.rows
+  return await db.spinWheel.getPrizes()
 }
 
 export async function spinWheel() {
   const user = await getUser()
   if (!user) throw new Error("Unauthorized")
 
-  // Check tickets
-  const ticketCheck = await db.query(
-    "SELECT COUNT(*)::int as count FROM spin_wheel_tickets WHERE user_id = $1 AND used = false",
-    [user.id],
-  )
-
-  if (ticketCheck.rows[0].count === 0) {
+  const useTicketResult = await db.spinWheel.useTicket(user.id)
+  if (!useTicketResult?.success) {
     throw new Error("No tickets available")
   }
 
-  // Use ticket
-  await db.query(
-    "UPDATE spin_wheel_tickets SET used = true WHERE id = (SELECT id FROM spin_wheel_tickets WHERE user_id = $1 AND used = false LIMIT 1)",
-    [user.id],
-  )
+  const prizes = await db.spinWheel.getPrizes()
+  if (!prizes.length) {
+    throw new Error("No prizes available")
+  }
 
-  // Get prizes with weighted random
-  const prizes = await db.query("SELECT * FROM spin_wheel_prizes WHERE is_active = true ORDER BY probability DESC")
+  const validPrizes = prizes.filter((p: any) => {
+    const prob = parseFloat(String(p.probability ?? 0))
+    return prob >= 0 && prob <= 100
+  })
+  const pool = validPrizes.length ? validPrizes : prizes
 
-  // Weighted random selection
-  const totalWeight = prizes.rows.reduce((sum, p) => sum + p.probability, 0)
-  let random = Math.random() * totalWeight
-  let selectedPrize = prizes.rows[0]
-
-  for (const prize of prizes.rows) {
-    random -= prize.probability
-    if (random <= 0) {
-      selectedPrize = prize
+  const totalProb = pool.reduce((sum: number, p: any) => sum + parseFloat(String(p.probability ?? 0)), 0)
+  const r = Math.random() * (totalProb || 1)
+  let cumulative = 0
+  let winner: any = pool[0]
+  for (const p of pool) {
+    cumulative += parseFloat(String(p.probability ?? 0))
+    if (r <= cumulative) {
+      winner = p
       break
     }
   }
 
-  // Record history
-  await db.query("INSERT INTO spin_wheel_history (user_id, prize_id) VALUES ($1, $2)", [user.id, selectedPrize.id])
+  await db.spinWheel.recordSpin({
+    user_id: user.id,
+    prize_id: winner.id,
+    prize_name: winner.name,
+    coins_won: winner.type === "coins" ? (winner.value || 0) : 0,
+  })
 
-  // Add coins if prize is coins
-  if (selectedPrize.type === "coins") {
-    await db.query(
-      "INSERT INTO coin_transactions (user_id, amount, transaction_type, description) VALUES ($1, $2, $3, $4)",
-      [user.id, selectedPrize.value, "spin_wheel", `Won ${selectedPrize.value} coins from spin wheel`],
-    )
+  if (winner.type === "coins" && winner.value > 0) {
+    await db.coins.addCoins({
+      user_id: user.id,
+      amount: winner.value,
+      type: "spin",
+      description: `Won ${winner.value} coins from spin wheel`,
+    })
+  } else if (winner.type === "ticket") {
+    await db.spinWheel.addTicket(user.id, "reward")
   }
 
-  // Get new balance
-  const balance = await db.query(
-    "SELECT COALESCE(SUM(amount), 0)::int as coins FROM coin_transactions WHERE user_id = $1",
-    [user.id],
-  )
-
-  const tickets = await db.query(
-    "SELECT COUNT(*)::int as count FROM spin_wheel_tickets WHERE user_id = $1 AND used = false",
-    [user.id],
-  )
+  const newBalance = await db.coins.getUserBalance(user.id)
+  const tickets = await db.spinWheel.getTickets(user.id)
 
   return {
     success: true,
-    prize: selectedPrize,
-    newBalance: balance.rows[0].coins,
-    newTickets: tickets.rows[0].count,
-    prizeIndex: prizes.rows.findIndex((p) => p.id === selectedPrize.id),
+    prize: winner,
+    newBalance,
+    newTickets: tickets.length,
+    prizeIndex: pool.findIndex((p: any) => p.id === winner.id),
   }
 }
 
@@ -87,70 +88,122 @@ export async function claimDailySpinTicket() {
   const user = await getUser()
   if (!user) throw new Error("Unauthorized")
 
-  const canClaim = await db.query("SELECT can_claim_daily($1, $2) as can_claim", [user.id, "spin"])
+  const supabase = createAdminClient()
+  const today = new Date()
+  today.setUTCHours(0, 0, 0, 0)
+  const tomorrow = new Date(today)
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
 
-  if (!canClaim.rows[0].can_claim) {
+  const { data: existingClaim } = await supabase
+    .from("daily_claims")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("claim_type", "spin_ticket")
+    .gte("claimed_at", today.toISOString())
+    .limit(1)
+
+  if (existingClaim && existingClaim.length > 0) {
     throw new Error("Already claimed today")
   }
 
-  await db.query("SELECT claim_daily_reward($1, $2)", [user.id, "spin"])
+  const yesterday = new Date(today)
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1)
 
-  const tickets = await db.query(
-    "SELECT COUNT(*)::int as count FROM spin_wheel_tickets WHERE user_id = $1 AND used = false",
-    [user.id],
-  )
+  const { data: yesterdayClaim } = await supabase
+    .from("daily_claims")
+    .select("streak, claimed_at")
+    .eq("user_id", user.id)
+    .eq("claim_type", "spin_ticket")
+    .gte("claimed_at", yesterday.toISOString())
+    .lt("claimed_at", today.toISOString())
+    .order("claimed_at", { ascending: false })
+    .limit(1)
 
-  return { success: true, newTickets: tickets.rows[0].count, bonusTickets: 1 }
+  let newStreak = 1
+  if (yesterdayClaim && yesterdayClaim.length > 0) {
+    newStreak = (yesterdayClaim[0] as any).streak + 1
+  }
+
+  let bonusTickets = 1
+  if (newStreak >= 7) bonusTickets = 3
+  else if (newStreak >= 3) bonusTickets = 2
+
+  const inserts = Array.from({ length: bonusTickets }).map(() => ({
+    user_id: user.id,
+    ticket_type: "daily",
+    expires_at: tomorrow.toISOString(),
+  }))
+
+  const { error: ticketError } = await supabase.from("spin_wheel_tickets").insert(inserts)
+  if (ticketError) throw ticketError
+
+  const { error: recordError } = await supabase.from("daily_claims").insert({
+    user_id: user.id,
+    claim_type: "spin_ticket",
+    streak: newStreak,
+    claimed_at: new Date().toISOString(),
+  })
+  if (recordError) throw recordError
+
+  const tickets = await db.spinWheel.getTickets(user.id)
+  return { success: true, newTickets: tickets.length, bonusTickets, newStreak }
 }
 
 export async function getSpinWinners() {
-  const result = await db.query(`
-    SELECT 
-      sh.id,
-      sh.user_id,
-      u.username,
-      u.avatar as avatar_url,
-      sp.name as prize_name,
-      sp.value as coins_won,
-      sh.created_at
-    FROM spin_wheel_history sh
-    JOIN users u ON sh.user_id = u.discord_id
-    JOIN spin_wheel_prizes sp ON sh.prize_id = sp.id
-    ORDER BY sh.created_at DESC
-    LIMIT 50
-  `)
-  return result.rows
+  const supabase = createAdminClient()
+  const { data: spins } = await supabase
+    .from("spin_history")
+    .select("id, user_id, prize_name, coins_won, created_at")
+    .order("created_at", { ascending: false })
+    .limit(50)
+
+  const userIds = [...new Set((spins || []).map((s: any) => s.user_id).filter(Boolean))]
+  let usersMap: Record<string, any> = {}
+  if (userIds.length > 0) {
+    const { data: users } = await supabase
+      .from("users")
+      .select("discord_id, username, avatar")
+      .in("discord_id", userIds)
+
+    for (const u of users || []) {
+      usersMap[u.discord_id] = u
+    }
+  }
+
+  return (spins || []).map((s: any) => ({
+    id: s.id,
+    user_id: s.user_id,
+    username: usersMap[s.user_id]?.username,
+    avatar_url: usersMap[s.user_id]?.avatar,
+    prize_name: s.prize_name,
+    coins_won: s.coins_won,
+    created_at: s.created_at,
+  }))
 }
 
 export async function getDailySpinStatus() {
   const user = await getUser()
   if (!user) return { canClaim: false }
 
-  const result = await db.query("SELECT can_claim_daily($1, $2) as can_claim", [user.id, "spin"])
+  const supabase = createAdminClient()
+  const today = new Date()
+  today.setUTCHours(0, 0, 0, 0)
 
-  return { canClaim: result.rows[0].can_claim }
+  const { data: existingClaim } = await supabase
+    .from("daily_claims")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("claim_type", "spin_ticket")
+    .gte("claimed_at", today.toISOString())
+    .limit(1)
+
+  return { canClaim: !(existingClaim && existingClaim.length > 0) }
 }
 
 export async function getSpinHistory() {
   const user = await getUser()
   if (!user) return []
 
-  const result = await db.query(
-    `
-    SELECT 
-      sh.id,
-      sp.name as prize_name,
-      sp.value as coins_won,
-      'ticket' as spin_type,
-      sh.created_at
-    FROM spin_wheel_history sh
-    JOIN spin_wheel_prizes sp ON sh.prize_id = sp.id
-    WHERE sh.user_id = $1
-    ORDER BY sh.created_at DESC
-    LIMIT 50
-  `,
-    [user.id],
-  )
-
-  return result.rows
+  const history = await db.spinWheel.getHistory(user.id, 50, 0)
+  return history
 }

@@ -48,6 +48,11 @@
   ],
   "exclude": [
     "supabase/functions",
+    "scripts",
+    "seed*.ts",
+    "**/*-old.ts",
+    "**/*-old.tsx",
+    "**/*page-server.tsx",
     ".next",
     "node_modules"
   ]

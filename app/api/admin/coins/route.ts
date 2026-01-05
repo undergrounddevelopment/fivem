@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     if (action === "add") {
       await db.coins.addCoins({ user_id: userId, amount, type: 'admin_adjust', description: reason })
     } else {
-      await db.coins.deductCoins({ user_id: userId, amount, type: 'admin_adjust', description: reason })
+      await db.coins.addCoins({ user_id: userId, amount: -Math.abs(amount), type: 'admin_adjust', description: reason })
     }
 
     const newBalance = await db.coins.getUserBalance(userId)

@@ -1,14 +1,25 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+
+async function checkAdmin(supabase: any, discordId: string): Promise<boolean> {
+  const { data } = await supabase.from("users").select("is_admin").eq("discord_id", discordId).single()
+  return data?.is_admin === true
+}
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const supabase = createAdminClient()
+    
+    if (!await checkAdmin(supabase, session.user.id)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -20,8 +31,6 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "50")
     const offset = (page - 1) * limit
-
-    const supabase = createClient()
     
     let query = supabase
       .from("users")
@@ -74,7 +83,7 @@ export async function GET(request: NextRequest) {
     // Apply pagination
     query = query.range(offset, offset + limit - 1)
 
-    const { data: users, error, count } = await query
+    const { data: users, error, count }: any = await (query as any)
 
     if (error) {
       console.error("Database error:", error)
@@ -82,9 +91,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Enhance user data
-    const enhancedUsers = users?.map(user => ({
-      ...user,
-      isOnline: user.last_seen ? 
+    const enhancedUsers = (users as any[])?.map((user: any) => ({
+      ...(user as any),
+      isOnline: user?.last_seen ? 
         new Date(user.last_seen).getTime() > Date.now() - (60 * 60 * 1000) : false,
       reputation: Math.floor(Math.random() * 1000), // Mock reputation
       warningsCount: Math.floor(Math.random() * 3) // Mock warnings
@@ -114,14 +123,18 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const supabase = createAdminClient()
+    
+    if (!await checkAdmin(supabase, session.user.id)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const body = await request.json()
     const { action, userIds } = body
-
-    const supabase = createClient()
 
     let updateData: any = {}
     let successMessage = ""

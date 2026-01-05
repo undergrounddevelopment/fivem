@@ -30,19 +30,14 @@ export function CategoriesSection() {
 
   const fetchCategories = async () => {
     try {
-      const { createClient } = await import("@/lib/supabase/client")
-      const supabase = createClient()
+      const res = await fetch("/api/forum/categories")
+      if (!res.ok) throw new Error("Failed to fetch")
       
-      const { data, error } = await supabase
-        .from("forum_categories")
-        .select("*")
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true })
-        .limit(6)
-
-      if (error) throw error
+      const data = await res.json()
+      // Handle both array response and object with categories property
+      const categoriesData = Array.isArray(data) ? data : (data.categories || [])
       
-      setCategories(data || [])
+      setCategories(categoriesData.slice(0, 6))
       setError(false)
     } catch (err) {
       console.error("Failed to fetch categories:", err)

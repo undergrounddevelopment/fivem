@@ -6,8 +6,12 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   outputFileTracingRoot: __dirname,
+  allowedDevOrigins: ['127.0.0.1', 'localhost', '*.localhost'],
   experimental: {
     scrollRestoration: true,
+    serverActions: {
+      allowedOrigins: ['127.0.0.1', 'localhost', '*.localhost'],
+    },
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',

@@ -174,15 +174,15 @@ export function SecurityMonitoring() {
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      active: { variant: "destructive" as const, icon: <AlertTriangle className="h-3 w-3" /> },
+      active: { variant: "destructive" as const, icon: <AlertTriangle className="h-3 w-3" />, className: "" },
       resolved: { variant: "default" as const, icon: <CheckCircle className="h-3 w-3" />, className: "bg-green-100 text-green-800" },
-      investigating: { variant: "secondary" as const, icon: <Eye className="h-3 w-3" /> }
+      investigating: { variant: "secondary" as const, icon: <Eye className="h-3 w-3" />, className: "" }
     }
     
     const config = variants[status as keyof typeof variants] || variants.active
     
     return (
-      <Badge variant={config.variant} className={`flex items-center gap-1 ${config.className || ""}`}>
+      <Badge variant={config.variant} className={`flex items-center gap-1 ${config.className}`}>
         {config.icon}
         {status.toUpperCase()}
       </Badge>

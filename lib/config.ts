@@ -2,35 +2,49 @@
 export const CONFIG = {
   // Database - PRODUCTION READY
   database: {
-    url: process.env.POSTGRES_URL || "postgres://postgres.linnqtixdfjwbrixitrb:your-db-password@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true",
-    pooling: process.env.POSTGRES_PRISMA_URL || "postgres://postgres.linnqtixdfjwbrixitrb:your-db-password@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true",
-    direct: process.env.POSTGRES_URL_NON_POOLING || "postgres://postgres.linnqtixdfjwbrixitrb:your-db-password@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require",
+    url: process.env.DATABASE_URL || process.env.POSTGRES_URL || "",
+    pooling: process.env.POSTGRES_PRISMA_URL || "",
+    direct: process.env.POSTGRES_URL_NON_POOLING || "",
   },
 
   // Supabase - PRODUCTION CREDENTIALS
   supabase: {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL || "https://linnqtixdfjwbrixitrb.supabase.co",
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxpbm5xdGl4ZGZqd2JyaXhpdHJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyMTI4NTIsImV4cCI6MjA4MDc4ODg1Mn0.7Mm9XtHZzWC4K4iHuPBCxIWoUJAVqqsD4ph0mwUbFrU",
-    serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxpbm5xdGl4ZGZqd2JyaXhpdHJiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTIxMjg1MiwiZXhwIjoyMDgwNzg4ODUyfQ.Rri9zq0S-Y4nRpwkuiHp1GsZJXAsL-6-xpqJ1fAP3KE",
+    url:
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      process.env.SUPABASE_URL ||
+      "",
+    anonKey:
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_ANON_KEY ||
+      "",
+    serviceKey:
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.SUPABASE_SERVICE_KEY ||
+      "",
   },
 
   // Auth - SECURE CONFIGURATION
   auth: {
-    secret: process.env.NEXTAUTH_SECRET || "jAA23MIrEPe4YRDbknuuZfP+tAMp2vUzFJaIFL0Uyoc=",
-    url: process.env.NEXTAUTH_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"),
+    secret: process.env.NEXTAUTH_SECRET || "",
+    url:
+      process.env.NEXTAUTH_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"),
     adminDiscordId: process.env.ADMIN_DISCORD_ID || "1047719075322810378",
   },
 
   // Discord OAuth - PRODUCTION CREDENTIALS
   discord: {
     clientId: process.env.DISCORD_CLIENT_ID || "1445650115447754933",
-    clientSecret: process.env.DISCORD_CLIENT_SECRET || "JXY7URZrY3zsN5Ca4kQ88tB0hUC2pXuW",
+    clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
   },
 
   // Linkvertise - MONETIZATION READY
   linkvertise: {
-    authToken: process.env.LINKVERTISE_AUTH_TOKEN || "your_linkvertise_auth_token_here",
+    authToken: process.env.LINKVERTISE_AUTH_TOKEN || "",
     userId: process.env.LINKVERTISE_USER_ID || "1461354",
+    enabled: process.env.NEXT_PUBLIC_LINKVERTISE_ENABLED === "true",
   },
 
   // Features - OPTIMIZED VALUES
@@ -56,7 +70,7 @@ export const CONFIG = {
   // Site - PRODUCTION INFO
   site: {
     name: "FiveM Tools V7",
-    url: process.env.NEXT_PUBLIC_SITE_URL || "https://fivemtools.net",
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.fivemtools.net",
     logo: "https://r2.fivemanage.com/IKG5gF4pHPjLHEhuHxEh0/Untitleddesign-26.png",
     description: "Platform lengkap untuk FiveM scripts, MLOs, dan resources",
   },

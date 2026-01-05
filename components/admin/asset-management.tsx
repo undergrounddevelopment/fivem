@@ -214,16 +214,16 @@ export function AssetManagement() {
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      pending: { variant: "secondary" as const, icon: <AlertTriangle className="h-3 w-3" /> },
-      approved: { variant: "default" as const, icon: <CheckCircle className="h-3 w-3" /> },
-      rejected: { variant: "destructive" as const, icon: <XCircle className="h-3 w-3" /> },
+      pending: { variant: "secondary" as const, icon: <AlertTriangle className="h-3 w-3" />, className: "" },
+      approved: { variant: "default" as const, icon: <CheckCircle className="h-3 w-3" />, className: "" },
+      rejected: { variant: "destructive" as const, icon: <XCircle className="h-3 w-3" />, className: "" },
       featured: { variant: "default" as const, icon: <Star className="h-3 w-3" />, className: "bg-yellow-500" }
     }
     
     const config = variants[status as keyof typeof variants] || variants.pending
     
     return (
-      <Badge variant={config.variant} className={`flex items-center gap-1 ${config.className || ""}`}>
+      <Badge variant={config.variant} className={`flex items-center gap-1 ${config.className}`}>
         {config.icon}
         {status.toUpperCase()}
       </Badge>
@@ -241,16 +241,16 @@ export function AssetManagement() {
     }
 
     const variants = {
-      pending: { variant: "secondary" as const, icon: <AlertTriangle className="h-3 w-3" />, text: "Pending" },
+      pending: { variant: "secondary" as const, icon: <AlertTriangle className="h-3 w-3" />, text: "Pending", className: "" },
       clean: { variant: "default" as const, icon: <CheckCircle className="h-3 w-3" />, text: "Clean", className: "bg-green-500" },
-      threat: { variant: "destructive" as const, icon: <XCircle className="h-3 w-3" />, text: "Threat" },
-      error: { variant: "secondary" as const, icon: <AlertTriangle className="h-3 w-3" />, text: "Error" }
+      threat: { variant: "destructive" as const, icon: <XCircle className="h-3 w-3" />, text: "Threat", className: "" },
+      error: { variant: "secondary" as const, icon: <AlertTriangle className="h-3 w-3" />, text: "Error", className: "" }
     }
     
     const config = variants[status as keyof typeof variants] || variants.pending
     
     return (
-      <Badge variant={config.variant} className={`flex items-center gap-1 ${config.className || ""}`}>
+      <Badge variant={config.variant} className={`flex items-center gap-1 ${config.className}`}>
         {config.icon}
         {config.text}
       </Badge>

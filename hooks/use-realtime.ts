@@ -30,8 +30,30 @@ export function useRealtimeStats() {
 
   useEffect(() => {
     fetchStats()
+    const supabase = getSupabaseBrowserClient()
+    let channel: RealtimeChannel | null = null
+
+    if (supabase) {
+      try {
+        channel = supabase
+          .channel("live-stats")
+          .on("postgres_changes", { event: "*", schema: "public", table: "users" }, fetchStats)
+          .on("postgres_changes", { event: "*", schema: "public", table: "assets" }, fetchStats)
+          .on("postgres_changes", { event: "*", schema: "public", table: "downloads" }, fetchStats)
+          .on("postgres_changes", { event: "*", schema: "public", table: "forum_threads" }, fetchStats)
+          .on("postgres_changes", { event: "*", schema: "public", table: "forum_replies" }, fetchStats)
+          .subscribe()
+      } catch (error) {
+        console.error("Failed to subscribe to live stats:", error)
+      }
+    }
+
+    // Fallback polling
     const interval = setInterval(fetchStats, 30000)
-    return () => clearInterval(interval)
+    return () => {
+      if (channel && supabase) supabase.removeChannel(channel)
+      clearInterval(interval)
+    }
   }, [fetchStats])
 
   return { stats, loading, refetch: fetchStats }
@@ -363,6 +385,8 @@ export function useRealtimeActivity() {
 export function useRealtimeReplies(threadId: string) {
   const [replies, setReplies] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [isConnected, setIsConnected] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
 
   const fetchReplies = useCallback(async () => {
     if (!threadId) return
@@ -371,6 +395,7 @@ export function useRealtimeReplies(threadId: string) {
       const res = await fetch(`/api/forum/threads/${threadId}/replies`)
       const data = await res.json()
       setReplies(data.replies || [])
+      setLastUpdate(new Date())
     } catch (error) {
       console.error("Failed to fetch replies:", error)
     } finally {
@@ -390,18 +415,13 @@ export function useRealtimeReplies(threadId: string) {
       channel = supabase
         .channel(`replies:${threadId}`)
         .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "forum_replies",
-            filter: `thread_id=eq.${threadId}`,
-          },
-          () => {
-            fetchReplies()
-          },
+          "broadcast",
+          { event: "replies_changed" },
+          () => fetchReplies(),
         )
-        .subscribe()
+        .subscribe((status) => {
+          setIsConnected(status === 'SUBSCRIBED')
+        })
     } catch (error) {
       console.error("Failed to subscribe to replies:", error)
     }
@@ -413,5 +433,5 @@ export function useRealtimeReplies(threadId: string) {
     }
   }, [threadId, fetchReplies])
 
-  return { replies, loading, refetch: fetchReplies }
+  return { replies, loading, refetch: fetchReplies, isConnected, lastUpdate }
 }

@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/server"
 // This endpoint auto-initializes database tables on first run
 export async function GET() {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
 
     const setupSQL = `
       -- Create spin_wheel_prizes table

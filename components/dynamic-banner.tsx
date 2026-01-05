@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react"
 import { X, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 
 interface Banner {
   id: string
@@ -39,8 +41,32 @@ export function DynamicBanner({ position, className, showClose = true }: Dynamic
 
   useEffect(() => {
     fetchBanners()
+    const supabase = getSupabaseBrowserClient()
+    let channel: RealtimeChannel | null = null
+
+    if (supabase) {
+      try {
+        channel = supabase
+          .channel(`banners:${position}`)
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "banners", filter: `position=eq.${position}` },
+            () => {
+              fetchBanners()
+            },
+          )
+          .subscribe()
+      } catch (error) {
+        console.error("Failed to subscribe to banners:", error)
+      }
+    }
+
+    // Fallback polling
     const interval = setInterval(fetchBanners, 30000)
-    return () => clearInterval(interval)
+    return () => {
+      if (channel && supabase) supabase.removeChannel(channel)
+      clearInterval(interval)
+    }
   }, [fetchBanners])
 
   // Auto-rotate banners

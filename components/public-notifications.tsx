@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
+import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 
 interface PublicNotification {
   id: string
@@ -19,8 +21,6 @@ interface PublicNotification {
 
 export function PublicNotifications() {
   // Temporarily disabled - API not available
-  return null
-  
   const [notifications, setNotifications] = useState<PublicNotification[]>([])
   const [dismissedIds, setDismissedIds] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -32,9 +32,28 @@ export function PublicNotifications() {
     setDismissedIds(dismissed)
     fetchNotifications()
 
+    const supabase = getSupabaseBrowserClient()
+    let channel: RealtimeChannel | null = null
+
+    if (supabase) {
+      try {
+        channel = supabase
+          .channel("public-notifications")
+          .on("postgres_changes", { event: "*", schema: "public", table: "public_notifications" }, () => {
+            fetchNotifications()
+          })
+          .subscribe()
+      } catch (error) {
+        console.error("Failed to subscribe to public notifications:", error)
+      }
+    }
+
     // Poll for new notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000)
-    return () => clearInterval(interval)
+    return () => {
+      if (channel && supabase) supabase.removeChannel(channel)
+      clearInterval(interval)
+    }
   }, [])
 
   const fetchNotifications = async () => {

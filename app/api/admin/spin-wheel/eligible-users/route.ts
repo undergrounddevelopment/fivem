@@ -9,7 +9,7 @@ async function verifyAdmin() {
     return { error: "Unauthorized", status: 401 }
   }
 
-  const supabase = await createAdminClient()
+  const supabase = createAdminClient()
   const { data: userData } = await supabase.from("users").select("id, role").eq("discord_id", session.user.id).single()
 
   if (!userData?.role || !["admin", "owner", "vip"].includes(userData.role)) {
@@ -46,11 +46,11 @@ export async function GET() {
     const { data: users } = await auth.supabase
       .from("users")
       .select("id, name, username, avatar, role, discord_id")
-      .in("discord_id", userIds)
+      .in("id", userIds)
 
     const enrichedData = eligibleUsers?.map((eu) => ({
       ...eu,
-      user: users?.find((u) => u.discord_id === eu.user_id) || null,
+      user: users?.find((u) => u.id === eu.user_id) || null,
     }))
 
     return NextResponse.json({ eligibleUsers: enrichedData || [] })

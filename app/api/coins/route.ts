@@ -56,10 +56,13 @@ export async function POST() {
 
     // Claim reward
     const result = await db.coins.claimDailyReward(userId, claimType, amount)
+    const totalCoins = await db.coins.getUserBalance(userId)
 
     return NextResponse.json({
       success: true,
       data: result,
+      coinsEarned: amount,
+      totalCoins,
     })
   } catch (error) {
     console.error('Error claiming daily:', error)

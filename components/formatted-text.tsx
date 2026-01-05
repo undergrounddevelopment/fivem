@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 interface FormattedTextProps {
   content: string
   className?: string
@@ -49,7 +51,7 @@ export function FormattedText({ content, className = "" }: FormattedTextProps) {
   }
 
   const formatInline = (text: string) => {
-    const parts = []
+    const parts: React.ReactNode[] = []
     let current = ''
     let i = 0
     

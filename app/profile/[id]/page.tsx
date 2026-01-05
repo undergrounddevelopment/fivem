@@ -166,6 +166,8 @@ export default function ProfilePage() {
 
   const { user, assets, threads, stats, downloadCount, postCount, likeCount, points } = data
 
+  const levelInfo = getLevelFromXP(user.xp || 0)
+
   const achievements = [
     { id: "1", name: "First Download", icon: "🏆", unlocked: downloadCount > 0 },
     { id: "2", name: "First Post", icon: "💬", unlocked: postCount > 0 },
@@ -249,6 +251,30 @@ export default function ProfilePage() {
                     title={getLevelFromXP(user.xp || 0).title} 
                     size="md" 
                   />
+                </div>
+
+                {/* XP Progress Bar (Profile Only) */}
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <Zap className="h-3.5 w-3.5 text-primary" />
+                      XP Progress
+                    </span>
+                    <span className="text-muted-foreground">
+                      {Math.round(levelInfo.progress)}% • Next at {levelInfo.nextLevelXP.toLocaleString()} XP
+                    </span>
+                  </div>
+                  <div className="relative h-3 rounded-full overflow-hidden bg-black/20 border border-white/10 backdrop-blur">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary via-pink-500 to-purple-500"
+                      style={{ width: `${Math.min(levelInfo.progress, 100)}%` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent animate-pulse" />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                    <span>{(user.xp || 0).toLocaleString()} XP</span>
+                    <span>Level {levelInfo.level}</span>
+                  </div>
                 </div>
               </div>
               <Link href={`/messages?to=${user.discordId}`}>
@@ -422,6 +448,22 @@ export default function ProfilePage() {
                         <div className="text-right">
                           <p className="text-2xl font-bold text-primary">{(user.xp || 0).toLocaleString()}</p>
                           <p className="text-xs text-muted-foreground">Total XP</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Progress to next level</span>
+                          <span className="text-muted-foreground">
+                            {Math.round(levelInfo.progress)}% • {levelInfo.nextLevelXP.toLocaleString()} XP
+                          </span>
+                        </div>
+                        <div className="relative h-3 rounded-full overflow-hidden bg-black/20 border border-white/10 backdrop-blur">
+                          <div
+                            className="h-full bg-gradient-to-r from-primary via-pink-500 to-purple-500"
+                            style={{ width: `${Math.min(levelInfo.progress, 100)}%` }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent animate-pulse" />
                         </div>
                       </div>
                     </div>

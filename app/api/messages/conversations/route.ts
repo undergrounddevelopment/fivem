@@ -54,7 +54,7 @@ export async function GET() {
       .in("discord_id", partnerIds)
 
     const userMap = new Map((users || []).map((u) => [u.discord_id, u]))
-    const conversations = []
+    const conversations: any[] = []
 
     for (const partnerId of partnerIds) {
       const user = userMap.get(partnerId)
@@ -77,7 +77,7 @@ export async function GET() {
     }
 
     // Sort by last message time
-    conversations.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
+    conversations.sort((a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
 
     return NextResponse.json({ conversations })
   } catch (error) {

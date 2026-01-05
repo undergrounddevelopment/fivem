@@ -13,34 +13,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    // Get user's assets (assets.author_id is UUID matching users.id)
-    const { data: assets } = await supabase
-      .from("assets")
-      .select("*")
-      .eq("author_id", user.id)
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(10)
-
-    // Get user's badges from database
-    const { data: userBadges } = await supabase
-      .from("user_badges")
-      .select("*, badges(*)")
-      .eq("user_id", id)
-
-    // Get all available badges for comparison
-    const { data: allBadges } = await supabase
-      .from("badges")
-      .select("*")
-      .order("min_xp", { ascending: true })
-
-    // Get user's downloads with asset info
-    const { data: downloads } = await supabase
-      .from("downloads")
-      .select("*")
-      .eq("user_id", id)
-      .order("created_at", { ascending: false })
-      .limit(10)
+    // Batch fetch user data in parallel for optimization
+    const [
+      { data: assets },
+      { data: userBadges },
+      { data: allBadges },
+      { data: downloads },
+      { data: threads }
+    ] = await Promise.all([
+      supabase.from("assets").select("*").eq("author_id", user.id).eq("status", "active").order("created_at", { ascending: false }).limit(10),
+      supabase.from("user_badges").select("*, badges(*)").eq("user_id", id),
+      supabase.from("badges").select("*").order("min_xp", { ascending: true }),
+      supabase.from("downloads").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(10),
+      supabase.from("forum_threads").select("*").eq("author_id", id).eq("is_deleted", false).order("created_at", { ascending: false }).limit(10),
+    ])
 
     // Get asset details for downloads
     const downloadsWithAssets = await Promise.all(
@@ -59,36 +45,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }),
     )
 
-    // Get user's threads
-    const { data: threads } = await supabase
-      .from("forum_threads")
-      .select("*")
-      .eq("author_id", id)
-      .eq("is_deleted", false)
-      .order("created_at", { ascending: false })
-      .limit(10)
-
-    // Get counts (assets use UUID, forum uses discord_id)
-    const { count: assetCount } = await supabase
-      .from("assets")
-      .select("*", { count: "exact", head: true })
-      .eq("author_id", user.id)
-      .eq("status", "active")
-
-    const { count: downloadCount } = await supabase
-      .from("downloads")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", id)
-
-    const { count: threadCount } = await supabase
-      .from("forum_threads")
-      .select("*", { count: "exact", head: true })
-      .eq("author_id", id)
-
-    const { count: likeCount } = await supabase
-      .from("likes")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", id)
+    // Get counts in parallel (assets use UUID, forum uses discord_id)
+    const [
+      { count: assetCount },
+      { count: downloadCount },
+      { count: threadCount },
+      { count: likeCount }
+    ] = await Promise.all([
+      supabase.from("assets").select("*", { count: "exact", head: true }).eq("author_id", user.id).eq("status", "active"),
+      supabase.from("downloads").select("*", { count: "exact", head: true }).eq("user_id", id),
+      supabase.from("forum_threads").select("*", { count: "exact", head: true }).eq("author_id", id),
+      supabase.from("likes").select("*", { count: "exact", head: true }).eq("user_id", id),
+    ])
 
     const formattedUser = {
       id: user.discord_id,

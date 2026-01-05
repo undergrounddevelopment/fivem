@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Activity, Users, MessageSquare, Download, Calendar } from "lucide-react"
 import { motion } from "framer-motion"
+import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 
 interface ActivityItem {
   id: string
@@ -27,8 +29,28 @@ export function ActivityFeed() {
 
   useEffect(() => {
     fetchActivities()
-    const interval = setInterval(fetchActivities, 60000) // Update every minute
-    return () => clearInterval(interval)
+
+    const supabase = getSupabaseBrowserClient()
+    let channel: RealtimeChannel | null = null
+
+    if (supabase) {
+      try {
+        channel = supabase
+          .channel("activity-feed")
+          .on("postgres_changes", { event: "*", schema: "public", table: "activities" }, () => {
+            fetchActivities()
+          })
+          .subscribe()
+      } catch (error) {
+        console.error("Failed to subscribe to activities:", error)
+      }
+    }
+
+    const interval = setInterval(fetchActivities, 60000) // Fallback polling
+    return () => {
+      if (channel && supabase) supabase.removeChannel(channel)
+      clearInterval(interval)
+    }
   }, [])
 
   const fetchActivities = async () => {

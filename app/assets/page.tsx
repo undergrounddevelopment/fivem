@@ -1,156 +1,133 @@
-import { getAssets } from '@/lib/database-direct'
+"use client"
+
+import { useState, useEffect } from "react"
+import { AssetCard } from "@/components/asset-card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { Search, Download, Star, Eye, Filter } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
+import { createClient } from "@/lib/supabase/client"
+import { Search, Package, Zap } from "lucide-react"
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export default function AssetsPage() {
+  const [assets, setAssets] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [search, setSearch] = useState("")
+  const [category, setCategory] = useState<string>("all")
 
-export default async function AssetsPage() {
-  let assets = []
-  
-  try {
-    assets = await getAssets()
-  } catch (error) {
-    console.error('Failed to load assets:', error)
-    // Return empty array if database fails during build
-    assets = []
+  useEffect(() => {
+    fetchAssets()
+  }, [search, category])
+
+  async function fetchAssets() {
+    setIsLoading(true)
+    try {
+      const supabase = createClient()
+      if (!supabase) return
+
+      let query = supabase
+        .from('assets')
+        .select('*')
+        .eq('status', 'active')
+
+      if (category !== 'all') query = query.eq('category', category)
+      if (search) query = query.ilike('title', `%${search}%`)
+      
+      query = query.order('created_at', { ascending: false }).limit(50)
+
+      const { data, error } = await query
+
+      if (error) {
+        console.error('Error:', error)
+        setAssets([])
+        return
+      }
+
+      const formatted = (data || []).map((asset: any) => ({
+        ...asset,
+        coinPrice: asset.coin_price || 0,
+        price: asset.coin_price === 0 ? 'free' : 'premium',
+      }))
+
+      setAssets(formatted)
+    } catch (error) {
+      console.error('Fetch error:', error)
+      setAssets([])
+    } finally {
+      setIsLoading(false)
+    }
   }
-  
-  const activeAssets = assets.filter(asset => asset.status === 'active' || asset.status === 'approved')
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Browse Assets</h1>
-          <p className="text-muted-foreground">Discover amazing FiveM resources</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search assets..." className="pl-10 w-64" />
+      <div className="mb-8">
+        <div className="flex items-center gap-4 mb-4">
+          <Package className="h-10 w-10 text-primary" />
+          <div>
+            <h1 className="text-4xl font-bold">Browse Assets</h1>
+            <p className="text-muted-foreground">Discover FiveM resources</p>
           </div>
-          <Button variant="outline" className="gap-2">
-            <Filter className="h-4 w-4" />
-            Filter
-          </Button>
+        </div>
+
+        <div className="flex gap-4 mb-4">
+          {['all', 'scripts', 'mlo', 'vehicles', 'clothing'].map((cat) => (
+            <Button
+              key={cat}
+              variant={category === cat ? 'default' : 'outline'}
+              onClick={() => setCategory(cat)}
+              className="capitalize"
+            >
+              {cat}
+            </Button>
+          ))}
+        </div>
+
+        <div className="relative max-w-xl">
+          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search assets..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-11"
+          />
         </div>
       </div>
 
-      {/* Categories */}
-      <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-        {['All', 'Scripts', 'MLO', 'Vehicles', 'Clothing'].map((category) => (
-          <Button
-            key={category}
-            variant={category === 'All' ? 'default' : 'outline'}
-            size="sm"
-            className="whitespace-nowrap"
-          >
-            {category}
-          </Button>
-        ))}
-      </div>
-
-      {/* Assets Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {activeAssets.map((asset) => (
-          <Card key={asset.id} className="group hover:shadow-lg transition-shadow">
-            <CardContent className="p-0">
-              <div className="relative aspect-video overflow-hidden rounded-t-lg">
-                {asset.thumbnail ? (
-                  <Image
-                    src={asset.thumbnail}
-                    alt={asset.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-full h-full bg-muted flex items-center justify-center">
-                    <div className="w-16 h-16 bg-muted-foreground/20 rounded" />
-                  </div>
-                )}
-                <div className="absolute top-2 left-2">
-                  <Badge variant="secondary" className="capitalize">
-                    {asset.category}
-                  </Badge>
-                </div>
-                <div className="absolute top-2 right-2">
-                  <Badge variant="outline" className="bg-background/80">
-                    {asset.coin_price || 0} coins
-                  </Badge>
-                </div>
-              </div>
-              
-              <div className="p-4">
-                <h3 className="font-semibold text-lg mb-2 line-clamp-1">{asset.title}</h3>
-                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                  {asset.description}
-                </p>
-                
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Download className="h-4 w-4" />
-                      {asset.downloads || 0}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Star className="h-4 w-4" />
-                      {asset.rating || 0}
-                    </span>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {asset.framework || 'Standalone'}
-                  </Badge>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="relative h-6 w-6 rounded-full overflow-hidden bg-secondary">
-                      {asset.users?.avatar ? (
-                        <Image
-                          src={asset.users.avatar}
-                          alt=""
-                          fill
-                          className="object-cover"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="h-full w-full bg-primary/20" />
-                      )}
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      {asset.users?.username || 'Unknown'}
-                    </span>
-                  </div>
-                  
-                  <Link href={`/asset/${asset.id}`}>
-                    <Button size="sm" className="gap-2">
-                      <Eye className="h-4 w-4" />
-                      View
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {activeAssets.length === 0 && (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-muted rounded-full mx-auto mb-4 flex items-center justify-center">
-            <Search className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">No assets found</h3>
-          <p className="text-muted-foreground">Try adjusting your search or filters</p>
+      {isLoading ? (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <Card key={i} className="overflow-hidden">
+              <div className="aspect-video bg-muted animate-pulse" />
+              <CardContent className="p-4 space-y-3">
+                <div className="h-4 w-1/3 bg-muted rounded animate-pulse" />
+                <div className="h-5 w-2/3 bg-muted rounded animate-pulse" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
+      ) : assets.length > 0 ? (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {assets.map((asset) => (
+            <AssetCard key={asset.id} asset={asset} />
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-20">
+            <Zap className="h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold">No assets found</h3>
+            <p className="text-muted-foreground mt-2">Try adjusting your filters</p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => {
+                setSearch("")
+                setCategory("all")
+              }}
+            >
+              Clear Filters
+            </Button>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

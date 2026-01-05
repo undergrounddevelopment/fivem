@@ -140,13 +140,11 @@ export function AnnouncementBar() {
     <motion.div
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className={cn("relative w-full overflow-hidden bg-gradient-to-r shadow-lg", typeStyles.bg, typeStyles.glow)}
+      className="relative w-full overflow-hidden glass border-primary/30"
     >
-      {/* Animated background effects */}
+      {/* Blur orb effect */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
-        <div className="absolute top-0 left-1/4 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-24 h-24 bg-white/5 rounded-full blur-2xl" />
+        <div className="blur-orb" style={{ top: '50%', left: '30%', opacity: 0.15, width: '200px', height: '200px' }} />
       </div>
 
       <div className="relative flex items-center justify-center gap-3 px-4 py-3 md:py-3.5">
@@ -158,10 +156,10 @@ export function AnnouncementBar() {
               e.stopPropagation()
               setCurrentIndex((prev) => (prev - 1 + visibleAnnouncements.length) % visibleAnnouncements.length)
             }}
-            className="absolute left-2 p-1 rounded-full hover:bg-white/10 transition-colors"
+            className="absolute left-2 p-1 rounded-full hover:bg-primary/10 transition-colors"
             aria-label="Previous announcement"
           >
-            <ChevronLeft className="w-4 h-4 text-white/70" />
+            <ChevronLeft className="w-4 h-4 text-primary" />
           </button>
         )}
 
@@ -170,9 +168,9 @@ export function AnnouncementBar() {
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: "spring", delay: 0.2 }}
-          className={cn("flex-shrink-0 p-2 rounded-xl backdrop-blur-sm", typeStyles.iconBg, typeStyles.iconColor)}
+          className="flex-shrink-0 p-2 rounded-xl bg-primary/20"
         >
-          <IconComponent className="w-4 h-4" aria-hidden="true" />
+          <IconComponent className="w-4 h-4 text-primary" aria-hidden="true" />
         </motion.div>
 
         {/* Message */}
@@ -180,17 +178,17 @@ export function AnnouncementBar() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="text-sm md:text-base font-medium text-center line-clamp-1 text-white flex items-center gap-2"
+          className="text-sm md:text-base font-medium text-center line-clamp-1 flex items-center gap-2"
         >
           {current.title && (
-            <span className="font-bold bg-white/20 px-2.5 py-0.5 rounded-full text-xs uppercase tracking-wide">
+            <span className="font-bold bg-primary/20 text-primary px-2.5 py-0.5 rounded-full text-xs uppercase tracking-wide">
               {current.title}
             </span>
           )}
           <span className="hidden sm:inline">{current.message || ''}</span>
           <span className="sm:hidden">{(current.message || '').slice(0, 50)}{(current.message || '').length > 50 ? '...' : ''}</span>
           {current.link && (
-            <span className="hidden md:flex items-center gap-1 text-white/80 hover:text-white transition-colors">
+            <span className="hidden md:flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
               <ExternalLink className="h-3.5 w-3.5" />
             </span>
           )}
@@ -204,10 +202,10 @@ export function AnnouncementBar() {
               e.stopPropagation()
               setCurrentIndex((prev) => (prev + 1) % visibleAnnouncements.length)
             }}
-            className="absolute right-10 p-1 rounded-full hover:bg-white/10 transition-colors"
+            className="absolute right-10 p-1 rounded-full hover:bg-primary/10 transition-colors"
             aria-label="Next announcement"
           >
-            <ChevronRight className="w-4 h-4 text-white/70" />
+            <ChevronRight className="w-4 h-4 text-primary" />
           </button>
         )}
 
@@ -219,10 +217,10 @@ export function AnnouncementBar() {
               e.stopPropagation()
               handleDismiss(current.id)
             }}
-            className="absolute right-2 p-1.5 rounded-full hover:bg-white/10 transition-colors"
+            className="absolute right-2 p-1.5 rounded-full hover:bg-primary/10 transition-colors"
             aria-label="Dismiss announcement"
           >
-            <X className="w-4 h-4 text-white/70 hover:text-white" />
+            <X className="w-4 h-4 text-muted-foreground hover:text-primary" />
           </button>
         )}
       </div>
@@ -243,8 +241,8 @@ export function AnnouncementBar() {
               className={cn(
                 "h-1.5 rounded-full transition-all duration-300",
                 idx === currentIndex % visibleAnnouncements.length
-                  ? "bg-white w-6 shadow-sm shadow-white/50"
-                  : "bg-white/40 hover:bg-white/60 w-1.5",
+                  ? "bg-primary w-6 glow-sm"
+                  : "bg-muted-foreground/40 hover:bg-primary/60 w-1.5",
               )}
               aria-label={`Go to announcement ${idx + 1}`}
             />

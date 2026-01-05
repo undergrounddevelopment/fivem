@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
@@ -14,9 +14,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = createClient()
+    const supabase = createAdminClient()
     
-    const { data: user, error } = await supabase
+    const { data: user, error }: any = await (supabase as any)
       .from("users")
       .select(`
         *,
@@ -49,9 +49,9 @@ export async function GET(
       .limit(10)
 
     const enhancedUser = {
-      ...user,
-      isOnline: user.last_seen ? 
-        new Date(user.last_seen).getTime() > Date.now() - (60 * 60 * 1000) : false,
+      ...(user as any),
+      isOnline: (user as any).last_seen ? 
+        new Date((user as any).last_seen).getTime() > Date.now() - (60 * 60 * 1000) : false,
       reputation: Math.floor(Math.random() * 1000), // Mock reputation
       warningsCount: Math.floor(Math.random() * 3), // Mock warnings
       recentActivity: recentActivity || []
@@ -85,7 +85,7 @@ export async function PATCH(
     const body = await request.json()
     const { action, reason, ...data } = body
 
-    const supabase = createClient()
+    const supabase = createAdminClient()
 
     let updateData: any = {}
     let successMessage = ""
@@ -186,7 +186,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = createClient()
+    const supabase = createAdminClient()
 
     // Soft delete by marking as deleted
     const { error } = await supabase

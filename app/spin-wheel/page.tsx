@@ -18,7 +18,7 @@ export default async function SpinWheelPage() {
     redirect('/')
   }
 
-  let prizes = []
+  let prizes: any[] = []
   
   try {
     prizes = await getSpinWheelPrizes()
@@ -27,7 +27,7 @@ export default async function SpinWheelPage() {
     prizes = []
   }
   
-  const activePrizes = prizes.filter(prize => prize.is_active)
+  const activePrizes = prizes.filter((prize: any) => prize.is_active)
 
   return (
     <div className="container mx-auto px-4 py-8">

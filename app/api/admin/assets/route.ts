@@ -65,12 +65,12 @@ export async function GET(request: NextRequest) {
     if (authorIds.length > 0) {
       const { data: authors } = await supabase
         .from("users")
-        .select("discord_id, username, avatar")
-        .in("discord_id", authorIds)
+        .select("id, discord_id, username, avatar")
+        .in("id", authorIds)
 
       authorsMap = (authors || []).reduce(
         (acc, author) => {
-          acc[author.discord_id] = author
+          acc[author.id] = author
           return acc
         },
         {} as Record<string, any>,

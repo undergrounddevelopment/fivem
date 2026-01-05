@@ -1,9 +1,16 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient, createClient } from "@/lib/supabase/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 async function getUser() {
+  const session = await getServerSession(authOptions)
+  if (session?.user?.id) {
+    return { id: session.user.id }
+  }
+
   const supabase = await createClient()
   const {
     data: { user },
@@ -15,67 +22,80 @@ async function checkAdmin() {
   const user = await getUser()
   if (!user) throw new Error("Unauthorized")
 
-  const result = await db.query("SELECT is_admin FROM users WHERE discord_id = $1", [user.id])
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from("users")
+    .select("is_admin, membership")
+    .eq("discord_id", user.id)
+    .single()
 
-  if (!result.rows[0]?.is_admin) throw new Error("Admin access required")
+  if (error) throw new Error("Admin access required")
+  if (!(data?.is_admin === true || data?.membership === "admin")) throw new Error("Admin access required")
   return user
 }
 
 export async function getAdminStats() {
   await checkAdmin()
 
-  const [users, threads, replies, transactions, tickets] = await Promise.all([
-    db.query("SELECT COUNT(*)::int as count FROM users"),
-    db.query("SELECT COUNT(*)::int as count FROM forum_threads"),
-    db.query("SELECT COUNT(*)::int as count FROM forum_replies"),
-    db.query("SELECT COUNT(*)::int as count, COALESCE(SUM(amount), 0)::int as total FROM coin_transactions"),
-    db.query("SELECT COUNT(*)::int as count FROM spin_wheel_tickets WHERE used = false"),
+  const supabase = createAdminClient()
+  const [usersCount, threadsCount, repliesCount, ticketsCount, coinsSum] = await Promise.all([
+    supabase.from("users").select("*", { count: "exact", head: true }),
+    supabase.from("forum_threads").select("*", { count: "exact", head: true }),
+    supabase.from("forum_replies").select("*", { count: "exact", head: true }),
+    supabase.from("spin_wheel_tickets").select("*", { count: "exact", head: true }).eq("is_used", false),
+    supabase.from("coin_transactions").select("amount"),
   ])
 
+  const totalCoins = coinsSum.data?.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) || 0
+  const totalTransactions = coinsSum.data?.length || 0
+
   return {
-    totalUsers: users.rows[0].count,
-    totalThreads: threads.rows[0].count,
-    totalReplies: replies.rows[0].count,
-    totalTransactions: transactions.rows[0].count,
-    totalCoins: transactions.rows[0].total,
-    activeTickets: tickets.rows[0].count,
+    totalUsers: usersCount.count || 0,
+    totalThreads: threadsCount.count || 0,
+    totalReplies: repliesCount.count || 0,
+    totalTransactions,
+    totalCoins,
+    activeTickets: ticketsCount.count || 0,
   }
 }
 
 export async function getAllUsers(limit = 100) {
   await checkAdmin()
 
-  const result = await db.query(
-    "SELECT discord_id, username, email, avatar, membership, coins, is_admin, created_at FROM users ORDER BY created_at DESC LIMIT $1",
-    [limit],
-  )
-  return result.rows
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from("users")
+    .select("discord_id, username, email, avatar, membership, coins, is_admin, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit)
+  return data || []
 }
 
 export async function updateUserMembership(userId: string, membership: string) {
   await checkAdmin()
 
-  await db.query("UPDATE users SET membership = $1, updated_at = NOW() WHERE discord_id = $2", [membership, userId])
-
+  const supabase = createAdminClient()
+  await supabase.from("users").update({ membership, updated_at: new Date().toISOString() }).eq("discord_id", userId)
   return { success: true }
 }
 
 export async function updateUserAdmin(userId: string, isAdmin: boolean) {
   await checkAdmin()
 
-  await db.query("UPDATE users SET is_admin = $1, updated_at = NOW() WHERE discord_id = $2", [isAdmin, userId])
-
+  const supabase = createAdminClient()
+  await supabase.from("users").update({ is_admin: isAdmin, updated_at: new Date().toISOString() }).eq("discord_id", userId)
   return { success: true }
 }
 
 export async function addCoinsToUser(userId: string, amount: number, description: string) {
   await checkAdmin()
 
-  await db.query(
-    "INSERT INTO coin_transactions (user_id, amount, transaction_type, description) VALUES ($1, $2, $3, $4)",
-    [userId, amount, "admin", description],
-  )
-
+  await db.coins.addCoins({
+    user_id: userId,
+    amount,
+    type: "admin",
+    description,
+  })
   return { success: true }
 }
 
@@ -90,12 +110,25 @@ export async function createSpinPrize(data: {
 }) {
   await checkAdmin()
 
-  const result = await db.query(
-    "INSERT INTO spin_wheel_prizes (name, type, value, probability, color, rarity, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
-    [data.name, data.type, data.value, data.probability, data.color, data.rarity, data.imageUrl],
-  )
+  const supabase = createAdminClient()
+  const { data: prize, error } = await supabase
+    .from("spin_wheel_prizes")
+    .insert({
+      name: data.name,
+      type: data.type,
+      value: data.value,
+      probability: data.probability,
+      color: data.color,
+      rarity: data.rarity,
+      image_url: data.imageUrl || null,
+      is_active: true,
+      sort_order: 0,
+    })
+    .select()
+    .single()
 
-  return result.rows[0]
+  if (error) throw error
+  return prize
 }
 
 export async function updateSpinPrize(
@@ -113,47 +146,55 @@ export async function updateSpinPrize(
 ) {
   await checkAdmin()
 
-  const updates: string[] = []
-  const values: any[] = []
-  let paramIndex = 1
+  const supabase = createAdminClient()
+  const updates: any = {}
 
-  Object.entries(data).forEach(([key, value]) => {
-    if (value !== undefined) {
-      const dbKey = key === "imageUrl" ? "image_url" : key.replace(/([A-Z])/g, "_$1").toLowerCase()
-      updates.push(`${dbKey} = $${paramIndex}`)
-      values.push(value)
-      paramIndex++
-    }
-  })
+  if (data.name !== undefined) updates.name = data.name
+  if (data.type !== undefined) updates.type = data.type
+  if (data.value !== undefined) updates.value = data.value
+  if (data.probability !== undefined) updates.probability = data.probability
+  if (data.color !== undefined) updates.color = data.color
+  if (data.rarity !== undefined) updates.rarity = data.rarity
+  if (data.imageUrl !== undefined) updates.image_url = data.imageUrl
+  if (data.active !== undefined) updates.is_active = data.active
+  updates.updated_at = new Date().toISOString()
 
-  if (updates.length === 0) return { success: false }
+  if (Object.keys(updates).length === 0) return { success: false }
 
-  values.push(prizeId)
-  await db.query(
-    `UPDATE spin_wheel_prizes SET ${updates.join(", ")}, updated_at = NOW() WHERE id = $${paramIndex}`,
-    values,
-  )
-
+  const { error } = await supabase.from("spin_wheel_prizes").update(updates).eq("id", prizeId)
+  if (error) throw error
   return { success: true }
 }
 
 export async function deleteSpinPrize(prizeId: string) {
   await checkAdmin()
 
-  await db.query("DELETE FROM spin_wheel_prizes WHERE id = $1", [prizeId])
+  const supabase = createAdminClient()
+  const { error } = await supabase.from("spin_wheel_prizes").delete().eq("id", prizeId)
+  if (error) throw error
   return { success: true }
 }
 
 export async function createAnnouncement(data: { title: string; content: string; type: string }) {
   await checkAdmin()
 
-  const result = await db.query("INSERT INTO announcements (title, content, type) VALUES ($1, $2, $3) RETURNING *", [
-    data.title,
-    data.content,
-    data.type,
-  ])
+  const supabase = createAdminClient()
+  const { data: row, error } = await supabase
+    .from("announcements")
+    .insert({
+      title: data.title,
+      content: data.content,
+      type: data.type,
+      is_active: true,
+      is_dismissible: true,
+      sort_order: 0,
+      created_at: new Date().toISOString(),
+    })
+    .select()
+    .single()
 
-  return result.rows[0]
+  if (error) throw error
+  return row
 }
 
 export async function updateAnnouncement(
@@ -162,30 +203,27 @@ export async function updateAnnouncement(
 ) {
   await checkAdmin()
 
-  const updates: string[] = []
-  const values: any[] = []
-  let paramIndex = 1
+  const supabase = createAdminClient()
+  const updates: any = {}
+  if (data.title !== undefined) updates.title = data.title
+  if (data.content !== undefined) updates.content = data.content
+  if (data.type !== undefined) updates.type = data.type
+  if (data.active !== undefined) updates.is_active = data.active
+  updates.updated_at = new Date().toISOString()
 
-  Object.entries(data).forEach(([key, value]) => {
-    if (value !== undefined) {
-      updates.push(`${key} = $${paramIndex}`)
-      values.push(value)
-      paramIndex++
-    }
-  })
+  if (Object.keys(updates).length === 0) return { success: false }
 
-  if (updates.length === 0) return { success: false }
-
-  values.push(id)
-  await db.query(`UPDATE announcements SET ${updates.join(", ")}, updated_at = NOW() WHERE id = $${paramIndex}`, values)
-
+  const { error } = await supabase.from("announcements").update(updates).eq("id", id)
+  if (error) throw error
   return { success: true }
 }
 
 export async function deleteAnnouncement(id: string) {
   await checkAdmin()
 
-  await db.query("DELETE FROM announcements WHERE id = $1", [id])
+  const supabase = createAdminClient()
+  const { error } = await supabase.from("announcements").delete().eq("id", id)
+  if (error) throw error
   return { success: true }
 }
 
@@ -193,97 +231,114 @@ export async function checkIsAdmin() {
   const user = await getUser()
   if (!user) return { isAdmin: false }
 
-  const result = await db.query("SELECT is_admin FROM users WHERE discord_id = $1", [user.id])
-
-  return { isAdmin: result.rows[0]?.is_admin || false }
+  const isAdmin = await db.admin.isAdmin(user.id)
+  return { isAdmin }
 }
 
 export async function getAdminDashboardStats() {
   await checkAdmin()
 
-  const [users, threads, replies, coins, tickets, spins] = await Promise.all([
-    db.query("SELECT COUNT(*)::int as count FROM users"),
-    db.query("SELECT COUNT(*)::int as count FROM forum_threads"),
-    db.query("SELECT COUNT(*)::int as count FROM forum_replies"),
-    db.query("SELECT COALESCE(SUM(amount), 0)::int as total FROM coin_transactions"),
-    db.query("SELECT COUNT(*)::int as count FROM spin_wheel_tickets WHERE used = false"),
-    db.query("SELECT COUNT(*)::int as count FROM spin_wheel_history"),
+  const supabase = createAdminClient()
+  const [users, threads, replies, tickets, spins, coinsSum] = await Promise.all([
+    supabase.from("users").select("*", { count: "exact", head: true }),
+    supabase.from("forum_threads").select("*", { count: "exact", head: true }),
+    supabase.from("forum_replies").select("*", { count: "exact", head: true }),
+    supabase.from("spin_wheel_tickets").select("*", { count: "exact", head: true }).eq("is_used", false),
+    supabase.from("spin_history").select("*", { count: "exact", head: true }),
+    supabase.from("coin_transactions").select("amount"),
   ])
 
+  const totalCoins = coinsSum.data?.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) || 0
+
   return {
-    totalUsers: users.rows[0].count,
-    totalThreads: threads.rows[0].count,
-    totalReplies: replies.rows[0].count,
-    totalCoins: coins.rows[0].total,
-    activeTickets: tickets.rows[0].count,
-    totalSpins: spins.rows[0].count,
+    totalUsers: users.count || 0,
+    totalThreads: threads.count || 0,
+    totalReplies: replies.count || 0,
+    totalCoins,
+    activeTickets: tickets.count || 0,
+    totalSpins: spins.count || 0,
   }
 }
 
 export async function getAdminAssets() {
   await checkAdmin()
 
-  const result = await db.query("SELECT * FROM assets ORDER BY created_at DESC LIMIT 100")
-  return result.rows
+  const supabase = createAdminClient()
+  const { data } = await supabase.from("assets").select("*").order("created_at", { ascending: false }).limit(100)
+  return data || []
 }
 
 export async function getPendingAssets() {
   await checkAdmin()
 
-  const result = await db.query("SELECT * FROM assets WHERE is_active = false ORDER BY created_at DESC")
-  return result.rows
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from("assets")
+    .select("*")
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+  return data || []
 }
 
 export async function approveAsset(assetId: string) {
   await checkAdmin()
 
-  await db.query("UPDATE assets SET is_active = true, updated_at = NOW() WHERE id = $1", [assetId])
-
+  const supabase = createAdminClient()
+  await supabase.from("assets").update({ status: "active", updated_at: new Date().toISOString() }).eq("id", assetId)
   return { success: true }
 }
 
 export async function deleteAsset(assetId: string) {
   await checkAdmin()
 
-  await db.query("DELETE FROM assets WHERE id = $1", [assetId])
+  const supabase = createAdminClient()
+  await supabase.from("assets").delete().eq("id", assetId)
   return { success: true }
 }
 
 export async function getCoinTransactionsAdmin(limit = 100) {
   await checkAdmin()
 
-  const result = await db.query(
-    "SELECT ct.*, u.username FROM coin_transactions ct JOIN users u ON ct.user_id = u.discord_id ORDER BY ct.created_at DESC LIMIT $1",
-    [limit],
-  )
-  return result.rows
+  const supabase = createAdminClient()
+  const { data: txs } = await supabase
+    .from("coin_transactions")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit)
+
+  const userIds = [...new Set((txs || []).map((t: any) => t.user_id).filter(Boolean))]
+  let usersMap: Record<string, any> = {}
+  if (userIds.length > 0) {
+    const { data: users } = await supabase
+      .from("users")
+      .select("discord_id, username")
+      .in("discord_id", userIds)
+    for (const u of users || []) {
+      usersMap[u.discord_id] = u
+    }
+  }
+
+  return (txs || []).map((t: any) => ({
+    ...t,
+    username: usersMap[t.user_id]?.username,
+  }))
 }
 
 export async function getPendingThreads() {
   await checkAdmin()
 
-  const result = await db.query(
-    `SELECT t.*, u.username, u.avatar 
-     FROM forum_threads t 
-     JOIN users u ON t.author_id = u.discord_id 
-     WHERE t.status = 'pending' 
-     ORDER BY t.created_at DESC`,
-  )
-  return result.rows
+  return await db.admin.getPendingThreads(100, 0)
 }
 
 export async function approveThread(threadId: string) {
-  await checkAdmin()
-
-  await db.query("UPDATE forum_threads SET status = 'approved', updated_at = NOW() WHERE id = $1", [threadId])
-
+  const admin = await checkAdmin()
+  await db.admin.approveThread(threadId, admin.id)
   return { success: true }
 }
 
 export async function rejectThread(threadId: string) {
   await checkAdmin()
 
-  await db.query("UPDATE forum_threads SET status = 'rejected', updated_at = NOW() WHERE id = $1", [threadId])
-
+  await db.admin.rejectThread(threadId, "Rejected by admin")
   return { success: true }
 }

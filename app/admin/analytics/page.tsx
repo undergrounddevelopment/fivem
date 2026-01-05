@@ -45,6 +45,7 @@ const topAssets = [
 export default function AnalyticsPage() {
   const { isAdmin, isLoading } = useAuth()
   const router = useRouter()
+  const [loading, setLoading] = useState(true)
   const [analytics, setAnalytics] = useState<{
     weeklyDownloads?: Array<{ day: string; downloads: number }>;
     categoryStats?: Array<{ name: string; count: number; percentage: number }>;
@@ -71,7 +72,7 @@ export default function AnalyticsPage() {
     load()
   }, [])
 
-  if (isLoading) {
+  if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />

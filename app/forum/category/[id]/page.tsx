@@ -135,10 +135,11 @@ export default function CategoryPage() {
     }
   }, [categoryId, refetchThreads])
 
-  // Filter threads for this category
-  const threads = (realtimeThreads || []).filter(
-    (t: Thread) => t.category_id === categoryId
-  )
+  // Threads are already filtered by API - no need to double filter
+  const threads = realtimeThreads || []
+  
+  // Debug logging
+  console.log(`[Category Page] categoryId: ${categoryId}, threads received: ${threads.length}`)
 
   if (loading) {
     return (

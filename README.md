@@ -94,10 +94,20 @@ DISCORD_CLIENT_SECRET=Configured
 pnpm dev              # Development server
 pnpm build            # Build production
 pnpm start            # Start production
-pnpm validate:env     # Validasi environment
+pnpm validate:env     # Validasi environment (NEW!)
 pnpm test:all         # Run all tests
 pnpm db:seed          # Seed sample data
 pnpm db:check         # Check database data
+```
+
+## 🏥 Health Check
+
+```bash
+# Windows - Quick health check
+health-check.bat
+
+# Manual validation
+node validate-system.js
 ```
 
 ## 🔧 Troubleshooting

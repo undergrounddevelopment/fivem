@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { assetsQueries } from '@/lib/db/queries'
 import { sendDiscordNotification } from '@/lib/discord-webhook'
 import { createAdminClient } from '@/lib/supabase/server'
+import { broadcastEvent } from '@/lib/realtime/broadcast'
+
+const supabase = createAdminClient()
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,24 +17,37 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = (page - 1) * limit
 
-    const [assets, total] = await Promise.all([
-      assetsQueries.getAll({ category: category || undefined, framework: framework || undefined, search: search || undefined, limit, offset }),
-      assetsQueries.getCount({ category: category || undefined, framework: framework || undefined, search: search || undefined })
-    ])
+    console.log('[API Assets] Query:', { category, framework, search, page, limit })
+
+    // Build query
+    let query = supabase
+      .from('assets')
+      .select('*, author:users!creator_id(username, avatar, membership)', { count: 'exact' })
+      .eq('status', 'active')
+
+    if (category) query = query.eq('category', category)
+    if (framework && framework !== 'all') query = query.eq('framework', framework)
+    if (search) query = query.ilike('title', `%${search}%`)
+
+    query = query.order('created_at', { ascending: false })
+    query = query.range(offset, offset + limit - 1)
+
+    const { data: assets, error, count } = await query
+
+    if (error) {
+      console.error('[API Assets] Query error:', error)
+      return NextResponse.json({ error: error.message, items: [], assets: [] }, { status: 500 })
+    }
+
+    console.log(`[API Assets] Found ${assets?.length || 0} assets (total: ${count})`)
 
     const formattedAssets = (assets || []).map((asset: any) => ({
       ...asset,
       price: asset.coin_price === 0 ? 'free' : 'premium',
       coinPrice: asset.coin_price || 0,
       author: asset.author?.username || 'Unknown',
-      authorData: asset.author ? { 
-        username: asset.author.username, 
-        avatar: asset.author.avatar, 
-        membership: asset.author.membership,
-        xp: asset.author.xp ?? 0,
-        level: asset.author.level ?? 1,
-      } : { username: 'Unknown', avatar: null, membership: 'free', xp: 0, level: 1 },
-      authorId: asset.author_id,
+      authorData: asset.author || { username: 'Unknown', avatar: null, membership: 'free', xp: 0, level: 1 },
+      authorId: asset.creator_id,
       isVerified: asset.is_verified !== false,
       isFeatured: asset.is_featured || (asset.downloads || 0) > 10000,
       image: asset.thumbnail,
@@ -46,12 +61,12 @@ export async function GET(request: NextRequest) {
       pagination: {
         page,
         limit,
-        total: total || 0,
-        pages: Math.ceil((total || 0) / limit) || 1,
+        total: count || 0,
+        pages: Math.ceil((count || 0) / limit) || 1,
       },
     })
   } catch (error) {
-    console.error('Assets API error:', error)
+    console.error('[API Assets] Error:', error)
     return NextResponse.json({ error: 'Internal server error', items: [], assets: [] }, { status: 500 })
   }
 }
@@ -65,34 +80,42 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json()
 
-    // Get user UUID from database (session.user.id is discord_id)
-    const supabase = createAdminClient()
-    const { data: dbUser, error: userError } = await supabase
+    // Get user UUID
+    const { data: dbUser } = await supabase
       .from('users')
       .select('id')
       .eq('discord_id', session.user.id)
       .single()
 
-    if (userError || !dbUser) {
-      console.error('User not found:', userError)
+    if (!dbUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const asset = await assetsQueries.create({
-      title: data.title,
-      description: data.description,
-      category: data.category,
-      framework: data.framework || 'standalone',
-      version: data.version || '1.0.0',
-      coin_price: data.coinPrice || 0,
-      thumbnail: data.thumbnail || data.image,
-      download_link: data.downloadLink,
-      file_size: data.fileSize,
-      tags: data.tags || [],
-      author_id: dbUser.id, // Use UUID from database
-    })
+    const { data: asset, error } = await supabase
+      .from('assets')
+      .insert({
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        framework: data.framework || 'standalone',
+        version: data.version || '1.0.0',
+        coin_price: data.coinPrice || 0,
+        thumbnail: data.thumbnail || data.image,
+        download_link: data.downloadLink,
+        file_size: data.fileSize,
+        tags: data.tags || [],
+        creator_id: dbUser.id,
+        status: 'active'
+      })
+      .select()
+      .single()
 
-    // Send Discord notification for new asset
+    if (error) {
+      console.error('[API Assets] Create error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // Send notification
     if (asset) {
       await sendDiscordNotification({
         title: asset.title,
@@ -101,12 +124,18 @@ export async function POST(request: NextRequest) {
         thumbnail: asset.thumbnail,
         author: { username: session.user.name || 'Unknown' },
         id: asset.id,
-      })
+      }).catch(() => {})
+
+      broadcastEvent("scripts-page-assets", "assets_changed", {
+        id: asset.id,
+        category: asset.category,
+        status: asset.status,
+      }).catch(() => {})
     }
 
     return NextResponse.json(asset, { status: 201 })
   } catch (error) {
-    console.error('Create asset error:', error)
+    console.error('[API Assets] POST error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

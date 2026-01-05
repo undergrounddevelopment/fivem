@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
     const { data: notifications, error } = await supabase
       .from("public_notifications")
       .select("*")
@@ -21,7 +21,7 @@ export async function GET() {
 
 export async function DELETE(request: Request) {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
 

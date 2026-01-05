@@ -11,7 +11,7 @@ export async function GET() {
       return NextResponse.json({ tickets: 0 })
     }
 
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
     const { data: user } = await supabase
       .from("users")
       .select("spin_tickets")

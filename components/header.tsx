@@ -25,6 +25,12 @@ export function Header() {
 
   const [userCoins, setUserCoins] = useState(0)
   const [userTickets, setUserTickets] = useState(0)
+  const [mounted, setMounted] = useState(false)
+
+  // Prevent hydration mismatch with Radix UI DropdownMenu
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -124,7 +130,7 @@ export function Header() {
           </>
         )}
 
-        {user && (
+        {user && mounted && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -185,7 +191,7 @@ export function Header() {
 
         {isLoading ? (
           <div className="h-10 w-24 bg-secondary/50 animate-pulse rounded-xl" />
-        ) : user ? (
+        ) : user && mounted ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { getSupabaseAdminClient } from "@/lib/supabase/server"
+import { hasPgConnection, pgPool } from "@/lib/db/postgres"
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +23,29 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = getSupabaseAdminClient()
+
+    if (hasPgConnection && pgPool) {
+      const reporterId = session.user.id
+      const existing = await pgPool.query(
+        'SELECT id FROM reports WHERE reporter_id = $1 AND target_id = $2 AND type = $3 AND status = $4 LIMIT 1',
+        [reporterId, targetId, type, 'pending'],
+      )
+
+      if (existing.rows?.[0]?.id) {
+        return NextResponse.json({ error: "You already reported this" }, { status: 400 })
+      }
+
+      const res = await pgPool.query(
+        `
+          INSERT INTO reports (type, target_id, reason, description, reporter_id, status)
+          VALUES ($1,$2,$3,$4,$5,'pending')
+          RETURNING *
+        `,
+        [type, targetId, reason, description?.trim() || null, reporterId],
+      )
+
+      return NextResponse.json({ success: true, report: res.rows?.[0] })
+    }
 
     // Check if user already reported this
     const { data: existingReport } = await supabase

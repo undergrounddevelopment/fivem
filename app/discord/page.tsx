@@ -1,11 +1,37 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MessageCircle, LifeBuoy, Mic, Award, Calendar, Users, Globe, Shield } from "lucide-react"
 import Link from "next/link"
 import { DISCORD_LINKS } from "@/lib/constants"
+
+type DiscordWidgetMember = {
+  id: string
+  username: string
+  discriminator: string
+  avatar_url?: string
+  status?: string
+}
+
+type DiscordWidgetChannel = {
+  id: string
+  name: string
+  position: number
+}
+
+type DiscordWidget = {
+  id: string
+  name: string
+  instant_invite?: string
+  presence_count?: number
+  channels?: DiscordWidgetChannel[]
+  members?: DiscordWidgetMember[]
+}
+
+const DISCORD_GUILD_ID = "1445784240750067830"
 
 const serverData = [
   {
@@ -40,6 +66,35 @@ const serverData = [
 
 const DiscordPage = () => {
   const activeServerData = serverData[0]
+  const [widget, setWidget] = useState<DiscordWidget | null>(null)
+  const [widgetLoading, setWidgetLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      try {
+        setWidgetLoading(true)
+        const res = await fetch(`/api/discord/widget?guildId=${DISCORD_GUILD_ID}`)
+        const json = await res.json()
+        if (!cancelled) {
+          setWidget(json?.data || null)
+        }
+      } catch {
+        if (!cancelled) {
+          setWidget(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setWidgetLoading(false)
+        }
+      }
+    }
+
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
@@ -49,6 +104,55 @@ const DiscordPage = () => {
         <p className="text-muted-foreground">
           Connect with our community and get support
         </p>
+      </div>
+
+      <div className="mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between gap-3">
+              <span className="truncate">Live Discord Widget</span>
+              <Badge variant="secondary">Guild: {DISCORD_GUILD_ID}</Badge>
+            </CardTitle>
+            <CardDescription>
+              {widgetLoading ? "Loading live data..." : widget ? "Live presence & members" : "Widget data unavailable"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {widget ? (
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">{widget.name}</Badge>
+                  <Badge variant="secondary">Online: {widget.presence_count ?? 0}</Badge>
+                  <Badge variant="secondary">Channels: {(widget.channels || []).length}</Badge>
+                </div>
+
+                {(widget.members || []).length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {(widget.members || []).slice(0, 10).map((m) => (
+                      <div key={m.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
+                        <div className="h-9 w-9 rounded-full overflow-hidden bg-secondary flex items-center justify-center">
+                          {m.avatar_url ? (
+                            <img src={m.avatar_url} alt={m.username} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-xs font-semibold">{m.username?.[0]?.toUpperCase()}</span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium truncate">{m.username}</div>
+                          <div className="text-xs text-muted-foreground truncate">{m.status || "online"}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">No members available from widget.</div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">Unable to load widget data.</div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -84,7 +84,11 @@ export async function POST() {
     for (const table of tables) {
       try {
         // Try to create table by inserting dummy data that will fail but create table structure
-        await supabase.from(table.name).insert({}).then(() => {}).catch(() => {})
+        try {
+          await supabase.from(table.name).insert({} as any)
+        } catch {
+          // ignore
+        }
         
         // Check if table exists
         const { error } = await supabase.from(table.name).select('count').limit(1)

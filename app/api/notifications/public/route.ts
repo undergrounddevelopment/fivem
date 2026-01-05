@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
     const { data: notifications, error } = await supabase
       .from("public_notifications")
       .select("*")
@@ -23,7 +23,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createAdminClient()
+    const supabase = createAdminClient()
     const body = await request.json()
     const { title, message, type, link, asset_id, expires_at, created_by } = body
 

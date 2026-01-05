@@ -1,37 +1,101 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { SPONSORS } from "@/lib/constants"
 import { X, ExternalLink, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
+import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+import type { RealtimeChannel } from "@supabase/supabase-js"
+
+interface DBBanner {
+  id: string
+  title: string
+  image_url: string
+  link: string | null
+  position: string
+  is_active: boolean
+}
 
 export function SponsorBanner() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
+  const [dbBanners, setDbBanners] = useState<DBBanner[]>([])
   const activeSponsors = SPONSORS.filter((s) => s.isActive)
 
-  // Add banner1.png to sponsors if not exists
+  // Fetch banners from database
+  const fetchBanners = useCallback(async () => {
+    try {
+      const res = await fetch("/api/banners?position=hero")
+      const data = await res.json()
+      setDbBanners(data.banners || [])
+    } catch (error) {
+      console.error("Failed to fetch banners:", error)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchBanners()
+    const supabase = getSupabaseBrowserClient()
+    let channel: RealtimeChannel | null = null
+
+    if (supabase) {
+      try {
+        channel = supabase
+          .channel("banners:hero")
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "banners", filter: "position=eq.hero" },
+            () => fetchBanners(),
+          )
+          .subscribe()
+      } catch (error) {
+        console.error("Failed to subscribe to hero banners:", error)
+      }
+    }
+
+    // Fallback polling
+    const interval = setInterval(fetchBanners, 30000)
+    return () => {
+      if (channel && supabase) supabase.removeChannel(channel)
+      clearInterval(interval)
+    }
+  }, [fetchBanners])
+
+  // Combine database banners with local sponsors
   const allBanners = [
-    { name: "Featured", image: "/banner1.png", url: "#", isActive: true, type: "image" as const },
+    // Database banners first (from admin panel)
+    ...dbBanners.map(b => ({
+      name: b.title || "Featured",
+      image: b.image_url,
+      url: b.link || "#",
+      isActive: b.is_active,
+      type: "image" as const
+    })),
+    // Then static sponsors
     ...activeSponsors
   ]
 
+  // Fallback if no banners
+  const finalBanners = allBanners.length > 0 ? allBanners : [
+    { name: "Featured", image: "/banner1.png", url: "#", isActive: true, type: "image" as const }
+  ]
+
   useEffect(() => {
-    if (allBanners.length <= 1) return
+    if (finalBanners.length <= 1) return
 
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % allBanners.length)
+      setCurrentIndex((prev) => (prev + 1) % finalBanners.length)
     }, 8000)
 
     return () => clearInterval(interval)
-  }, [allBanners.length])
+  }, [finalBanners.length])
 
-  if (!isVisible) return null
+  if (!isVisible || finalBanners.length === 0) return null
 
-  const sponsor = allBanners[currentIndex]
-  const href = sponsor.url || "#"
-  const isExternal = Boolean(sponsor.url && sponsor.url !== "#")
+  const sponsor = finalBanners[currentIndex % finalBanners.length]
+  const href = sponsor?.url || "#"
+  const isExternal = Boolean(sponsor?.url && sponsor.url !== "#")
 
   return (
     <motion.div 
@@ -115,9 +179,9 @@ export function SponsorBanner() {
       </a>
 
       {/* Indicator Dots */}
-      {allBanners.length > 1 && (
+      {finalBanners.length > 1 && (
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-          {allBanners.map((_, i) => (
+          {finalBanners.map((_, i) => (
             <motion.button
               key={i}
               onClick={() => setCurrentIndex(i)}
