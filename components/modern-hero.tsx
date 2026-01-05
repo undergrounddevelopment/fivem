@@ -8,6 +8,66 @@ import { SnowPile } from "@/components/snow-pile";
 export function ModernHero() {
   return (
     <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden py-20">
+      {/* Lightning Effect */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="lightning-glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge> 
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+            <linearGradient id="lightning-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#00d4ff" stopOpacity="0.8">
+                <animate attributeName="stop-opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite"/>
+              </stop>
+              <stop offset="50%" stopColor="#0099cc" stopOpacity="0.6">
+                <animate attributeName="stop-opacity" values="0.6;0.2;0.6" dur="1.5s" repeatCount="indefinite"/>
+              </stop>
+              <stop offset="100%" stopColor="#ffffff" stopOpacity="0.9">
+                <animate attributeName="stop-opacity" values="0.9;0.4;0.9" dur="1.8s" repeatCount="indefinite"/>
+              </stop>
+            </linearGradient>
+          </defs>
+          
+          {/* Lightning Bolts */}
+          <motion.path
+            d="M100 50 L150 120 L130 120 L180 200 L160 200 L210 280"
+            stroke="url(#lightning-gradient)"
+            strokeWidth="2"
+            fill="none"
+            filter="url(#lightning-glow)"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: [0, 1, 0] }}
+            transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 3 }}
+          />
+          
+          <motion.path
+            d="M800 100 L750 180 L770 180 L720 260 L740 260 L690 340"
+            stroke="url(#lightning-gradient)"
+            strokeWidth="2"
+            fill="none"
+            filter="url(#lightning-glow)"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: [0, 1, 0] }}
+            transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 4, delay: 1 }}
+          />
+          
+          <motion.path
+            d="M400 80 L450 160 L430 160 L480 240 L460 240 L510 320"
+            stroke="url(#lightning-gradient)"
+            strokeWidth="1.5"
+            fill="none"
+            filter="url(#lightning-glow)"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: [0, 1, 0] }}
+            transition={{ duration: 0.4, repeat: Infinity, repeatDelay: 5, delay: 2 }}
+          />
+        </svg>
+      </div>
+
       {/* Grid Background */}
       <div className="grid-background">
         <svg className="grid-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 982 786" fill="none">
@@ -162,6 +222,9 @@ export function ModernHero() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Snow Effect */}
+      <SnowPile />
     </section>
   );
 }

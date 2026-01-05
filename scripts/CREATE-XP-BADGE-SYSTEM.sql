@@ -54,13 +54,13 @@ CREATE TABLE IF NOT EXISTS xp_activities (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Insert badge tiers with custom PNG assets
+-- Insert badge tiers with local PNG assets
 INSERT INTO badges (id, name, description, image_url, min_xp, max_xp, color, tier) VALUES
-  ('beginner', 'Beginner Bolt', 'Start your journey - New member rank', 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/badge1-ahgQp6RhRXE3Yv12muS4eqNsZruDjr.png', 0, 999, '#84CC16', 1),
-  ('intermediate', 'Intermediate Bolt', 'Rising star - Active community member', 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/badge4-vdqfUlKB6C6TIR1heSgY0Oy3OIsUsL.png', 1000, 4999, '#3B82F6', 2),
-  ('advanced', 'Advanced Bolt', 'Skilled contributor - Experienced member', 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/badge2-PJRoorKzcfsEjQ0YSMM9CIKSabSBN6.png', 5000, 14999, '#9333EA', 3),
-  ('expert', 'Expert Bolt', 'Elite status - Top community member', 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/badge3-uSclnyXGLUshZgBEcZ7DISXPKsWDEh.png', 15000, 49999, '#DC2626', 4),
-  ('legend', 'Legend Bolt', 'Legendary - Ultimate rank achieved', 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/badge5-2k4q1Z4hKWPGPwG9mmQYWKl3sT05qg.png', 50000, NULL, '#F59E0B', 5)
+  ('beginner', 'Beginner Bolt', 'Start your journey - New member rank', '/badges/badge1.png', 0, 999, '#84CC16', 1),
+  ('intermediate', 'Intermediate Bolt', 'Rising star - Active community member', '/badges/badge2.png', 1000, 4999, '#3B82F6', 2),
+  ('advanced', 'Advanced Bolt', 'Skilled contributor - Experienced member', '/badges/badge3.png', 5000, 14999, '#9333EA', 3),
+  ('expert', 'Expert Bolt', 'Elite status - Top community member', '/badges/badge4.png', 15000, 49999, '#DC2626', 4),
+  ('legend', 'Legend Bolt', 'Legendary - Ultimate rank achieved', '/badges/badge5.png', 50000, NULL, '#F59E0B', 5)
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,

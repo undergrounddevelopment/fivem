@@ -2,10 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { sendDiscordNotification } from '@/lib/discord-webhook'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { broadcastEvent } from '@/lib/realtime/broadcast'
+import { xpQueries } from '@/lib/xp/queries'
 
-const supabase = createAdminClient()
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+)
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,11 +24,17 @@ export async function GET(request: NextRequest) {
 
     console.log('[API Assets] Query:', { category, framework, search, page, limit })
 
-    // Build query
+    // Build query - Fix status filter to match database enum
     let query = supabase
       .from('assets')
-      .select('*, author:users!creator_id(username, avatar, membership)', { count: 'exact' })
-      .eq('status', 'active')
+      .select('*, author:users!assets_author_id_fkey(username, avatar, membership)', { count: 'exact' })
+      .in('status', ['pending', 'approved', 'featured', 'active'])
+
+    // Add status filter if specified
+    const status = searchParams.get('status')
+    if (status) {
+      query = query.eq('status', status)
+    }
 
     if (category) query = query.eq('category', category)
     if (framework && framework !== 'all') query = query.eq('framework', framework)
@@ -41,19 +52,30 @@ export async function GET(request: NextRequest) {
 
     console.log(`[API Assets] Found ${assets?.length || 0} assets (total: ${count})`)
 
-    const formattedAssets = (assets || []).map((asset: any) => ({
-      ...asset,
-      price: asset.coin_price === 0 ? 'free' : 'premium',
-      coinPrice: asset.coin_price || 0,
-      author: asset.author?.username || 'Unknown',
-      authorData: asset.author || { username: 'Unknown', avatar: null, membership: 'free', xp: 0, level: 1 },
-      authorId: asset.creator_id,
-      isVerified: asset.is_verified !== false,
-      isFeatured: asset.is_featured || (asset.downloads || 0) > 10000,
-      image: asset.thumbnail,
-      createdAt: asset.created_at,
-      updatedAt: asset.updated_at,
-    }))
+    const formattedAssets = (assets || []).map((asset: any) => {
+      // Handle author data - fallback if author not found via foreign key
+      let authorData = asset.author
+      if (!authorData && asset.author_id) {
+        // Try to find author by UUID if foreign key failed
+        authorData = { username: 'Unknown', avatar: null, membership: 'free' }
+      }
+
+      return {
+        ...asset,
+        price: asset.coin_price === 0 ? 'free' : 'premium',
+        coinPrice: asset.coin_price || 0,
+        author: authorData?.username || 'Unknown',
+        authorData: authorData || { username: 'Unknown', avatar: null, membership: 'free', xp: 0, level: 1 },
+        authorId: asset.author_id || asset.creator_id,
+        isVerified: asset.is_verified !== false,
+        isFeatured: asset.is_featured || asset.status === 'featured' || (asset.downloads || 0) > 10000,
+        image: asset.thumbnail_url || asset.thumbnail,
+        thumbnail: asset.thumbnail_url || asset.thumbnail,
+        downloadLink: asset.download_url || asset.download_link,
+        createdAt: asset.created_at,
+        updatedAt: asset.updated_at,
+      }
+    })
 
     return NextResponse.json({
       items: formattedAssets,
@@ -100,12 +122,12 @@ export async function POST(request: NextRequest) {
         framework: data.framework || 'standalone',
         version: data.version || '1.0.0',
         coin_price: data.coinPrice || 0,
-        thumbnail: data.thumbnail || data.image,
-        download_link: data.downloadLink,
+        thumbnail_url: data.thumbnail || data.image,
+        download_url: data.downloadLink,
         file_size: data.fileSize,
         tags: data.tags || [],
-        creator_id: dbUser.id,
-        status: 'active'
+        author_id: dbUser.id,
+        status: 'pending'
       })
       .select()
       .single()
@@ -131,6 +153,9 @@ export async function POST(request: NextRequest) {
         category: asset.category,
         status: asset.status,
       }).catch(() => {})
+
+      // Award XP for uploading asset
+      await xpQueries.awardXP(session.user.id, 'upload_asset', asset.id).catch(() => {})
     }
 
     return NextResponse.json(asset, { status: 201 })

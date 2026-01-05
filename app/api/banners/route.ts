@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import { createAdminClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 
 export async function GET(request: Request) {
   try {
-    const supabase = createAdminClient()
+    const supabase = createClient()
     const { searchParams } = new URL(request.url)
     const position = searchParams.get("position")
     const all = searchParams.get("all")
@@ -22,7 +20,10 @@ export async function GET(request: Request) {
 
     const { data: banners, error } = await query
 
-    if (error) throw error
+    if (error) {
+      console.error("Banners fetch error:", error)
+      return NextResponse.json({ banners: [] })
+    }
 
     return NextResponse.json({ banners: banners || [] })
   } catch (error) {

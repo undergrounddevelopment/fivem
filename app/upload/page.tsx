@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { motion } from "framer-motion"
 import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -810,19 +811,28 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="p-4 md:p-6">
-          <div className="max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="mb-8">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/20">
-                  <Upload className="h-7 w-7 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-bold">Create New Asset</h1>
-                  <p className="text-muted-foreground">Share your creation with the FiveM community</p>
-                </div>
+    <div className="min-h-screen bg-background">
+      {/* Background Effects */}
+      <div className="blur-orb" style={{ top: '5%', left: '15%', opacity: 0.2 }} />
+      <div className="blur-orb" style={{ top: '50%', right: '10%', opacity: 0.15 }} />
+      
+      <div className="container mx-auto px-4 py-8 relative z-10">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-pink-600 flex items-center justify-center shadow-lg shadow-primary/20">
+                <Upload className="h-7 w-7 text-white" />
               </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold">Create New Asset</h1>
+                <p className="text-muted-foreground">Share your creation with the FiveM community</p>
+              </div>
+            </div>
 
               {/* Progress Steps */}
               <div className="flex items-center gap-2 mt-6">
@@ -864,9 +874,9 @@ export default function UploadPage() {
                   </div>
                 ))}
               </div>
-            </div>
+          </motion.div>
 
-            <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit}>
               {/* Step 1: Basic Information */}
               {currentStep === 1 && (
                 <div className="space-y-6">
@@ -1313,6 +1323,7 @@ export default function UploadPage() {
               )}
             </form>
           </div>
+        </div>
     </div>
   )
 }

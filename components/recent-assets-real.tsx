@@ -33,19 +33,11 @@ export function RecentAssets() {
 
   const fetchAssets = async () => {
     try {
-      const { createClient } = await import("@/lib/supabase/client")
-      const supabase = createClient()
+      const response = await fetch('/api/assets?limit=6&status=approved')
+      if (!response.ok) throw new Error('Failed to fetch')
       
-      const { data, error } = await supabase
-        .from("assets")
-        .select("*")
-        .eq("status", "approved")
-        .order("created_at", { ascending: false })
-        .limit(6)
-
-      if (error) throw error
-      
-      setAssets(data || [])
+      const data = await response.json()
+      setAssets(data.assets || data.items || [])
       setError(false)
     } catch (err) {
       console.error("Failed to fetch assets:", err)
@@ -125,25 +117,29 @@ export function RecentAssets() {
               transition={{ delay: index * 0.1 }}
             >
               <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 rounded-t-lg flex items-center justify-center">
-                  {asset.thumbnail_url ? (
-                    <img 
-                      src={asset.thumbnail_url} 
-                      alt={asset.title}
-                      className="w-full h-full object-cover rounded-t-lg"
-                    />
-                  ) : (
-                    <div className="text-white text-center">
-                      <div className="text-2xl mb-2">📦</div>
-                      <div className="text-sm font-medium">{asset.category}</div>
-                    </div>
-                  )}
-                </div>
+                <Link href={`/asset/${asset.id}`}>
+                  <div className="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 rounded-t-lg flex items-center justify-center">
+                    {asset.thumbnail_url || asset.thumbnail ? (
+                      <img 
+                        src={asset.thumbnail_url || asset.thumbnail} 
+                        alt={asset.title}
+                        className="w-full h-full object-cover rounded-t-lg"
+                      />
+                    ) : (
+                      <div className="text-white text-center">
+                        <div className="text-2xl mb-2">📦</div>
+                        <div className="text-sm font-medium">{asset.category}</div>
+                      </div>
+                    )}
+                  </div>
+                </Link>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-sm line-clamp-1">
-                      {asset.title}
-                    </h3>
+                    <Link href={`/asset/${asset.id}`}>
+                      <h3 className="font-semibold text-sm line-clamp-1 hover:text-primary">
+                        {asset.title}
+                      </h3>
+                    </Link>
                     <Badge variant="secondary" className="text-xs">
                       {asset.category}
                     </Badge>
@@ -161,7 +157,7 @@ export function RecentAssets() {
                       </div>
                       <div className="flex items-center gap-1">
                         <Star className="h-3 w-3" />
-                        {asset.rating.toFixed(1)}
+                        {(asset.rating || 4.8).toFixed(1)}
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
@@ -172,7 +168,7 @@ export function RecentAssets() {
                   
                   <div className="mt-3 flex items-center justify-between">
                     <Badge variant={asset.coin_price === 0 ? "secondary" : "default"}>
-                      {asset.coin_price === 0 ? "FREE" : `${asset.coin_price} coins`}
+                      {asset.coin_price === 0 ? "FREE" : `${asset.coinPrice || asset.coin_price} coins`}
                     </Badge>
                     <Badge variant="outline" className="text-xs">
                       {asset.framework}

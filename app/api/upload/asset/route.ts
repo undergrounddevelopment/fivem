@@ -7,6 +7,7 @@ import { logger } from "@/lib/logger"
 import { XP_CONFIG, getLevelFromXP } from "@/lib/xp-badges"
 import { broadcastEvent } from "@/lib/realtime/broadcast"
 import { hasPgConnection, pgPool } from "@/lib/db/postgres"
+import { sendDiscordNotification } from "@/lib/discord-webhook"
 
 export async function POST(request: NextRequest) {
   try {
@@ -312,6 +313,22 @@ export async function POST(request: NextRequest) {
       },
       "low",
     )
+
+    // Send Discord notification for ALL uploads (pending and approved)
+    try {
+      await sendDiscordNotification({
+        title: asset.title || title,
+        description: asset.description || description,
+        category: asset.category || category,
+        thumbnail: asset.thumbnail || safeThumbnail,
+        author: { username: user?.username || session.user.name || "Unknown User" },
+        id: asset.id,
+      })
+      console.log("✅ Discord notification sent for asset:", asset.title)
+    } catch (discordError) {
+      console.error("❌ Discord notification failed:", discordError)
+      // Don't fail the upload if Discord notification fails
+    }
 
     // Realtime notification (works even after migrating DB away from Supabase)
     broadcastEvent("scripts-page-assets", "assets_changed", {

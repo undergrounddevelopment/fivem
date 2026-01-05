@@ -1,252 +1,275 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { X, Bell, Sparkles, AlertTriangle, Info, CheckCircle, ExternalLink, Zap } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect, useRef, useLayoutEffect } from "react"
+import { X, AlertTriangle, Info, CheckCircle, ArrowRight, Megaphone, Package } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 
-interface PublicNotification {
+interface Notif {
   id: string
   title: string
   message: string
   type: "info" | "success" | "warning" | "alert" | "new_asset"
   link?: string
-  asset_id?: string
   created_at: string
 }
 
-export function PublicNotifications() {
-  // Temporarily disabled - API not available
-  const [notifications, setNotifications] = useState<PublicNotification[]>([])
-  const [dismissedIds, setDismissedIds] = useState<string[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isMounted, setIsMounted] = useState(false)
+// Electric Border Component - ULTRA VISIBLE
+function ElectricBorder({ color, width, height }: { color: string; width: number; height: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const animRef = useRef<number | null>(null)
+  const tRef = useRef(Math.random() * 100)
+  const lastRef = useRef(0)
 
   useEffect(() => {
-    setIsMounted(true)
-    const dismissed = JSON.parse(localStorage.getItem("dismissedNotifications") || "[]")
-    setDismissedIds(dismissed)
-    fetchNotifications()
+    const cv = canvasRef.current
+    if (!cv || width === 0 || height === 0) return
+    const ctx = cv.getContext("2d")
+    if (!ctx) return
 
-    const supabase = getSupabaseBrowserClient()
-    let channel: RealtimeChannel | null = null
+    const pad = 40
+    cv.width = width + pad * 2
+    cv.height = height + pad * 2
 
-    if (supabase) {
-      try {
-        channel = supabase
-          .channel("public-notifications")
-          .on("postgres_changes", { event: "*", schema: "public", table: "public_notifications" }, () => {
-            fetchNotifications()
-          })
-          .subscribe()
-      } catch (error) {
-        console.error("Failed to subscribe to public notifications:", error)
-      }
+    const rnd = (x: number) => (Math.sin(x * 12.9898) * 43758.5453) % 1
+    const n2d = (x: number, y: number) => {
+      const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j
+      const a = rnd(i + j * 57), b = rnd(i + 1 + j * 57), c = rnd(i + (j + 1) * 57), d = rnd(i + 1 + (j + 1) * 57)
+      const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy)
+      return a * (1 - ux) * (1 - uy) + b * ux * (1 - uy) + c * (1 - ux) * uy + d * ux * uy
+    }
+    const fbm = (x: number, t: number, s: number) => {
+      let v = 0, a = 0.15, f = 4
+      for (let i = 0; i < 5; i++) { v += a * n2d(f * x + s * 50, t * f * 0.3); f *= 1.8; a *= 0.5 }
+      return v
+    }
+    const crn = (cx: number, cy: number, r: number, st: number, ar: number, p: number) => ({
+      x: cx + r * Math.cos(st + p * ar), y: cy + r * Math.sin(st + p * ar)
+    })
+    const pt = (t: number, l: number, tp: number, w: number, h: number, r: number) => {
+      const sw = w - 2 * r, sh = h - 2 * r, ca = Math.PI * r / 2, tot = 2 * sw + 2 * sh + 4 * ca, d = t * tot
+      let ac = 0
+      if (d <= ac + sw) return { x: l + r + (d - ac) / sw * sw, y: tp }; ac += sw
+      if (d <= ac + ca) return crn(l + w - r, tp + r, r, -Math.PI / 2, Math.PI / 2, (d - ac) / ca); ac += ca
+      if (d <= ac + sh) return { x: l + w, y: tp + r + (d - ac) / sh * sh }; ac += sh
+      if (d <= ac + ca) return crn(l + w - r, tp + h - r, r, 0, Math.PI / 2, (d - ac) / ca); ac += ca
+      if (d <= ac + sw) return { x: l + w - r - (d - ac) / sw * sw, y: tp + h }; ac += sw
+      if (d <= ac + ca) return crn(l + r, tp + h - r, r, Math.PI / 2, Math.PI / 2, (d - ac) / ca); ac += ca
+      if (d <= ac + sh) return { x: l, y: tp + h - r - (d - ac) / sh * sh }; ac += sh
+      return crn(l + r, tp + r, r, Math.PI, Math.PI / 2, (d - ac) / ca)
     }
 
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000)
-    return () => {
-      if (channel && supabase) supabase.removeChannel(channel)
-      clearInterval(interval)
+    const draw = (now: number) => {
+      const dt = (now - lastRef.current) / 1000
+      tRef.current += dt * 3
+      lastRef.current = now
+      ctx.clearRect(0, 0, cv.width, cv.height)
+
+      const bw = width, bh = height, r = 14, disp = 18
+      const samp = Math.max(80, Math.floor((2 * (bw + bh) + 2 * Math.PI * r) / 2))
+
+      // Outer glow layer
+      ctx.save()
+      ctx.globalAlpha = 0.4
+      ctx.strokeStyle = color
+      ctx.lineWidth = 8
+      ctx.lineCap = "round"
+      ctx.shadowColor = color
+      ctx.shadowBlur = 25
+      ctx.beginPath()
+      for (let i = 0; i <= samp; i++) {
+        const p = i / samp, point = pt(p, pad, pad, bw, bh, r)
+        const nx = fbm(p * 6, tRef.current, 0) * disp * 1.5, ny = fbm(p * 6, tRef.current, 1) * disp * 1.5
+        i === 0 ? ctx.moveTo(point.x + nx, point.y + ny) : ctx.lineTo(point.x + nx, point.y + ny)
+      }
+      ctx.closePath()
+      ctx.stroke()
+      ctx.restore()
+
+      // Main lightning
+      ctx.save()
+      ctx.strokeStyle = color
+      ctx.lineWidth = 2
+      ctx.lineCap = "round"
+      ctx.shadowColor = color
+      ctx.shadowBlur = 15
+      ctx.beginPath()
+      for (let i = 0; i <= samp; i++) {
+        const p = i / samp, point = pt(p, pad, pad, bw, bh, r)
+        const nx = fbm(p * 6, tRef.current, 0) * disp, ny = fbm(p * 6, tRef.current, 1) * disp
+        i === 0 ? ctx.moveTo(point.x + nx, point.y + ny) : ctx.lineTo(point.x + nx, point.y + ny)
+      }
+      ctx.closePath()
+      ctx.stroke()
+      ctx.restore()
+
+      // White core
+      ctx.save()
+      ctx.globalAlpha = 0.7
+      ctx.strokeStyle = "#ffffff"
+      ctx.lineWidth = 1
+      ctx.shadowColor = color
+      ctx.shadowBlur = 10
+      ctx.beginPath()
+      for (let i = 0; i <= samp; i++) {
+        const p = i / samp, point = pt(p, pad, pad, bw, bh, r)
+        const nx = fbm(p * 6, tRef.current, 0) * disp, ny = fbm(p * 6, tRef.current, 1) * disp
+        i === 0 ? ctx.moveTo(point.x + nx, point.y + ny) : ctx.lineTo(point.x + nx, point.y + ny)
+      }
+      ctx.closePath()
+      ctx.stroke()
+      ctx.restore()
+
+      animRef.current = requestAnimationFrame(draw)
+    }
+
+    animRef.current = requestAnimationFrame(draw)
+    return () => { if (animRef.current) cancelAnimationFrame(animRef.current) }
+  }, [width, height, color])
+
+  if (width === 0 || height === 0) return null
+  return <canvas ref={canvasRef} className="absolute pointer-events-none" style={{ top: -40, left: -40, width: width + 80, height: height + 80, zIndex: 50 }} />
+}
+
+// Single Notification Card
+function NotificationCard({ notif, onDismiss, index }: { notif: Notif; onDismiss: () => void; index: number }) {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState({ w: 0, h: 0 })
+
+  const types: Record<string, { icon: any; color: string; label: string }> = {
+    new_asset: { icon: Package, color: "#00ff88", label: "New" },
+    success: { icon: CheckCircle, color: "#22c55e", label: "Done" },
+    warning: { icon: AlertTriangle, color: "#eab308", label: "Notice" },
+    alert: { icon: Megaphone, color: "#ef4444", label: "Alert" },
+    info: { icon: Info, color: "#3b82f6", label: "Info" }
+  }
+
+  const t = types[notif.type] || types.info
+  const Icon = t.icon
+
+  useLayoutEffect(() => {
+    if (!cardRef.current) return
+    const rect = cardRef.current.getBoundingClientRect()
+    setSize({ w: rect.width, h: rect.height })
+
+    const obs = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setSize({ w: entry.contentRect.width, h: entry.contentRect.height })
+      }
+    })
+    obs.observe(cardRef.current)
+    return () => obs.disconnect()
+  }, [])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 50, scale: 0.95 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 50, scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 350, damping: 25, delay: index * 0.06 }}
+      className="relative"
+      style={{ overflow: 'visible' }}
+    >
+      <div className="absolute inset-0 rounded-2xl blur-xl opacity-50" style={{ background: `radial-gradient(ellipse, ${t.color}50, transparent 60%)`, margin: -15 }} />
+
+      <div ref={cardRef} className="relative rounded-2xl bg-[#0a0a0a]/95 backdrop-blur-lg border border-white/[0.08]" style={{ overflow: 'visible' }}>
+        {size.w > 0 && size.h > 0 && <ElectricBorder color={t.color} width={size.w} height={size.h} />}
+        <div className="absolute inset-0 opacity-40 pointer-events-none rounded-2xl" style={{ background: `linear-gradient(135deg, ${t.color}15, transparent 60%)` }} />
+
+        <div className="relative p-4">
+          <div className="flex gap-3">
+            <div className="shrink-0 h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${t.color}28, ${t.color}08)`, boxShadow: `0 0 18px ${t.color}25` }}>
+              <Icon className="h-5 w-5" style={{ color: t.color }} />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: `${t.color}cc` }}>{t.label}</span>
+              <h4 className="font-medium text-white/95 text-[14px] leading-tight mt-0.5">{notif.title}</h4>
+              <p className="text-white/50 text-[12px] mt-1 line-clamp-2 leading-relaxed">{notif.message}</p>
+              {notif.link && (
+                <Link href={notif.link}>
+                  <motion.span whileHover={{ x: 3 }} className="inline-flex items-center gap-1 mt-2 text-[12px] font-medium" style={{ color: t.color }}>
+                    View <ArrowRight className="h-3.5 w-3.5" />
+                  </motion.span>
+                </Link>
+              )}
+            </div>
+
+            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={onDismiss} className="shrink-0 h-7 w-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center">
+              <X className="h-4 w-4 text-white/50" />
+            </motion.button>
+          </div>
+        </div>
+
+        <div className="h-[2px] bg-white/[0.06]">
+          <motion.div initial={{ width: "100%" }} animate={{ width: "0%" }} transition={{ duration: 10, ease: "linear" }} className="h-full" style={{ background: `linear-gradient(90deg, ${t.color}, ${t.color}50)` }} />
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// Main Component
+export function PublicNotifications() {
+  const [notifs, setNotifs] = useState<Notif[]>([])
+  const [dismissed, setDismissed] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    setDismissed(JSON.parse(localStorage.getItem("dismissed_notifs") || "[]"))
+    
+    const fetchNotifs = () => {
+      fetch("/api/notifications/public")
+        .then(r => r.ok ? r.json() : { notifications: [] })
+        .then(d => setNotifs(d.notifications || []))
+        .finally(() => setLoading(false))
+    }
+    
+    fetchNotifs()
+
+    const sb = getSupabaseBrowserClient()
+    let ch: RealtimeChannel | null = null
+    if (sb) {
+      try {
+        ch = sb.channel("pub-notifs")
+          .on("postgres_changes", { event: "*", schema: "public", table: "public_notifications" }, fetchNotifs)
+          .subscribe()
+      } catch {}
+    }
+    
+    const iv = setInterval(fetchNotifs, 30000)
+    return () => { 
+      if (ch && sb) sb.removeChannel(ch)
+      clearInterval(iv) 
     }
   }, [])
 
-  const fetchNotifications = async () => {
-    try {
-      const res = await fetch("/api/notifications/public")
-      if (res.ok) {
-        const data = await res.json()
-        setNotifications(data.notifications || [])
-      }
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error)
-    } finally {
-      setIsLoading(false)
-    }
+  const dismiss = (id: string) => {
+    const next = [...dismissed, id]
+    setDismissed(next)
+    localStorage.setItem("dismissed_notifs", JSON.stringify(next))
   }
 
-  const dismissNotification = (id: string) => {
-    const newDismissed = [...dismissedIds, id]
-    setDismissedIds(newDismissed)
-    localStorage.setItem("dismissedNotifications", JSON.stringify(newDismissed))
-  }
-
-  const visibleNotifications = notifications.filter((n) => !dismissedIds.includes(n.id))
-
-  // Prevent hydration mismatch - only render on client
-  if (!isMounted || isLoading || visibleNotifications.length === 0) return null
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case "new_asset":
-        return <Sparkles className="h-5 w-5" />
-      case "success":
-        return <CheckCircle className="h-5 w-5" />
-      case "warning":
-        return <AlertTriangle className="h-5 w-5" />
-      case "alert":
-        return <Bell className="h-5 w-5" />
-      default:
-        return <Info className="h-5 w-5" />
-    }
-  }
-
-  const getStyles = (type: string) => {
-    switch (type) {
-      case "new_asset":
-        return {
-          container: "bg-gradient-to-br from-cyan-500/30 via-blue-500/20 to-purple-500/30 border-cyan-400/60 shadow-cyan-500/20",
-          icon: "bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-lg shadow-cyan-500/30",
-          text: "text-cyan-50",
-          subtext: "text-cyan-200/80",
-          button: "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white"
-        }
-      case "success":
-        return {
-          container: "bg-gradient-to-br from-green-500/30 via-emerald-500/20 to-teal-500/30 border-green-400/60 shadow-green-500/20",
-          icon: "bg-gradient-to-br from-green-400 to-emerald-500 text-white shadow-lg shadow-green-500/30",
-          text: "text-green-50",
-          subtext: "text-green-200/80",
-          button: "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white"
-        }
-      case "warning":
-        return {
-          container: "bg-gradient-to-br from-amber-500/30 via-orange-500/20 to-yellow-500/30 border-amber-400/60 shadow-amber-500/20",
-          icon: "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30",
-          text: "text-amber-50",
-          subtext: "text-amber-200/80",
-          button: "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white"
-        }
-      case "alert":
-        return {
-          container: "bg-gradient-to-br from-red-500/30 via-rose-500/20 to-pink-500/30 border-red-400/60 shadow-red-500/20",
-          icon: "bg-gradient-to-br from-red-400 to-rose-500 text-white shadow-lg shadow-red-500/30",
-          text: "text-red-50",
-          subtext: "text-red-200/80",
-          button: "bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-400 hover:to-rose-400 text-white"
-        }
-      default:
-        return {
-          container: "bg-gradient-to-br from-blue-500/30 via-indigo-500/20 to-violet-500/30 border-blue-400/60 shadow-blue-500/20",
-          icon: "bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-lg shadow-blue-500/30",
-          text: "text-blue-50",
-          subtext: "text-blue-200/80",
-          button: "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 text-white"
-        }
-    }
-  }
+  const visible = notifs.filter(n => !dismissed.includes(n.id))
+  
+  if (!mounted || loading || visible.length === 0) return null
 
   return (
-    <div className="fixed top-20 right-4 z-50 flex flex-col gap-3 w-[380px] max-w-[calc(100vw-2rem)]">
+    <div className="fixed top-20 right-4 z-50 flex flex-col gap-4 max-w-[360px]" style={{ overflow: 'visible' }}>
       <AnimatePresence mode="popLayout">
-        {visibleNotifications.slice(0, 3).map((notification, index) => {
-          const styles = getStyles(notification.type)
-          return (
-            <motion.div
-              key={notification.id}
-              initial={{ opacity: 0, x: 100, scale: 0.8 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 100, scale: 0.8 }}
-              transition={{ 
-                type: "spring", 
-                stiffness: 400, 
-                damping: 30,
-                delay: index * 0.1 
-              }}
-              className={cn(
-                "relative rounded-2xl border-2 p-4 backdrop-blur-xl shadow-2xl overflow-hidden",
-                styles.container
-              )}
-            >
-              {/* Animated background glow */}
-              <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-bl from-white/10 to-transparent rounded-full blur-2xl animate-pulse" />
-              </div>
-              
-              {/* Shimmer effect */}
-              <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
-              </div>
-
-              <div className="relative flex items-start gap-4">
-                {/* Icon with glow */}
-                <motion.div 
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", delay: 0.2 }}
-                  className={cn(
-                    "flex-shrink-0 p-2.5 rounded-xl",
-                    styles.icon
-                  )}
-                >
-                  {getIcon(notification.type)}
-                </motion.div>
-
-                <div className="flex-1 min-w-0 space-y-2">
-                  {/* Title with badge */}
-                  <div className="flex items-center gap-2">
-                    <p className={cn("font-bold text-base", styles.text)}>
-                      {notification.title}
-                    </p>
-                    {notification.type === "new_asset" && (
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider">
-                        <Zap className="h-3 w-3" />
-                        New
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Message */}
-                  <p className={cn("text-sm leading-relaxed", styles.subtext)}>
-                    {notification.message}
-                  </p>
-
-                  {/* Action button */}
-                  {notification.link && (
-                    <Link href={notification.link}>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={cn(
-                          "mt-2 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all",
-                          styles.button
-                        )}
-                      >
-                        View Details
-                        <ExternalLink className="h-4 w-4" />
-                      </motion.button>
-                    </Link>
-                  )}
-                </div>
-
-                {/* Close button */}
-                <motion.button
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => dismissNotification(notification.id)}
-                  className="flex-shrink-0 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-                >
-                  <X className="h-4 w-4 text-white/80" />
-                </motion.button>
-              </div>
-
-              {/* Progress bar for auto-dismiss (visual only) */}
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10">
-                <motion.div 
-                  initial={{ width: "100%" }}
-                  animate={{ width: "0%" }}
-                  transition={{ duration: 10, ease: "linear" }}
-                  className="h-full bg-white/30"
-                />
-              </div>
-            </motion.div>
-          )
-        })}
+        {visible.slice(0, 3).map((n, i) => (
+          <NotificationCard 
+            key={n.id} 
+            notif={n} 
+            onDismiss={() => dismiss(n.id)} 
+            index={i} 
+          />
+        ))}
       </AnimatePresence>
     </div>
   )

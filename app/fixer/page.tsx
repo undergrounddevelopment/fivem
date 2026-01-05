@@ -3,8 +3,12 @@
 import { useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 
-export default function FixerPage() {
+// Force dynamic rendering to avoid SSG issues with auth
+export const dynamic_config = 'force-dynamic';
+
+function FixerPageContent() {
   const { user } = useAuth();
   const router = useRouter();
 
@@ -35,4 +39,8 @@ export default function FixerPage() {
       </div>
     </div>
   );
+}
+
+export default function FixerPage() {
+  return <FixerPageContent />;
 }

@@ -1,5 +1,6 @@
 "use client"
 
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import {
   Check,
@@ -106,37 +107,63 @@ export default function MembershipPage() {
   }
 
   return (
-    <div className="p-4 md:p-6">
-          {/* Header */}
-          <div className="text-center mb-12 relative">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-background">
+      {/* Background Effects */}
+      <div className="blur-orb" style={{ top: '5%', left: '20%', opacity: 0.25 }} />
+      <div className="blur-orb" style={{ top: '40%', right: '10%', opacity: 0.2 }} />
+      <div className="blur-orb" style={{ top: '70%', left: '30%', opacity: 0.15 }} />
+      
+      <div className="container mx-auto px-4 py-8 relative z-10">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-12 relative"
+        >
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="relative">
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-2 text-sm text-primary mb-6 border border-primary/30">
-                <Sparkles className="h-4 w-4" />
-                <span className="font-medium">UPGRADE YOUR EXPERIENCE</span>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-                Simple, Transparent <span className="gradient-text">Pricing</span>
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Join over 5,000+ server owners who use FiveM Tools to build their dream servers.
-              </p>
+          <div className="relative">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-2 text-sm text-primary mb-6 border border-primary/30">
+              <Sparkles className="h-4 w-4" />
+              <span className="font-medium">UPGRADE YOUR EXPERIENCE</span>
             </div>
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+              Simple, Transparent <span className="gradient-text">Pricing</span>
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Join over 5,000+ server owners who use FiveM Tools to build their dream servers.
+            </p>
           </div>
+        </motion.div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-12">
-            {stats.map((stat) => (
-              <div key={stat.label} className="glass rounded-xl p-4 text-center card-hover">
-                <p className="text-2xl font-bold text-primary">{stat.value}</p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </div>
-            ))}
-          </div>
+        {/* Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-12"
+        >
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 + index * 0.05 }}
+              className="glass rounded-xl p-4 text-center card-hover border-white/10"
+            >
+              <p className="text-2xl font-bold text-primary">{stat.value}</p>
+              <p className="text-sm text-muted-foreground">{stat.label}</p>
+            </motion.div>
+          ))}
+        </motion.div>
 
           {/* Pricing Cards */}
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-16"
+          >
             {plans.map((plan) => {
               const Icon = plan.icon
               const isCurrentVIP = user?.membership === "vip" || user?.membership === "admin"
@@ -231,10 +258,15 @@ export default function MembershipPage() {
                 </div>
               )
             })}
-          </div>
+          </motion.div>
 
           {/* How to Get VIP Section */}
-          <div className="max-w-4xl mx-auto mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="max-w-4xl mx-auto mb-16"
+          >
             <div className="glass rounded-2xl p-8 border-primary/30">
               <h2 className="text-2xl font-bold text-foreground text-center mb-6 flex items-center justify-center gap-2">
                 <MessageCircle className="h-6 w-6 text-primary" />
@@ -278,10 +310,15 @@ export default function MembershipPage() {
                 </Button>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Benefits Section */}
-          <div className="max-w-4xl mx-auto mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="max-w-4xl mx-auto mb-16"
+          >
             <h2 className="text-2xl font-bold text-foreground text-center mb-8 flex items-center justify-center gap-2">
               <Zap className="h-6 w-6 text-primary" />
               Why Go Premium?
@@ -299,10 +336,15 @@ export default function MembershipPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* FAQ */}
-          <div className="max-w-2xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="max-w-2xl mx-auto"
+          >
             <h2 className="text-2xl font-bold text-foreground text-center mb-8">Frequently Asked Questions</h2>
             <div className="space-y-4">
               {[
@@ -322,14 +364,21 @@ export default function MembershipPage() {
                   q: "Is there a refund policy?",
                   a: "We offer a 7-day money-back guarantee if you're not satisfied with your VIP membership.",
                 },
-              ].map((faq) => (
-                <div key={faq.q} className="glass rounded-xl p-5">
+              ].map((faq, index) => (
+                <motion.div
+                  key={faq.q}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + index * 0.05 }}
+                  className="glass rounded-xl p-5 border-white/10"
+                >
                   <h3 className="font-semibold text-foreground mb-2">{faq.q}</h3>
                   <p className="text-sm text-muted-foreground">{faq.a}</p>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
+      </div>
     </div>
   )
 }

@@ -7,7 +7,7 @@
     "build:webpack": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
     "deploy:prod": "vercel --prod",
     "deploy:now": "powershell -ExecutionPolicy Bypass -File ./deploy-vercel-now.ps1",
-    "dev": "next dev --webpack",
+    "dev": "next dev",
     "lint": "cross-env ESLINT_USE_FLAT_CONFIG=false eslint \"app/**/*.{js,jsx,ts,tsx}\" \"components/**/*.{js,jsx,ts,tsx}\" \"lib/**/*.{js,jsx,ts,tsx}\" \"hooks/**/*.{js,jsx,ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "monitor": "node scripts/monitor-performance.js",
@@ -24,11 +24,11 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:check": "node scripts/check-database.js",
     "analyze:supabase": "node scripts/analyze-supabase-direct.mjs",
-    "db:check-fix": "node scripts/auto-check-and-fix-database.mjs"
-    ,
+    "db:check-fix": "node scripts/auto-check-and-fix-database.mjs",
+    "storage:setup": "node setup-storage.js",
     "db:apply:akamai": "node scripts/apply-akamai-sql.js",
     "fix:assets": "node fix-assets-scripts.js",
-    "deploy:prod": "deploy-production-now.bat"
+    "deploy:prod:now": "deploy-production-now.bat"
   },
   "dependencies": {
     "@auth/core": "latest",
@@ -103,7 +103,7 @@
     "pg": "^8.16.3",
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
-    "react-day-picker": "^8.10.1",
+    "react-day-picker": "^9.4.4",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",
     "react-resizable-panels": "4.1.1",
@@ -126,7 +126,9 @@
   },
   "pnpm": {
     "overrides": {
-      "date-fns": "^3.6.0"
+      "date-fns": "^3.6.0",
+      "react-day-picker": "^9.4.4",
+      "whatwg-encoding": "npm:@zxing/text-encoding@^0.9.0"
     },
     "shamefully-hoist": true
   },

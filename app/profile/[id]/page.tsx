@@ -1,12 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CoinIcon } from "@/components/coin-icon"
 import { BadgesDisplay, LevelBadge } from "@/components/badges-display"
 import { getLevelFromXP } from "@/lib/xp-badges"
+import { LoadingState } from "@/components/loading-state"
+import { EmptyState } from "@/components/empty-state"
 import {
   ArrowLeft,
   MessageSquare,
@@ -22,6 +25,7 @@ import {
   Shirt,
   Trophy,
   Zap,
+  User,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -134,17 +138,11 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <Skeleton className="h-8 w-24 mb-6" />
-        <div className="rounded-xl border border-border bg-card p-6 mb-6">
-          <div className="flex items-start gap-6">
-            <Skeleton className="h-28 w-28 rounded-full" />
-            <div className="flex-1 space-y-3">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-4 w-96" />
-              <Skeleton className="h-4 w-64" />
-            </div>
-          </div>
+      <div className="min-h-screen bg-background">
+        <div className="blur-orb" style={{ top: '10%', left: '20%', opacity: 0.2 }} />
+        <div className="blur-orb" style={{ top: '60%', right: '10%', opacity: 0.15 }} />
+        <div className="container mx-auto px-4 py-8 relative z-10">
+          <LoadingState variant="page" />
         </div>
       </div>
     )
@@ -152,13 +150,20 @@ export default function ProfilePage() {
 
   if (error || !data) {
     return (
-      <div className="p-6">
-        <div className="rounded-xl border border-border bg-card p-12 text-center">
-          <h2 className="text-xl font-semibold text-foreground mb-2">User Not Found</h2>
-          <p className="text-muted-foreground mb-4">{error || "This user does not exist."}</p>
-          <Link href="/forum">
-            <Button>Back to Forum</Button>
-          </Link>
+      <div className="min-h-screen bg-background">
+        <div className="blur-orb" style={{ top: '30%', left: '50%', opacity: 0.2 }} />
+        <div className="container mx-auto px-4 py-8 relative z-10">
+          <EmptyState
+            icon={User}
+            title="User Not Found"
+            description={error || "This user does not exist or has been removed."}
+            action={{
+              label: "Back to Forum",
+              href: "/forum",
+              icon: ArrowLeft
+            }}
+            size="lg"
+          />
         </div>
       </div>
     )
@@ -178,16 +183,32 @@ export default function ProfilePage() {
   ].filter((a) => a.unlocked)
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="min-h-screen bg-background">
+      {/* Background Effects */}
+      <div className="blur-orb" style={{ top: '5%', left: '10%', opacity: 0.2 }} />
+      <div className="blur-orb" style={{ top: '50%', right: '5%', opacity: 0.15 }} />
+      
+      <div className="container mx-auto px-4 py-8 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
           <Link
             href="/forum"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-6"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            Back to Forum
           </Link>
+        </motion.div>
 
-          <div className="rounded-xl border border-border bg-card p-6 mb-6">
+        {/* Profile Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="glass rounded-2xl border-white/10 p-6 mb-6"
+        >
             <div className="flex items-start gap-6">
               <div className="relative">
                 <Image
@@ -278,18 +299,28 @@ export default function ProfilePage() {
                 </div>
               </div>
               <Link href={`/messages?to=${user.discordId}`}>
-                <Button className="bg-primary hover:bg-primary/90 gap-2">
+                <Button className="bg-gradient-to-r from-primary to-pink-600 hover:opacity-90 gap-2 glow-sm">
                   <MessageSquare className="h-4 w-4" />
                   Send Message
                 </Button>
               </Link>
             </div>
-          </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="col-span-1 space-y-4">
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="font-semibold text-foreground mb-4">Statistics</h2>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="col-span-1 space-y-4"
+            >
+              <div className="glass rounded-2xl border-white/10 p-6">
+                <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-blue-500/15 flex items-center justify-center">
+                    <Download className="h-4 w-4 text-blue-400" />
+                  </div>
+                  Statistics
+                </h2>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground flex items-center gap-2">
@@ -323,8 +354,13 @@ export default function ProfilePage() {
               </div>
 
               {achievements.length > 0 && (
-                <div className="rounded-xl border border-border bg-card p-6">
-                  <h2 className="font-semibold text-foreground mb-4">Achievements</h2>
+                <div className="glass rounded-2xl border-white/10 p-6">
+                  <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-amber-500/15 flex items-center justify-center">
+                      <Trophy className="h-4 w-4 text-amber-400" />
+                    </div>
+                    Achievements
+                  </h2>
                   <div className="flex flex-wrap gap-2">
                     {achievements.map((achievement) => (
                       <div
@@ -339,10 +375,15 @@ export default function ProfilePage() {
                   </div>
                 </div>
               )}
-            </div>
+            </motion.div>
 
-            <div className="col-span-1 lg:col-span-2">
-              <div className="rounded-xl border border-border bg-card p-6">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="col-span-1 lg:col-span-2"
+            >
+              <div className="glass rounded-2xl border-white/10 p-6">
                 <div className="flex items-center gap-4 mb-4 border-b border-border pb-4">
                   <button
                     onClick={() => setActiveTab("posts")}
@@ -529,8 +570,9 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
-            </div>
+            </motion.div>
           </div>
+      </div>
     </div>
   )
 }

@@ -1,5 +1,13 @@
 # 🎮 FiveM Tools V7
 
+![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![Database](https://img.shields.io/badge/Database-15%2F15%20Tables-success)
+![Tests](https://img.shields.io/badge/Tests-23%2F23%20Passed-brightgreen)
+![Build](https://img.shields.io/badge/Build-Success-brightgreen)
+![Discord](https://img.shields.io/badge/Discord%20OAuth-Connected-blue)
+![XP System](https://img.shields.io/badge/XP%20System-5%20Badges-purple)
+![Version](https://img.shields.io/badge/Version-7.0.0-blue)
+
 Platform lengkap untuk FiveM scripts, MLOs, dan resources.
 
 ## ✅ Status Koneksi - 100% COMPLETE!
@@ -15,6 +23,10 @@ Platform lengkap untuk FiveM scripts, MLOs, dan resources.
 - ✅ Linkvertise: Integrated (User ID: 1461354)
 - ✅ Build: Success (137 pages)
 - ✅ Tests: 23/23 passed (100%)
+- ✅ Badge System: 100% Complete ✅
+- ✅ XP Auto-Award: Active ✅
+- ✅ Badge Gallery: Available ✅
+- ✅ Image Upload: Active (Supabase Storage) 📸
 
 ## 🚀 Quick Start
 
@@ -79,6 +91,35 @@ DISCORD_CLIENT_ID=1445650115447754933
 DISCORD_CLIENT_SECRET=Configured
 ```
 
+## 🏆 Badge System
+
+**Status: 100% COMPLETE** ✅
+
+### Features Implemented:
+- ✅ **Profile Badge Display** - Full badge showcase with progress
+- ✅ **Forum Badge Integration** - Badges shown next to usernames
+- ✅ **Asset Card Badges** - Author badges in asset listings
+- ✅ **Auto XP Award** - Automatic XP for activities
+- ✅ **Badge Gallery** - Dedicated page at `/badges`
+- ✅ **5 Badge Tiers** - From Beginner to Legend
+- ✅ **Real-time Updates** - Instant badge unlocks
+
+### XP Activities:
+```
+Upload Asset: +100 XP    Create Thread: +50 XP
+Create Reply: +20 XP     Receive Like: +10 XP
+Daily Login: +10 XP      Asset Download: +15 XP
+```
+
+### Badge Tiers:
+```
+Tier 1: Beginner Bolt (0-999 XP)
+Tier 2: Intermediate Bolt (1,000-4,999 XP)
+Tier 3: Advanced Bolt (5,000-14,999 XP)
+Tier 4: Expert Bolt (15,000-49,999 XP)
+Tier 5: Legend Bolt (50,000+ XP)
+```
+
 ## 📚 Dokumentasi
 
 - `SEED_SUCCESS.md` - Database seed status
@@ -88,7 +129,7 @@ DISCORD_CLIENT_SECRET=Configured
 - `STATUS_KONEKSI.md` - Status detail
 - `RINGKASAN.md` - Ringkasan bahasa Indonesia
 
-## 🧪 Commands
+## 🎯 Commands
 
 ```bash
 pnpm dev              # Development server
@@ -98,6 +139,7 @@ pnpm validate:env     # Validasi environment (NEW!)
 pnpm test:all         # Run all tests
 pnpm db:seed          # Seed sample data
 pnpm db:check         # Check database data
+pnpm storage:setup    # Setup image upload (NEW!) 📸
 ```
 
 ## 🏥 Health Check

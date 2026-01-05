@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server"
-import { createAdminClient } from "@/lib/supabase/server"
+import { createClient, createAdminClient } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
-    const supabase = createAdminClient()
+    const supabase = createClient()
+    
+    // Use public_notifications table instead of notifications
     const { data: notifications, error } = await supabase
       .from("public_notifications")
       .select("*")
       .eq("is_active", true)
-      .or("expires_at.is.null,expires_at.gt.now()")
       .order("created_at", { ascending: false })
       .limit(10)
 
-    if (error) throw error
+    if (error) {
+      console.error("Public notifications fetch error:", error)
+      return NextResponse.json({ notifications: [] })
+    }
 
     return NextResponse.json({ notifications: notifications || [] })
   } catch (error) {

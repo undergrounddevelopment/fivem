@@ -10,8 +10,26 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Development optimizations
+  ...(process.env.NODE_ENV === 'development' && {
+    swcMinify: false,
+    compiler: {
+      removeConsole: false,
+    },
+    experimental: {
+      // Faster builds in development
+      turbo: {
+        rules: {
+          '*.svg': {
+            loaders: ['@svgr/webpack'],
+            as: '*.js',
+          },
+        },
+      },
+    },
+  }),
   images: {
-    unoptimized: false,
+    unoptimized: process.env.NODE_ENV === 'development',
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -28,12 +46,13 @@ const nextConfig = {
       { protocol: 'https', hostname: 'docs.esx-framework.org' },
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
       { protocol: 'https', hostname: 'cdn.discordapp.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: '**' },
     ],
   },
   compress: true,
   poweredByHeader: false,
-  reactStrictMode: true,
+  reactStrictMode: process.env.NODE_ENV !== 'development',
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
@@ -57,6 +76,11 @@ const nextConfig = {
       'class-variance-authority'
     ],
     scrollRestoration: true,
+    // Faster development builds
+    ...(process.env.NODE_ENV === 'development' && {
+      optimizeCss: false,
+      optimizeServerReact: false,
+    }),
   },
   headers: async () => [
     {
@@ -65,10 +89,14 @@ const nextConfig = {
         { key: 'X-DNS-Prefetch-Control', value: 'on' },
         { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
         { key: 'X-Content-Type-Options', value: 'nosniff' },
-        { key: 'X-Frame-Options', value: 'DENY' },
+        { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
         { key: 'X-XSS-Protection', value: '1; mode=block' },
         { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        { 
+          key: 'Content-Security-Policy', 
+          value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; media-src 'self' https://r2.fivemanage.com https://cdn.discordapp.com https:; connect-src 'self' https://api.supabase.co https://supabase.co https://www.google-analytics.com https://va.vercel-scripts.com wss: ws:; frame-src 'self' https://www.googletagmanager.com https://publisher.linkvertise.com https://linkvertise.com; object-src 'none'; base-uri 'self'; form-action 'self';" 
+        },
       ],
     },
     {

@@ -1,148 +1,190 @@
-import { getSpinWheelPrizes } from '@/lib/database-direct'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { Button } from "@/components/ui/button"
+"use client"
+
+import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Zap, Gift, Coins, Star } from "lucide-react"
-import { redirect } from 'next/navigation'
+import { Zap, Clock, Gift, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
-export default async function SpinWheelPage() {
-  const session = await getServerSession(authOptions)
-  
-  if (!session?.user) {
-    redirect('/')
-  }
-
-  let prizes: any[] = []
-  
-  try {
-    prizes = await getSpinWheelPrizes()
-  } catch (error) {
-    console.error('Failed to load prizes:', error)
-    prizes = []
-  }
-  
-  const activePrizes = prizes.filter((prize: any) => prize.is_active)
+export default function SpinWheelPage() {
+  const activities = [
+    {
+      emoji: "📦",
+      title: "Browse Assets",
+      description: "Download scripts, MLO, vehicles",
+      href: "/assets",
+      color: "bg-blue-500/20"
+    },
+    {
+      emoji: "📤",
+      title: "Upload Assets",
+      description: "Share your creations",
+      href: "/upload",
+      color: "bg-green-500/20"
+    },
+    {
+      emoji: "💬",
+      title: "Join Forum",
+      description: "Discuss with community",
+      href: "/forum",
+      color: "bg-purple-500/20"
+    },
+    {
+      emoji: "👑",
+      title: "Get Membership",
+      description: "Unlock premium features",
+      href: "/membership",
+      color: "bg-amber-500/20"
+    }
+  ]
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold flex items-center justify-center gap-3 mb-4">
-            <Zap className="h-10 w-10 text-primary" />
-            Spin Wheel
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Test your luck and win amazing prizes!
-          </p>
-        </div>
+    <div className="min-h-screen bg-background relative">
+      {/* Background Effects */}
+      <div className="blur-orb" style={{ top: '10%', left: '10%', opacity: 0.15 }} />
+      <div className="blur-orb" style={{ top: '50%', right: '5%', opacity: 0.1 }} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Spin Wheel */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardContent className="p-8">
-                <div className="relative">
-                  {/* Wheel Container */}
-                  <div className="w-80 h-80 mx-auto relative">
-                    <div className="w-full h-full rounded-full border-8 border-primary bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                      <div className="text-center">
-                        <Zap className="h-16 w-16 mx-auto text-primary mb-4" />
-                        <p className="text-lg font-semibold">Ready to Spin!</p>
-                        <p className="text-sm text-muted-foreground">
-                          Cost: 10 coins
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {/* Spin Button */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Button 
-                        size="lg" 
-                        className="w-24 h-24 rounded-full text-lg font-bold shadow-lg"
-                        disabled={!session.user.coins || session.user.coins < 10}
-                      >
-                        SPIN
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8 text-center">
-                  <div className="flex items-center justify-center gap-4 mb-4">
-                    <div className="flex items-center gap-2">
-                      <Coins className="h-5 w-5 text-primary" />
-                      <span className="font-semibold">{session.user.coins || 0} Coins</span>
-                    </div>
-                  </div>
-                  
-                  {(!session.user.coins || session.user.coins < 10) && (
-                    <p className="text-sm text-destructive">
-                      You need at least 10 coins to spin
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+      <div className="container mx-auto p-6 relative z-10">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="text-center mb-8"
+        >
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+              <Zap className="h-7 w-7 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold">Lucky Spin Wheel</h1>
           </div>
+          <Badge variant="destructive" className="text-base px-4 py-2 bg-red-500/15 text-red-400 border-red-500/30">
+            <Clock className="h-4 w-4 mr-2" />
+            Event Berakhir
+          </Badge>
+        </motion.div>
 
-          {/* Prizes */}
-          <div>
-            <Card>
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* Event Ended Notice */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <Card className="glass border-red-500/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Gift className="h-5 w-5" />
-                  Available Prizes
+                <CardTitle className="flex items-center gap-2 text-red-400">
+                  <div className="h-10 w-10 rounded-xl bg-red-500/15 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-red-400" />
+                  </div>
+                  Event Telah Berakhir
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground">
+                  Terima kasih telah berpartisipasi dalam event Lucky Spin Wheel! 
+                  Event ini telah berakhir dan tidak lagi tersedia.
+                </p>
+                
+                <div className="bg-secondary/30 p-4 rounded-xl">
+                  <h4 className="font-semibold mb-3 text-sm">Informasi Event:</h4>
+                  <ul className="text-sm text-muted-foreground space-y-2">
+                    <li className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+                      Event berlangsung selama periode terbatas
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+                      Semua hadiah telah didistribusikan
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+                      Spin tickets tidak lagi dapat digunakan
+                    </li>
+                  </ul>
+                </div>
+
+                <Link href="/assets">
+                  <Button className="w-full gap-2">
+                    <ArrowLeft className="h-4 w-4" />
+                    Kembali ke Assets
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Alternative Activities */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+          >
+            <Card className="glass">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                    <Gift className="h-5 w-5 text-primary" />
+                  </div>
+                  Aktivitas Lainnya
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground text-sm">
+                  Jangan khawatir! Masih banyak cara untuk mendapatkan coins dan menikmati fitur-fitur lainnya:
+                </p>
+
                 <div className="space-y-3">
-                  {activePrizes.map((prize) => (
-                    <div key={prize.id} className="p-3 border rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium">{prize.name}</h4>
-                        <Badge variant="outline" className="text-xs">
-                          {prize.probability}%
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground capitalize">
-                          {prize.type}
-                        </span>
-                        <span className="font-semibold text-primary">
-                          {prize.value}
-                        </span>
-                      </div>
-                    </div>
+                  {activities.map((activity, index) => (
+                    <motion.div
+                      key={activity.href}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
+                    >
+                      <Link href={activity.href}>
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start h-auto py-3 px-4 hover:bg-secondary/50 transition-all border-white/10"
+                        >
+                          <div className="flex items-center gap-3 w-full">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${activity.color}`}>
+                              <span className="text-xl">{activity.emoji}</span>
+                            </div>
+                            <div className="text-left flex-1">
+                              <div className="font-semibold">{activity.title}</div>
+                              <div className="text-xs text-muted-foreground">{activity.description}</div>
+                            </div>
+                          </div>
+                        </Button>
+                      </Link>
+                    </motion.div>
                   ))}
                 </div>
               </CardContent>
             </Card>
-
-            {/* Rules */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5" />
-                  Rules
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>• Each spin costs 10 coins</p>
-                  <p>• You can spin once every 24 hours</p>
-                  <p>• Prizes are awarded instantly</p>
-                  <p>• Check your inventory for items</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          </motion.div>
         </div>
+
+        {/* Footer Message */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.4 }}
+          className="mt-8 max-w-4xl mx-auto"
+        >
+          <Card className="glass">
+            <CardContent className="py-6 text-center">
+              <p className="text-muted-foreground">
+                Pantau terus untuk event-event menarik lainnya di masa depan! 
+                <br />
+                <span className="text-sm">Terima kasih telah menjadi bagian dari komunitas FiveM Tools V7.</span>
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   )

@@ -12,7 +12,7 @@ const features = [
   { icon: Key, title: "Decrypt", desc: "CFX V7 Tool", href: "/decrypt" },
   { icon: Rocket, title: "Upvotes", desc: "Server Boost", href: "/upvotes" },
   { icon: MessageSquare, title: "Forum", desc: "Community", href: "/forum" },
-  { icon: Sparkles, title: "Spin Wheel", desc: "Win Prizes", href: "/spin-wheel" },
+  // { icon: Sparkles, title: "Spin Wheel", desc: "Win Prizes", href: "/spin-wheel" }, // Event sudah habis
 ]
 
 export function ModernFeatures() {

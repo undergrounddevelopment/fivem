@@ -67,13 +67,13 @@ const adminNavItems = [
     color: "from-orange-500 to-red-500",
     badge: null,
   },
-  {
-    title: "Spin Wheel",
-    href: "/admin/spin-wheel",
-    icon: Sparkles,
-    color: "from-yellow-500 to-orange-500",
-    badge: null,
-  },
+  // {
+  //   title: "Spin Wheel",
+  //   href: "/admin/spin-wheel",
+  //   icon: Sparkles,
+  //   color: "from-yellow-500 to-orange-500",
+  //   badge: null,
+  // }, // Event sudah habis
   {
     title: "Coins",
     href: "/admin/coins",

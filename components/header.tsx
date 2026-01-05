@@ -87,7 +87,8 @@ export function Header() {
 
         {user && (
           <>
-            <Link href="/spin-wheel">
+            {/* Spin Wheel - Event sudah habis */}
+            {/* <Link href="/spin-wheel">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button variant="ghost" size="sm" className="gap-2 text-[var(--textDim)] hover:text-[var(--text)] glass-hover">
                   <svg className="h-4 w-4 text-[var(--primary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -106,7 +107,7 @@ export function Header() {
                   <span className="text-xs">Tickets</span>
                 </Button>
               </motion.div>
-            </Link>
+            </Link> */}
 
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button variant="ghost" size="sm" className="gap-2 text-[var(--textDim)] hover:text-[var(--text)] glass-hover">

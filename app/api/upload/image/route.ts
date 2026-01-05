@@ -1,56 +1,67 @@
-import { put } from "@vercel/blob"
-import { type NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import { logger } from "@/lib/logger"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { createClient } from "@supabase/supabase-js";
 
-export async function POST(request: NextRequest) {
+const supabaseUrl = process.env.NEXT_PUBLIC_fivemvip_SUPABASE_URL || process.env.SUPABASE_URL!;
+const supabaseKey = process.env.fivemvip_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const formData = await request.formData()
-    const file = formData.get("file") as File | null
-    const type = (formData.get("type") as string) || "general"
+    const formData = await req.formData();
+    const file = formData.get("file") as File;
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 })
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: "Invalid file type. Allowed: JPG, PNG, GIF, WebP" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid file type. Only images allowed." }, { status: 400 });
     }
 
-    // Validate file size (10MB max)
-    const maxSize = 10 * 1024 * 1024
-    if (file.size > maxSize) {
-      return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 })
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      return NextResponse.json({ error: "File too large. Max 5MB." }, { status: 400 });
     }
 
     // Generate unique filename
-    const timestamp = Date.now()
-    const ext = file.name.split(".").pop() || "jpg"
-    const filename = `${type}/${session.user.id}-${timestamp}.${ext}`
+    const ext = file.name.split(".").pop();
+    const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+    const filepath = `forum/${filename}`;
 
-    // Upload to Vercel Blob
-    const blob = await put(filename, file, {
-      access: "public",
-    })
+    // Convert file to buffer
+    const buffer = await file.arrayBuffer();
 
-    return NextResponse.json({
-      url: blob.url,
-      filename: file.name,
-      size: file.size,
-      type: file.type,
-    })
-  } catch (error: any) {
-    logger.error("Image upload error", error, {
-      endpoint: "/api/upload/image",
-    })
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 })
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from("uploads")
+      .upload(filepath, buffer, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (error) {
+      console.error("Upload error:", error);
+      return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from("uploads")
+      .getPublicUrl(filepath);
+
+    return NextResponse.json({ url: publicUrl });
+  } catch (error) {
+    console.error("Upload error:", error);
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

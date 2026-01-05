@@ -1,143 +1,76 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseAdminClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_fivemvip_SUPABASE_URL || 
+              process.env.fivemvip_SUPABASE_URL || 
+              process.env.SUPABASE_URL!
+  const key = process.env.fivemvip_SUPABASE_SERVICE_ROLE_KEY || 
+              process.env.SUPABASE_SERVICE_ROLE_KEY!
+  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } })
+}
+
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-
-    const supabase = getSupabaseAdminClient()
+    const supabase = getSupabase()
 
     const { data: thread, error } = await supabase.from("forum_threads").select("*").eq("id", id).single()
+    if (error || !thread) return NextResponse.json({ error: "Thread not found" }, { status: 404 })
 
-    if (error || !thread) {
-      return NextResponse.json({ error: "Thread not found" }, { status: 404 })
-    }
-
-    // Fetch author by discord_id first, then try UUID (backward compatibility)
-    let author: { id?: string; discord_id?: string; username: string; avatar: string | null; membership: string; xp?: number; level?: number; current_badge?: string } | null = null
-    if (thread.author_id) {
-      // Try discord_id match first
-      const { data: authorByDiscord } = await supabase
-        .from("users")
-        .select("id, discord_id, username, avatar, membership, xp, level, current_badge")
-        .eq("discord_id", thread.author_id)
-        .single()
-      
-      if (authorByDiscord) {
-        author = authorByDiscord
-      } else {
-        // Try UUID match (backward compatibility)
-        const { data: authorByUUID } = await supabase
-          .from("users")
-          .select("id, discord_id, username, avatar, membership, xp, level, current_badge")
-          .eq("id", thread.author_id)
-          .single()
-        author = authorByUUID
-      }
-    }
-
-    // Fetch category
-    let category: { id: string; name: string; color: string } | null = null
+    // Get category
+    let categoryName = "General"
+    let categoryColor = "#3b82f6"
     if (thread.category_id) {
-      const { data: categoryData } = await supabase
-        .from("forum_categories")
-        .select("id, name, color")
-        .eq("id", thread.category_id)
-        .single()
-      category = categoryData
+      const { data } = await supabase.from("forum_categories").select("id, name, color").eq("id", thread.category_id).single()
+      if (data) {
+        categoryName = data.name || "General"
+        categoryColor = data.color || "#3b82f6"
+      }
     }
 
     // Get replies
-    const { data: replies } = await supabase
-      .from("forum_replies")
-      .select("*")
-      .eq("thread_id", id)
-      .eq("is_deleted", false)
-      .order("created_at", { ascending: true })
+    const { data: replies } = await supabase.from("forum_replies").select("*").eq("thread_id", id).eq("is_deleted", false).order("created_at", { ascending: true })
 
-    // Fetch reply authors by discord_id first, then try UUID
-    const replyAuthorIds = [...new Set((replies || []).map((r) => r.author_id).filter(Boolean))]
-    let replyAuthorsMap: Record<string, any> = {}
-    if (replyAuthorIds.length > 0) {
-      // Try discord_id match first
-      const { data: replyAuthorsByDiscord } = await supabase
+    // Get authors by discord_id (author_id is TEXT = discord_id)
+    const authorIds = [thread.author_id, ...(replies || []).map(r => r.author_id)].filter(Boolean)
+    const authorsMap: Record<string, any> = {}
+
+    if (authorIds.length > 0) {
+      const uniqueIds = [...new Set(authorIds)]
+      const { data: users } = await supabase
         .from("users")
-        .select("id, discord_id, username, avatar, membership, xp, level, current_badge")
-        .in("discord_id", replyAuthorIds)
+        .select("id, discord_id, username, avatar, membership, xp, level")
+        .in("discord_id", uniqueIds)
       
-      for (const a of replyAuthorsByDiscord || []) {
-        replyAuthorsMap[a.discord_id] = a
-      }
-
-      // For any missing authors, try UUID match
-      const missingIds = replyAuthorIds.filter(id => !replyAuthorsMap[id])
-      if (missingIds.length > 0) {
-        const { data: replyAuthorsByUUID } = await supabase
-          .from("users")
-          .select("id, discord_id, username, avatar, membership, xp, level, current_badge")
-          .in("id", missingIds)
-        
-        for (const a of replyAuthorsByUUID || []) {
-          replyAuthorsMap[a.id] = a
-        }
+      for (const u of users || []) {
+        authorsMap[u.discord_id] = u
       }
     }
 
     // Increment views
-    await supabase
-      .from("forum_threads")
-      .update({ views: thread.views + 1 })
-      .eq("id", id)
+    supabase.from("forum_threads").update({ views: (thread.views || 0) + 1 }).eq("id", id).then(() => {})
 
-    const formattedThread = {
-      id: thread.id,
-      title: thread.title,
-      content: thread.content,
-      categoryId: thread.category_id,
-      category: category ? category.name : "General",
-      categoryColor: category ? category.color : "#3b82f6",
+    const author = authorsMap[thread.author_id]
+    return NextResponse.json({
+      id: thread.id, title: thread.title, content: thread.content,
+      categoryId: thread.category_id, category: categoryName, categoryColor: categoryColor,
       authorId: thread.author_id,
-      author: author
-        ? {
-            id: author.discord_id || author.id,
-            username: author.username || 'Unknown',
-            avatar: author.avatar,
-            membership: author.membership || 'member',
-          }
-        : null,
-      replies: (replies || []).map((reply) => {
-        const replyAuthor = replyAuthorsMap[reply.author_id]
+      author: { id: author?.discord_id || thread.author_id, username: author?.username, avatar: author?.avatar, membership: author?.membership || "member" },
+      replies: (replies || []).map(r => {
+        const a = authorsMap[r.author_id]
         return {
-          id: reply.id,
-          content: reply.content,
-          authorId: reply.author_id,
-          author: replyAuthor
-            ? {
-                id: replyAuthor.discord_id || replyAuthor.id,
-                username: replyAuthor.username || 'Unknown',
-                avatar: replyAuthor.avatar,
-                membership: replyAuthor.membership || 'member',
-              }
-            : null,
-          likes: reply.likes,
-          isEdited: reply.is_edited,
-          createdAt: reply.created_at,
-          updatedAt: reply.updated_at,
+          id: r.id, content: r.content, authorId: r.author_id,
+          author: { id: a?.discord_id || r.author_id, username: a?.username, avatar: a?.avatar, membership: a?.membership || "member" },
+          likes: r.likes || 0, isEdited: r.is_edited || false, createdAt: r.created_at, updatedAt: r.updated_at,
         }
       }),
-      repliesCount: thread.replies_count,
-      likes: thread.likes,
-      views: thread.views + 1,
-      isPinned: thread.is_pinned,
-      isLocked: thread.is_locked,
-      images: thread.images || [],
-      createdAt: thread.created_at,
-      updatedAt: thread.updated_at,
-    }
-
-    return NextResponse.json(formattedThread)
-  } catch (error) {
-    console.error("Get thread error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+      repliesCount: thread.replies_count || thread.replies || 0, likes: thread.likes || 0, views: (thread.views || 0) + 1,
+      isPinned: thread.is_pinned || false, isLocked: thread.is_locked || false, images: thread.images || [],
+      createdAt: thread.created_at, updatedAt: thread.updated_at,
+    })
+  } catch (e: any) {
+    console.error("[Thread GET]", e)
+    return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }

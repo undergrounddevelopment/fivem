@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { XP_CONFIG, getLevelFromXP } from '@/lib/xp-badges'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+)
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,8 +28,6 @@ export async function POST(request: NextRequest) {
     if (!xpReward) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
-
-    const supabase = createAdminClient()
 
     // Get current user XP by discord_id
     const { data: user, error: userError } = await supabase
@@ -90,8 +94,6 @@ export async function GET(request: NextRequest) {
     if (!discordId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
-
-    const supabase = createAdminClient()
 
     // Get user XP data by discord_id
     const { data: user, error } = await supabase

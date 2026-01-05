@@ -4,7 +4,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import { CONFIG } from "@/lib/config"
 
 // PRODUCTION-READY SERVER CLIENT
-export async function createClient() {
+export function createClient() {
   const url = CONFIG.supabase.url
   const anonKey = CONFIG.supabase.anonKey
 
@@ -14,31 +14,11 @@ export async function createClient() {
     throw new Error("Supabase server configuration is required")
   }
 
-  const cookieStore = await cookies()
-  
-  return createServerClient(url, anonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll()
-      },
-      setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
-        try {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, {
-              ...options,
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: 'lax',
-            })
-          })
-        } catch (error) {
-          console.warn("[Supabase Server] Cookie setting failed (Server Component):", error)
-        }
-      },
-    },
+  // For API routes, use simple client without cookies
+  return createSupabaseClient(url, anonKey, {
     auth: {
-      autoRefreshToken: true,
-      persistSession: true,
+      autoRefreshToken: false,
+      persistSession: false,
     },
     global: {
       headers: {
@@ -85,7 +65,7 @@ export function createAdminClient() {
 // CONNECTION TESTING
 export async function testServerConnection() {
   try {
-    const client = await createClient()
+    const client = createClient()
     const { data, error } = await client.from('users').select('count').limit(1)
     return { success: !error, error: error?.message }
   } catch (err) {

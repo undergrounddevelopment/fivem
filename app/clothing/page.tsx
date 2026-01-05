@@ -1,11 +1,23 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
 import { AssetCard } from "@/components/asset-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Grid, List, Search, Shirt, Zap } from "lucide-react"
-import type { Asset } from "@/lib/types"
+
+interface Asset {
+  id: string
+  title: string
+  description?: string
+  category: string
+  price?: string
+  coinPrice?: number
+  thumbnail?: string
+  downloads?: number
+  likes?: number
+}
 
 export default function ClothingPage() {
   const [assets, setAssets] = useState<Asset[]>([])
@@ -38,108 +50,144 @@ export default function ClothingPage() {
   }, [price, search])
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="min-h-screen bg-background relative">
+      {/* Background Effects */}
+      <div className="blur-orb" style={{ top: '10%', left: '5%', opacity: 0.15 }} />
+      <div className="blur-orb" style={{ top: '60%', right: '10%', opacity: 0.1 }} />
 
-          {/* Page Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-4 mb-3">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-warning to-chart-5 flex items-center justify-center glow-sm">
-                <Shirt className="h-7 w-7 text-white" />
+      <div className="container mx-auto p-6 relative z-10">
+        {/* Page Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8"
+        >
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-warning to-chart-5 flex items-center justify-center shadow-lg shadow-warning/20">
+              <Shirt className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold">EUP & Clothing</h1>
+                <span className="rounded-full bg-warning/20 px-3 py-1 text-sm font-medium text-warning">
+                  {assets.length} resources
+                </span>
               </div>
-              <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-bold text-foreground">EUP & Clothing</h1>
-                  <span className="rounded-full bg-warning/20 px-3 py-1 text-sm font-medium text-warning">
-                    {assets.length} resources
-                  </span>
-                </div>
-                <p className="text-muted-foreground">
-                  Emergency uniforms, civilian clothing, and character customization packs
-                </p>
-              </div>
+              <p className="text-muted-foreground">
+                Emergency uniforms, civilian clothing, and character customization packs
+              </p>
             </div>
           </div>
-
-          {/* Search & Filters */}
-          <div className="glass rounded-2xl p-4 mb-6">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search clothing..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-11 h-11 bg-secondary/50 border-border/50 rounded-xl"
-                />
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex gap-1 bg-secondary/50 rounded-xl p-1">
-                  {(["all", "free", "premium"] as const).map((p) => (
-                    <Button
-                      key={p}
-                      variant={price === p ? "secondary" : "ghost"}
-                      size="sm"
-                      onClick={() => setPrice(p)}
-                      className={`rounded-lg capitalize ${price === p ? "bg-card" : ""} ${
-                        p === "free" ? "text-success" : p === "premium" ? "text-primary" : ""
-                      }`}
-                    >
-                      {p}
-                    </Button>
-                  ))}
-                </div>
-                <div className="flex gap-1 border border-border/50 rounded-xl p-1 ml-auto">
-                  <Button
-                    variant={viewMode === "grid" ? "secondary" : "ghost"}
-                    size="icon"
-                    onClick={() => setViewMode("grid")}
-                    className={`h-9 w-9 rounded-lg ${viewMode === "grid" ? "bg-card" : ""}`}
-                  >
-                    <Grid className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === "list" ? "secondary" : "ghost"}
-                    size="icon"
-                    onClick={() => setViewMode("list")}
-                    className={`h-9 w-9 rounded-lg ${viewMode === "list" ? "bg-card" : ""}`}
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search clothing..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 w-64 bg-card/50 backdrop-blur-sm border-white/10"
+              />
             </div>
           </div>
+        </motion.div>
 
-          {/* Clothing Grid */}
-          {isLoading ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="glass rounded-2xl overflow-hidden">
-                  <div className="aspect-[16/10] bg-secondary/50 animate-pulse" />
-                  <div className="p-4 space-y-3">
-                    <div className="h-4 w-1/3 bg-secondary/50 rounded animate-pulse" />
-                    <div className="h-5 w-2/3 bg-secondary/50 rounded animate-pulse" />
-                  </div>
+        {/* Filters */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="glass rounded-2xl p-4 mb-6"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex gap-2">
+              {(["all", "free", "premium"] as const).map((p) => (
+                <Button
+                  key={p}
+                  variant={price === p ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setPrice(p)}
+                  className={`capitalize transition-all ${
+                    p === "free" && price === p ? "bg-success hover:bg-success/90" : 
+                    p === "premium" && price === p ? "bg-warning hover:bg-warning/90" : ""
+                  }`}
+                >
+                  {p}
+                </Button>
+              ))}
+            </div>
+            <div className="flex gap-1 border border-white/10 rounded-lg p-1">
+              <Button
+                variant={viewMode === "grid" ? "secondary" : "ghost"}
+                size="icon"
+                onClick={() => setViewMode("grid")}
+                className="h-8 w-8"
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="icon"
+                onClick={() => setViewMode("list")}
+                className="h-8 w-8"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Clothing Grid */}
+        {isLoading ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <motion.div 
+                key={i} 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: i * 0.05 }}
+                className="glass rounded-2xl overflow-hidden"
+              >
+                <div className="aspect-[16/10] bg-secondary/50 animate-pulse" />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 w-1/3 bg-secondary/50 rounded animate-pulse" />
+                  <div className="h-5 w-2/3 bg-secondary/50 rounded animate-pulse" />
                 </div>
-              ))}
+              </motion.div>
+            ))}
+          </div>
+        ) : assets.length > 0 ? (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className={viewMode === "grid" ? "grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-4"}
+          >
+            {assets.map((asset, index) => (
+              <motion.div
+                key={asset.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+              >
+                <AssetCard asset={asset} variant={viewMode === "list" ? "compact" : "default"} />
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass rounded-2xl flex flex-col items-center justify-center py-20"
+          >
+            <div className="h-16 w-16 rounded-2xl bg-secondary flex items-center justify-center mb-4">
+              <Zap className="h-8 w-8 text-muted-foreground" />
             </div>
-          ) : assets.length > 0 ? (
-            <div
-              className={viewMode === "grid" ? "grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-4"}
-            >
-              {assets.map((asset) => (
-                <AssetCard key={asset.id} asset={asset} variant={viewMode === "list" ? "compact" : "default"} />
-              ))}
-            </div>
-          ) : (
-            <div className="glass rounded-2xl flex flex-col items-center justify-center py-20">
-              <div className="h-20 w-20 rounded-2xl bg-secondary flex items-center justify-center mb-4">
-                <Zap className="h-10 w-10 text-muted-foreground" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground">No clothing found</h3>
-              <p className="text-muted-foreground">Try adjusting your filters</p>
-            </div>
-          )}
+            <h3 className="text-xl font-semibold">No clothing found</h3>
+            <p className="text-muted-foreground mt-1">Try adjusting your filters</p>
+          </motion.div>
+        )}
+      </div>
     </div>
   )
 }

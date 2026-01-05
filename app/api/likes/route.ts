@@ -1,10 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { getSupabaseAdminClient } from "@/lib/supabase/server"
-import { logger } from "@/lib/logger"
+import { createClient } from "@supabase/supabase-js"
 import { XP_CONFIG, getLevelFromXP } from "@/lib/xp-badges"
-import { hasPgConnection, pgPool } from "@/lib/db/postgres"
+
+// Direct Supabase connection
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } })
+}
 
 // Helper function to award XP
 async function awardXP(supabase: any, discordId: string, action: keyof typeof XP_CONFIG.rewards, description: string) {
@@ -57,69 +62,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing targetId or targetType" }, { status: 400 })
     }
 
-    const supabase = getSupabaseAdminClient()
-
-    // Prefer Akamai Postgres when available
-    if (hasPgConnection && pgPool) {
-      // likes.user_id uses discord_id (varchar)
-      const userDiscordId = session.user.id
-      if (!userDiscordId) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-      }
-
-      const client = await pgPool.connect()
-      try {
-        await client.query('BEGIN')
-
-        const existing = await client.query(
-          'SELECT id FROM likes WHERE user_id = $1 AND target_id = $2 AND target_type = $3 LIMIT 1',
-          [userDiscordId, targetId, targetType],
-        )
-
-        if (existing.rows?.[0]?.id) {
-          await client.query('DELETE FROM likes WHERE id = $1', [existing.rows[0].id])
-
-          if (targetType === 'asset') {
-            await client.query('UPDATE assets SET likes = GREATEST(COALESCE(likes,0) - 1, 0) WHERE id = $1', [targetId])
-          } else if (targetType === 'thread') {
-            await client.query('UPDATE forum_threads SET likes = GREATEST(COALESCE(likes,0) - 1, 0) WHERE id = $1', [targetId])
-          } else if (targetType === 'reply') {
-            await client.query('UPDATE forum_replies SET likes = GREATEST(COALESCE(likes,0) - 1, 0) WHERE id = $1', [targetId])
-          }
-
-          await client.query('COMMIT')
-          return NextResponse.json({ success: true, liked: false })
-        }
-
-        await client.query(
-          'INSERT INTO likes (user_id, target_id, target_type) VALUES ($1,$2,$3)',
-          [userDiscordId, targetId, targetType],
-        )
-
-        if (targetType === 'asset') {
-          await client.query('UPDATE assets SET likes = COALESCE(likes,0) + 1 WHERE id = $1', [targetId])
-        } else if (targetType === 'thread') {
-          await client.query('UPDATE forum_threads SET likes = COALESCE(likes,0) + 1 WHERE id = $1', [targetId])
-        } else if (targetType === 'reply') {
-          await client.query('UPDATE forum_replies SET likes = COALESCE(likes,0) + 1 WHERE id = $1', [targetId])
-        }
-
-        await client.query('COMMIT')
-        return NextResponse.json({ success: true, liked: true })
-      } catch (e: any) {
-        await client.query('ROLLBACK')
-        logger.error('Like PG error', e)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-      } finally {
-        client.release()
-      }
-    }
+    const supabase = getSupabase()
+    const discordId = session.user.id
 
     // Check if already liked
     const { data: existingLike } = await supabase
       .from("likes")
       .select("id")
-      .eq("user_id", session.user.id)
+      .eq("user_id", discordId)
       .eq("target_id", targetId)
       .eq("target_type", targetType)
       .single()
@@ -129,24 +79,20 @@ export async function POST(request: NextRequest) {
       await supabase.from("likes").delete().eq("id", existingLike.id)
 
       // Decrement like count
-      if (targetType === "asset") {
-        const { data: asset } = await supabase.from("assets").select("downloads").eq("id", targetId).single()
-        // Note: assets don't have a likes column in our schema, skip
-      } else if (targetType === "thread") {
+      if (targetType === "thread") {
         const { data: thread } = await supabase.from("forum_threads").select("likes").eq("id", targetId).single()
         if (thread) {
-          await supabase
-            .from("forum_threads")
-            .update({ likes: Math.max(0, thread.likes - 1) })
-            .eq("id", targetId)
+          await supabase.from("forum_threads").update({ likes: Math.max(0, (thread.likes || 0) - 1) }).eq("id", targetId)
         }
       } else if (targetType === "reply") {
         const { data: reply } = await supabase.from("forum_replies").select("likes").eq("id", targetId).single()
         if (reply) {
-          await supabase
-            .from("forum_replies")
-            .update({ likes: Math.max(0, reply.likes - 1) })
-            .eq("id", targetId)
+          await supabase.from("forum_replies").update({ likes: Math.max(0, (reply.likes || 0) - 1) }).eq("id", targetId)
+        }
+      } else if (targetType === "asset") {
+        const { data: asset } = await supabase.from("assets").select("likes").eq("id", targetId).single()
+        if (asset) {
+          await supabase.from("assets").update({ likes: Math.max(0, (asset.likes || 0) - 1) }).eq("id", targetId)
         }
       }
 
@@ -155,7 +101,7 @@ export async function POST(request: NextRequest) {
 
     // Add like
     await supabase.from("likes").insert({
-      user_id: session.user.id,
+      user_id: discordId,
       target_id: targetId,
       target_type: targetType,
     })
@@ -164,52 +110,47 @@ export async function POST(request: NextRequest) {
     if (targetType === "thread") {
       const { data: thread } = await supabase.from("forum_threads").select("likes").eq("id", targetId).single()
       if (thread) {
-        await supabase
-          .from("forum_threads")
-          .update({ likes: thread.likes + 1 })
-          .eq("id", targetId)
+        await supabase.from("forum_threads").update({ likes: (thread.likes || 0) + 1 }).eq("id", targetId)
       }
     } else if (targetType === "reply") {
       const { data: reply } = await supabase.from("forum_replies").select("likes").eq("id", targetId).single()
       if (reply) {
-        await supabase
-          .from("forum_replies")
-          .update({ likes: reply.likes + 1 })
-          .eq("id", targetId)
+        await supabase.from("forum_replies").update({ likes: (reply.likes || 0) + 1 }).eq("id", targetId)
+      }
+    } else if (targetType === "asset") {
+      const { data: asset } = await supabase.from("assets").select("likes").eq("id", targetId).single()
+      if (asset) {
+        await supabase.from("assets").update({ likes: (asset.likes || 0) + 1 }).eq("id", targetId)
       }
     }
 
-    // Log activity
-    await supabase.from("activities").insert({
-      user_id: session.user.id,
-      type: "like",
-      action: `liked a ${targetType}`,
-      target_id: targetId,
-    })
-
     // Award XP to the liker
-    await awardXP(supabase, session.user.id, 'GIVE_LIKE', `Gave a like on a ${targetType}`)
+    await awardXP(supabase, discordId, 'GIVE_LIKE', `Gave a like on a ${targetType}`)
 
     // Award XP to the content author
     let authorId: string | null = null
     if (targetType === 'thread') {
       const { data: thread } = await supabase.from('forum_threads').select('author_id').eq('id', targetId).single()
-      authorId = thread?.author_id
+      if (thread?.author_id) {
+        // Get author's discord_id from UUID
+        const { data: author } = await supabase.from('users').select('discord_id').eq('id', thread.author_id).single()
+        authorId = author?.discord_id
+      }
     } else if (targetType === 'reply') {
       const { data: reply } = await supabase.from('forum_replies').select('author_id').eq('id', targetId).single()
-      authorId = reply?.author_id
+      if (reply?.author_id) {
+        const { data: author } = await supabase.from('users').select('discord_id').eq('id', reply.author_id).single()
+        authorId = author?.discord_id
+      }
     }
 
-    if (authorId && authorId !== session.user.id) {
+    if (authorId && authorId !== discordId) {
       await awardXP(supabase, authorId, 'RECEIVE_LIKE', `Received a like on ${targetType}`)
     }
 
     return NextResponse.json({ success: true, liked: true })
   } catch (error: any) {
-    logger.error("Like error", error, {
-      endpoint: "/api/likes",
-      ip: request.headers.get("x-forwarded-for") || "unknown",
-    })
+    console.error("[Like error]", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

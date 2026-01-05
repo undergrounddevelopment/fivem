@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getSupabaseAdminClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = getSupabaseAdminClient()
+    const supabase = createClient()
     
     const { data: announcements, error } = await supabase
       .from("announcements")
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
         success: false,
         error: error.message,
         data: []
-      }, { status: 500 })
+      })
     }
 
     return NextResponse.json({
@@ -34,8 +34,7 @@ export async function GET(request: NextRequest) {
         success: false, 
         error: "Failed to fetch announcements",
         data: []
-      },
-      { status: 500 }
+      }
     )
   }
 }

@@ -50,7 +50,7 @@ const navItems = [
   { label: "Maps & MLO", href: "/mlo", icon: ICONS_3D.map },
   { label: "Vehicles", href: "/vehicles", icon: ICONS_3D.car },
   { label: "EUP & Clothing", href: "/clothing", icon: ICONS_3D.clothing },
-  { label: "Lucky Spin", href: "/spin-wheel", icon: ICONS_3D.ticket, badge: "NEW" },
+  // { label: "Lucky Spin", href: "/spin-wheel", icon: ICONS_3D.ticket, badge: "NEW" }, // Event sudah habis
   { label: "Messages", href: "/messages", icon: ICONS_3D.message },
   { label: "Membership", href: "/membership", icon: ICONS_3D.crown },
   { label: "Decrypt CFX V7", href: "/decrypt", icon: ICONS_3D.decrypt },

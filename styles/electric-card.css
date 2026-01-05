@@ -1,0 +1,141 @@
+/* Modern Electric Forum 2026 - Ultra Lightweight */
+:root {
+  --electric-primary: #ec4899;
+  --electric-secondary: #8b5cf6;
+  --electric-glow: rgba(236, 72, 153, 0.4);
+  --electric-pulse: rgba(139, 92, 246, 0.3);
+}
+
+/* Electric Border Animation */
+@keyframes electric-border {
+  0%, 100% { 
+    box-shadow: 0 0 5px var(--electric-glow), 0 0 10px var(--electric-glow), inset 0 0 5px var(--electric-glow);
+  }
+  50% { 
+    box-shadow: 0 0 10px var(--electric-primary), 0 0 20px var(--electric-primary), inset 0 0 10px var(--electric-pulse);
+  }
+}
+
+@keyframes electric-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+@keyframes electric-glow {
+  0%, 100% { filter: drop-shadow(0 0 5px var(--electric-glow)); }
+  50% { filter: drop-shadow(0 0 15px var(--electric-primary)); }
+}
+
+/* Electric Components */
+.electric-card {
+  position: relative;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--electric-primary);
+  border-radius: 16px;
+  animation: electric-border 3s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.electric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px var(--electric-primary), 0 0 40px var(--electric-glow);
+}
+
+.electric-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  background: linear-gradient(45deg, var(--electric-primary), var(--electric-secondary), var(--electric-primary));
+  border-radius: 16px;
+  z-index: -1;
+  animation: electric-pulse 2s ease-in-out infinite;
+}
+
+.electric-button {
+  position: relative;
+  background: linear-gradient(135deg, var(--electric-primary), var(--electric-secondary));
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  animation: electric-glow 2s ease-in-out infinite;
+}
+
+.electric-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px var(--electric-glow);
+}
+
+.electric-text {
+  background: linear-gradient(135deg, var(--electric-primary), var(--electric-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: electric-glow 3s ease-in-out infinite;
+}
+
+.electric-border {
+  border: 1px solid var(--electric-primary);
+  box-shadow: 0 0 10px var(--electric-glow);
+  animation: electric-border 4s ease-in-out infinite;
+}
+
+.electric-glow {
+  box-shadow: 0 0 20px var(--electric-glow), inset 0 0 20px var(--electric-pulse);
+}
+
+/* Neon Grid Background */
+.neon-grid {
+  background-image: 
+    linear-gradient(rgba(236, 72, 153, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(236, 72, 153, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: electric-pulse 5s ease-in-out infinite;
+}
+
+/* Modern Glassmorphism */
+.glass-modern {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Electric Avatar */
+.electric-avatar {
+  border: 2px solid var(--electric-primary);
+  box-shadow: 0 0 10px var(--electric-glow);
+  animation: electric-pulse 3s ease-in-out infinite;
+}
+
+/* Responsive Optimizations */
+@media (max-width: 768px) {
+  .electric-card {
+    animation-duration: 4s;
+  }
+  
+  .electric-button {
+    animation-duration: 3s;
+  }
+}
+
+/* Performance Optimizations */
+.electric-card,
+.electric-button,
+.electric-text {
+  will-change: transform, box-shadow;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .electric-card,
+  .electric-button,
+  .electric-text,
+  .electric-border {
+    animation: none;
+  }
+}

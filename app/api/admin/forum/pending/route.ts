@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { createAdminClient } from "@/lib/supabase/server"
+import { getSupabaseAdminClient } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
@@ -11,27 +11,103 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (!session.user.isAdmin) {
+    // Check admin status
+    const supabase = getSupabaseAdminClient()
+    
+    // Verify admin
+    const { data: userData } = await supabase
+      .from("users")
+      .select("is_admin")
+      .eq("discord_id", session.user.id)
+      .single()
+
+    if (!userData?.is_admin && !session.user.isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
-    
-    const supabase = createAdminClient()
 
-    const { data: threads, error } = await supabase
+    // Get pending threads - handle case where status column might not exist
+    let threads: any[] = []
+    let fetchError: any = null
+    
+    // Try with status filter first
+    const { data: threadsWithStatus, error: statusError } = await supabase
       .from("forum_threads")
-      .select(`
-        *,
-        category:forum_categories(id, name, color),
-        author:users!forum_threads_author_id_fkey(discord_id, username, avatar, membership)
-      `)
+      .select("*")
       .eq("status", "pending")
+      .eq("is_deleted", false)
       .order("created_at", { ascending: false })
 
-    if (error) throw error
+    if (statusError) {
+      console.error("[Admin Forum] Status query error:", statusError)
+      // If status column doesn't exist, get all non-deleted threads
+      const { data: allThreads, error: allError } = await supabase
+        .from("forum_threads")
+        .select("*")
+        .eq("is_deleted", false)
+        .order("created_at", { ascending: false })
+        .limit(50)
+      
+      if (allError) {
+        console.error("[Admin Forum] Fallback query error:", allError)
+        fetchError = allError
+      } else {
+        threads = allThreads || []
+      }
+    } else {
+      threads = threadsWithStatus || []
+    }
 
-    return NextResponse.json({ threads: threads || [] })
+    if (fetchError) {
+      throw fetchError
+    }
+
+    // Get author and category info separately
+    const formattedThreads = await Promise.all((threads || []).map(async (thread) => {
+      // Get author
+      let author: any = null
+      if (thread.author_id) {
+        // Try by UUID first
+        const { data: authorByUUID } = await supabase
+          .from("users")
+          .select("discord_id, username, avatar, membership")
+          .eq("id", thread.author_id)
+          .single()
+        
+        if (authorByUUID) {
+          author = authorByUUID
+        } else {
+          // Try by discord_id
+          const { data: authorByDiscord } = await supabase
+            .from("users")
+            .select("discord_id, username, avatar, membership")
+            .eq("discord_id", thread.author_id)
+            .single()
+          author = authorByDiscord
+        }
+      }
+
+      // Get category
+      let category: any = null
+      if (thread.category_id) {
+        const { data: categoryData } = await supabase
+          .from("forum_categories")
+          .select("id, name, color")
+          .eq("id", thread.category_id)
+          .single()
+        category = categoryData
+      }
+
+      return {
+        ...thread,
+        author,
+        category
+      }
+    }))
+
+    return NextResponse.json({ threads: formattedThreads })
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch" }, { status: 500 })
+    console.error("[Admin Forum] Error:", error)
+    return NextResponse.json({ error: "Failed to fetch pending threads", threads: [] }, { status: 500 })
   }
 }
 
@@ -43,32 +119,59 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (!session.user.isAdmin) {
+    const supabase = getSupabaseAdminClient()
+    
+    // Verify admin
+    const { data: userData } = await supabase
+      .from("users")
+      .select("is_admin")
+      .eq("discord_id", session.user.id)
+      .single()
+
+    if (!userData?.is_admin && !session.user.isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
-    
-    const supabase = createAdminClient()
 
     const { threadId, action, reason } = await request.json()
+
+    if (!threadId || !action) {
+      return NextResponse.json({ error: "Missing threadId or action" }, { status: 400 })
+    }
 
     if (action === "approve") {
       const { error } = await supabase
         .from("forum_threads")
-        .update({ status: "approved" })
+        .update({ 
+          status: "approved",
+          updated_at: new Date().toISOString()
+        })
         .eq("id", threadId)
 
-      if (error) throw error
+      if (error) {
+        console.error("[Admin Forum] Approve error:", error)
+        throw error
+      }
     } else if (action === "reject") {
       const { error } = await supabase
         .from("forum_threads")
-        .update({ status: "rejected", rejection_reason: reason })
+        .update({ 
+          status: "rejected", 
+          rejection_reason: reason || "Rejected by admin",
+          updated_at: new Date().toISOString()
+        })
         .eq("id", threadId)
 
-      if (error) throw error
+      if (error) {
+        console.error("[Admin Forum] Reject error:", error)
+        throw error
+      }
+    } else {
+      return NextResponse.json({ error: "Invalid action" }, { status: 400 })
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    return NextResponse.json({ error: "Failed to process" }, { status: 500 })
+    console.error("[Admin Forum] POST error:", error)
+    return NextResponse.json({ error: "Failed to process action" }, { status: 500 })
   }
 }

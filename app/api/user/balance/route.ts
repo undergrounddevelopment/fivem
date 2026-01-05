@@ -1,49 +1,40 @@
-import { createClient } from "@/lib/supabase/server"
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import { db } from "@/lib/db"
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { createClient } from '@supabase/supabase-js'
 
-// Simple in-memory cache
-const cache = new Map<string, { coins: number, spin_tickets: number, timestamp: number }>()
-const CACHE_TTL = 3000 // 3 seconds
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+)
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ coins: 0, spin_tickets: 0 })
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const discordId = session.user.id
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('coins, spin_tickets, xp, level')
+      .eq('discord_id', session.user.id)
+      .single()
 
-    // Check cache first
-    const cached = cache.get(discordId)
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return NextResponse.json({ coins: cached.coins, spin_tickets: cached.spin_tickets })
+    if (error) {
+      console.error('[API User Balance] Error:', error)
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
-
-    // Get coins from coin_transactions (single source of truth)
-    const coins = await db.coins.getUserBalance(discordId)
-
-    // Get tickets from spin_wheel_tickets table only
-    const tickets = await db.spinWheel.getTickets(discordId)
-
-    const result = {
-      coins: coins || 0,
-      spin_tickets: tickets?.length || 0,
-      timestamp: Date.now()
-    }
-
-    // Update cache
-    cache.set(discordId, result)
 
     return NextResponse.json({
-      coins: result.coins,
-      spin_tickets: result.spin_tickets
+      coins: user.coins || 0,
+      spin_tickets: user.spin_tickets || 0,
+      xp: user.xp || 0,
+      level: user.level || 1
     })
   } catch (error) {
-    console.error("Error fetching balance:", error)
-    return NextResponse.json({ coins: 0, spin_tickets: 0 })
+    console.error('[API User Balance] Error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

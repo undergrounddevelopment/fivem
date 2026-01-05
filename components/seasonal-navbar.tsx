@@ -45,6 +45,7 @@ export function SeasonalNavbar() {
             <Link href="/mlo" className="nav-link">MLO</Link>
             <Link href="/vehicles" className="nav-link">Vehicles</Link>
             <Link href="/forum" className="nav-link">Forum</Link>
+            <Link href="/badges" className="nav-link">Badges</Link>
           </div>
 
           {/* Actions */}
@@ -85,6 +86,7 @@ export function SeasonalNavbar() {
             <Link href="/mlo" className="mobile-link">MLO</Link>
             <Link href="/vehicles" className="mobile-link">Vehicles</Link>
             <Link href="/forum" className="mobile-link">Forum</Link>
+            <Link href="/badges" className="mobile-link">Badges</Link>
           </div>
         )}
 

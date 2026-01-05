@@ -15,11 +15,37 @@ export function DailyCoinsButton() {
   const [isClaiming, setIsClaiming] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
+  const [canClaim, setCanClaim] = useState(true)
+  const [countdown, setCountdown] = useState("")
 
   // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Fetch claim status
+  useEffect(() => {
+    if (!user || !mounted) return
+
+    const checkStatus = async () => {
+      try {
+        const res = await fetch("/api/coins/daily/status")
+        const data = await res.json()
+        if (res.ok) {
+          setCanClaim(data.canClaim)
+          if (!data.canClaim) {
+            setCountdown(`${data.hoursUntilReset}h ${data.minutesUntilReset}m`)
+          }
+        }
+      } catch (error) {
+        console.error("Failed to check daily coins status:", error)
+      }
+    }
+
+    checkStatus()
+    const interval = setInterval(checkStatus, 60000) // Check every minute
+    return () => clearInterval(interval)
+  }, [user, mounted])
 
   // Show static button during SSR
   if (!mounted) {
@@ -39,7 +65,7 @@ export function DailyCoinsButton() {
   }
 
   const handleClaim = async () => {
-    if (!user) return
+    if (!user || !canClaim) return
 
     setIsClaiming(true)
     try {
@@ -47,10 +73,11 @@ export function DailyCoinsButton() {
       const data = await res.json()
 
       if (!res.ok || !data?.success) {
-        throw new Error(data?.error || "Failed to claim coins")
+        throw new Error(data?.message || data?.error || "Failed to claim coins")
       }
 
-      setResult({ success: true, coinsAdded: data.coinsEarned, newBalance: data.totalCoins })
+      setResult({ success: true, coinsAdded: data.reward || data.coinsEarned || 50, newBalance: data.newBalance || data.totalCoins })
+      setCanClaim(false)
 
       await refreshSession()
       setTimeout(() => {
@@ -68,16 +95,30 @@ export function DailyCoinsButton() {
 
   return (
     <>
-      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+      <motion.div whileHover={{ scale: canClaim ? 1.02 : 1 }} whileTap={{ scale: canClaim ? 0.98 : 1 }}>
         <Button
           onClick={() => setShowModal(true)}
+          disabled={!canClaim}
           className="w-full rounded-xl gap-2 glow relative overflow-hidden group shimmer"
-          style={{ background: 'linear-gradient(90deg, var(--primary), var(--accent))', color: 'white' }}
+          style={{ 
+            background: canClaim ? 'linear-gradient(90deg, var(--primary), var(--accent))' : 'rgba(128, 128, 128, 0.3)', 
+            color: 'white',
+            opacity: canClaim ? 1 : 0.6
+          }}
         >
           <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(90deg, var(--primary), var(--accent), var(--primary))' }} />
-          <Gift className="h-4 w-4 relative z-10" />
-          <span className="relative z-10">Daily Coins</span>
-          <Sparkles className="h-3 w-3 relative z-10 animate-pulse" />
+          {canClaim ? (
+            <>
+              <Gift className="h-4 w-4 relative z-10" />
+              <span className="relative z-10">Daily Coins</span>
+              <Sparkles className="h-3 w-3 relative z-10 animate-pulse" />
+            </>
+          ) : (
+            <>
+              <Clock className="h-4 w-4 relative z-10" />
+              <span className="relative z-10 text-xs">{countdown}</span>
+            </>
+          )}
         </Button>
       </motion.div>
 
@@ -113,7 +154,9 @@ export function DailyCoinsButton() {
                     />
                   </motion.div>
                   <h2 className="text-2xl font-bold text-[var(--text)] mb-2">Daily Coins</h2>
-                  <p className="text-[var(--textDim)]">Claim your free 100 coins every 24 hours!</p>
+                  <p className="text-[var(--textDim)]">
+                    {canClaim ? "Claim your free 100 coins today!" : `Already claimed! Come back in ${countdown}`}
+                  </p>
                 </div>
 
                 <AnimatePresence mode="wait">
@@ -174,7 +217,7 @@ export function DailyCoinsButton() {
                       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                         <Button
                           onClick={handleClaim}
-                          disabled={isClaiming}
+                          disabled={isClaiming || !canClaim}
                           className="w-full rounded-xl h-12 glow-sm relative overflow-hidden group shimmer"
                           style={{ background: 'var(--primary)', color: 'white' }}
                         >

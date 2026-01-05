@@ -72,15 +72,15 @@ export function ModernNavbar() {
           <div className="flex items-center gap-3">
             {user ? (
               <>
-                {/* Spin Tickets */}
-                <Link href="/spin-wheel">
+                {/* Spin Tickets - Event sudah habis */}
+                {/* <Link href="/spin-wheel">
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button variant="ghost" size="sm" className="glass-hover gap-2 hidden sm:flex">
                       <Ticket className="h-4 w-4 text-primary" />
                       <span className="font-semibold">{(user as any).tickets || 0}</span>
                     </Button>
                   </motion.div>
-                </Link>
+                </Link> */}
 
                 {/* Coins */}
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

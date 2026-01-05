@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CoinIcon } from "@/components/coin-icon"
@@ -15,15 +15,40 @@ import {
   MapPin,
   Car,
   Shirt,
+  Award,
+  Trophy,
+  Zap,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { ForumRankBadge } from "@/components/forum-rank-badge"
+import { BadgesDisplay } from "@/components/badges-display"
+import { Progress } from "@/components/ui/progress"
 
 export default function ProfileView({ profileData }) {
   const [activeTab, setActiveTab] = useState("posts")
+  const [xpStats, setXpStats] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   const { user, assets, threads, stats } = profileData
+
+  // Fetch XP & Badge stats
+  useEffect(() => {
+    const fetchXPStats = async () => {
+      try {
+        const res = await fetch(`/api/xp/stats?userId=${user.discord_id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setXpStats(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch XP stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchXPStats()
+  }, [user.discord_id])
 
   const getCategoryIcon = (category) => {
     switch (category) {
@@ -81,6 +106,24 @@ export default function ProfileView({ profileData }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="col-span-1 space-y-4">
+          {/* XP & Badge Section */}
+          {xpStats && (
+            <BadgesDisplay 
+              userStats={{
+                level: xpStats.level,
+                xp: xpStats.xp,
+                posts: stats.totalPosts,
+                threads: threads.length,
+                likes_received: stats.likeCount,
+                assets: stats.totalUploads,
+                asset_downloads: stats.totalDownloads,
+                membership: user.rank?.name || 'member',
+                created_at: user.created_at
+              }}
+              compact={false}
+            />
+          )}
+
           <div className="rounded-xl border border-border bg-card p-6">
             <h2 className="font-semibold text-foreground mb-4">Statistics</h2>
             <div className="space-y-4">

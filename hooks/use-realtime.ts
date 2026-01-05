@@ -415,9 +415,14 @@ export function useRealtimeReplies(threadId: string) {
       channel = supabase
         .channel(`replies:${threadId}`)
         .on(
-          "broadcast",
-          { event: "replies_changed" },
-          () => fetchReplies(),
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "forum_replies",
+            filter: `thread_id=eq.${threadId}`
+          },
+          () => fetchReplies()
         )
         .subscribe((status) => {
           setIsConnected(status === 'SUBSCRIBED')

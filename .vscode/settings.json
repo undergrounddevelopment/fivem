@@ -1,3 +1,4 @@
 {
-    "Lingma.aI Chat.mcpToolsInAgentMode": true
+    "Lingma.aI Chat.mcpToolsInAgentMode": true,
+    "typescript.autoClosingTags": false
 }

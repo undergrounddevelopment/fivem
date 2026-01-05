@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/server"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export async function GET() {
   try {
     const supabase = createAdminClient()
@@ -8,7 +11,7 @@ export async function GET() {
 
     const { data: users, error } = await supabase
       .from("users")
-      .select("discord_id, username, avatar, last_seen")
+      .select("discord_id, username, avatar, membership, is_admin, last_seen")
       .eq("is_banned", false)
       .not("last_seen", "is", null)
       .gte("last_seen", fiveMinutesAgo)
@@ -26,7 +29,9 @@ export async function GET() {
         id: u.discord_id,
         username: u.username,
         avatar: u.avatar,
+        membership: u.is_admin ? "admin" : u.membership || "member",
         status,
+        isOnline: true,
         last_activity: u.last_seen,
       }
     })

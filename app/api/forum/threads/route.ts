@@ -1,107 +1,134 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { forumQueries } from '@/lib/db/queries'
-import { hasPgConnection, pgPool } from '@/lib/db/postgres'
+import { createClient } from '@supabase/supabase-js'
 
-// GET /api/forum/threads - Get all threads
+// Direct Supabase connection - use correct env variables
+const supabaseUrl = process.env.NEXT_PUBLIC_fivemvip_SUPABASE_URL || 
+                    process.env.fivemvip_SUPABASE_URL || 
+                    process.env.SUPABASE_URL || ""
+const supabaseServiceKey = process.env.fivemvip_SUPABASE_SERVICE_ROLE_KEY || 
+                           process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+
+function getDirectSupabase() {
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error("Missing Supabase credentials")
+  }
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
+}
+
+// Helper to fetch authors by discord_id only
+async function fetchAuthors(supabase: any, authorIds: string[]) {
+  if (!authorIds.length) return {}
+  
+  const uniqueIds = [...new Set(authorIds.filter(Boolean))]
+  const authorsMap: Record<string, any> = {}
+
+  const { data: users } = await supabase
+    .from("users")
+    .select("id, discord_id, username, avatar, membership, xp, level")
+    .in("discord_id", uniqueIds)
+
+  for (const user of users || []) {
+    authorsMap[user.discord_id] = user
+  }
+
+  return authorsMap
+}
+
+function formatAuthor(author: any, fallbackId: string) {
+  if (!author) {
+    const fallbackUsername = `User_${fallbackId.slice(-4)}`
+    return {
+      id: fallbackId,
+      username: fallbackUsername,
+      avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${fallbackUsername}`,
+      membership: "member",
+      xp: 0,
+      level: 1,
+    }
+  }
+  
+  return {
+    id: author.discord_id,
+    username: author.username,
+    avatar: author.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${author.username}`,
+    membership: author.membership || "member",
+    xp: author.xp || 0,
+    level: author.level || 1,
+  }
+}
+
+// GET /api/forum/threads
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const categoryId = searchParams.get('category')
     const limit = parseInt(searchParams.get('limit') || '50')
-    const offset = parseInt(searchParams.get('offset') || '0')
-
     const page = parseInt(searchParams.get('page') || '1')
-    const calculatedOffset = (page - 1) * limit
+    const offset = (page - 1) * limit
 
-    console.log(`[Forum API] Fetching threads - category: ${categoryId}, limit: ${limit}, hasPG: ${hasPgConnection}`)
+    const supabase = getDirectSupabase()
 
-    // Prefer Akamai Postgres when available
-    let rawThreads: any[] = []
-    if (hasPgConnection && pgPool) {
-      const where: string[] = ["t.is_deleted = false"]
-      const params: any[] = []
+    // Build query
+    let query = supabase
+      .from("forum_threads")
+      .select("*")
+      .eq("is_deleted", false)
+      .or("status.eq.approved,status.is.null")
+      .order("is_pinned", { ascending: false })
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1)
 
-      if (categoryId) {
-        params.push(categoryId)
-        where.push(`t.category_id = $${params.length}`)
-      }
-
-      params.push(limit)
-      params.push(calculatedOffset)
-
-      // Try join on UUID first, fallback to discord_id if author not found
-      const sql = `
-        SELECT
-          t.*,
-          COALESCE(u1.id, u2.id) AS author_user_id,
-          COALESCE(u1.discord_id, u2.discord_id) AS author_discord_id,
-          COALESCE(u1.username, u2.username) AS author_username,
-          COALESCE(u1.avatar, u2.avatar) AS author_avatar,
-          COALESCE(u1.membership, u2.membership) AS author_membership
-        FROM forum_threads t
-        LEFT JOIN users u1 ON u1.id::text = t.author_id::text
-        LEFT JOIN users u2 ON u2.discord_id = t.author_id::text AND u1.id IS NULL
-        WHERE ${where.join(" AND ")}
-        ORDER BY t.is_pinned DESC, t.created_at DESC
-        LIMIT $${params.length - 1} OFFSET $${params.length}
-      `
-
-      try {
-        const res = await pgPool.query(sql, params)
-        rawThreads = res.rows || []
-        console.log(`[Forum API] PG returned ${rawThreads.length} threads`)
-      } catch (pgErr) {
-        console.error('[Forum API] PG query failed, falling back to Supabase:', pgErr)
-        rawThreads = await forumQueries.getThreads(categoryId || undefined, limit, calculatedOffset)
-      }
-    } else {
-      console.log('[Forum API] Using Supabase fallback')
-      rawThreads = await forumQueries.getThreads(categoryId || undefined, limit, calculatedOffset)
-      console.log(`[Forum API] Supabase returned ${rawThreads.length} threads`)
+    if (categoryId) {
+      query = query.eq("category_id", categoryId)
     }
 
-    console.log(`[Forum API] Total raw threads: ${rawThreads.length}`)
+    const { data: threads, error } = await query
 
-    // Transform threads to include author object
-    const threads = rawThreads.map((t: any) => ({
-      id: t.id,
-      title: t.title,
-      content: t.content,
-      category_id: t.category_id,
-      author_id: t.author_id,
-      status: (t as any).status,
-      is_pinned: t.is_pinned,
-      is_locked: t.is_locked,
-      views: t.views || 0,
-      likes: t.likes || 0,
-      replies: (t.replies ?? t.replies_count) || 0,
-      replies_count: (t.replies ?? t.replies_count) || 0,
-      images: (t.images || []),
-      created_at: t.created_at,
-      updated_at: t.updated_at,
-      author: t.author ? {
-        id: t.author.id || t.author_id,
-        username: t.author.username || 'Unknown',
-        avatar: t.author.avatar,
-        membership: t.author.membership || 'member'
-      } : (t.author_discord_id || t.author_user_id) ? {
-        id: t.author_discord_id || t.author_user_id,
-        username: t.author_username || 'Unknown',
-        avatar: t.author_avatar,
-        membership: t.author_membership || 'member'
-      } : { id: t.author_id, username: 'Unknown', avatar: null, membership: 'member' }
-    }))
+    if (error) {
+      console.error("[Forum API] Error:", error)
+      throw error
+    }
+
+    // Fetch authors
+    const authorIds = (threads || []).map(t => t.author_id).filter(Boolean)
+    const authorsMap = await fetchAuthors(supabase, authorIds)
+
+    // Format threads
+    const formattedThreads = (threads || []).map(t => {
+      const author = authorsMap[t.author_id]
+      
+      return {
+        id: t.id,
+        title: t.title,
+        content: t.content,
+        category_id: t.category_id,
+        author_id: t.author_id,
+        status: t.status,
+        is_pinned: t.is_pinned,
+        is_locked: t.is_locked,
+        views: t.views || 0,
+        likes: t.likes || 0,
+        replies: t.replies_count || t.replies || 0,
+        replies_count: t.replies_count || t.replies || 0,
+        images: t.images || [],
+        created_at: t.created_at,
+        updated_at: t.updated_at,
+        author: formatAuthor(author, t.author_id),
+      }
+    })
 
     return NextResponse.json({
       success: true,
-      threads: threads,
-      total: threads.length,
-      totalPages: Math.ceil(threads.length / limit) || 1,
+      threads: formattedThreads,
+      total: formattedThreads.length,
+      totalPages: Math.ceil(formattedThreads.length / limit) || 1,
     })
   } catch (error) {
-    console.error('Error fetching threads:', error)
+    console.error('[Forum API] Error:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch threads' },
       { status: 500 }
@@ -109,10 +136,9 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/forum/threads - Create new thread (SECURED)
+// POST /api/forum/threads
 export async function POST(request: NextRequest) {
   try {
-    // SECURITY: Require authentication
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -123,8 +149,6 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { title, content, category_id, images } = body
-    
-    // SECURITY: Use session user ID, NOT from body (prevents impersonation)
     const discordId = session.user.id
 
     // Validation
@@ -142,31 +166,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let thread: any = null
-    if (hasPgConnection && pgPool) {
-      const userRes = await pgPool.query('SELECT id FROM users WHERE discord_id = $1 LIMIT 1', [discordId])
-      const authorUuid = userRes.rows?.[0]?.id
-      if (!authorUuid) {
-        return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
-      }
+    const supabase = getDirectSupabase()
 
-      const res = await pgPool.query(
-        `
-          INSERT INTO forum_threads (title, content, category_id, author_id)
-          VALUES ($1,$2,$3,$4)
-          RETURNING *
-        `,
-        [title, content, category_id, authorUuid],
-      )
-      thread = res.rows?.[0] || null
-    } else {
-      thread = await forumQueries.createThread({
+    // Create thread with discord_id directly (author_id is TEXT = discord_id)
+    const { data: thread, error: insertError } = await supabase
+      .from("forum_threads")
+      .insert({
         title,
         content,
         category_id,
         author_id: discordId,
+        user_id: discordId,
+        status: 'pending',
         images: images || [],
       })
+      .select()
+      .single()
+
+    if (insertError) {
+      console.error('[Forum API] Insert error:', insertError)
+      throw insertError
     }
 
     return NextResponse.json({
@@ -174,7 +193,7 @@ export async function POST(request: NextRequest) {
       data: thread,
     })
   } catch (error) {
-    console.error('Error creating thread:', error)
+    console.error('[Forum API] Error:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to create thread' },
       { status: 500 }

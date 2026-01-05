@@ -61,11 +61,12 @@ export const forumQueries = {
     try {
       const supabase = createAdminClient()
       
-      // Get threads
+      // Get threads - only approved or null status
       let query = supabase
         .from("forum_threads")
         .select(`*`)
         .eq("is_deleted", false)
+        .or("status.eq.approved,status.is.null")
         .order("is_pinned", { ascending: false })
         .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1)
@@ -322,15 +323,17 @@ export const coinsQueries = {
   canClaimDaily: async (userId: string, claimType: string) => {
     try {
       const supabase = createAdminClient()
-      const yesterday = new Date()
-      yesterday.setDate(yesterday.getDate() - 1)
+      
+      // Get start of today (00:00:00)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
 
       const { data, error } = await supabase
         .from("coin_transactions")
         .select("created_at")
         .eq("user_id", userId)
         .eq("type", claimType)
-        .gte("created_at", yesterday.toISOString())
+        .gte("created_at", today.toISOString())
         .limit(1)
 
       if (error) throw error

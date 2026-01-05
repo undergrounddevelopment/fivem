@@ -1,0 +1,483 @@
+/* Electric Modern 2025 Styles */
+
+/* CSS Variables for Electric Theme */
+:root {
+  --electric-border-color: #ec4899; /* Modern pink */
+  --electric-light-color: oklch(from var(--electric-border-color) l c h);
+  --gradient-color: oklch(from var(--electric-border-color) 0.3 calc(c / 2) h / 0.4);
+  --color-neutral-900: oklch(0.185 0 0);
+  --electric-glow: rgba(236, 72, 153, 0.5);
+  --electric-accent: #f472b6;
+  --electric-dark: #831843;
+}
+
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: oklch(0.145 0 0);
+  color: oklch(0.985 0 0);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Electric Card Container */
+.electric-card {
+  padding: 2px;
+  border-radius: 24px;
+  position: relative;
+  background: linear-gradient(
+    -30deg,
+    var(--gradient-color),
+    transparent,
+    var(--gradient-color)
+  ),
+  linear-gradient(
+    to bottom,
+    var(--color-neutral-900),
+    var(--color-neutral-900)
+  );
+}
+
+/* Inner container */
+.electric-inner {
+  position: relative;
+}
+
+/* Border layers */
+.electric-border-outer {
+  border: 2px solid rgba(236, 72, 153, 0.5);
+  border-radius: 24px;
+  padding-right: 4px;
+  padding-bottom: 4px;
+}
+
+.electric-main-card {
+  border-radius: 24px;
+  border: 2px solid var(--electric-border-color);
+  margin-top: -4px;
+  margin-left: -4px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+/* Glow effects */
+.electric-glow-1 {
+  border: 2px solid rgba(236, 72, 153, 0.6);
+  border-radius: 24px;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+.electric-glow-2 {
+  border: 2px solid var(--electric-light-color);
+  border-radius: 24px;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* Overlay effects */
+.electric-overlay-1 {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 24px;
+  opacity: 1;
+  mix-blend-mode: overlay;
+  transform: scale(1.1);
+  filter: blur(16px);
+  background: linear-gradient(
+    -30deg,
+    white,
+    transparent 30%,
+    transparent 70%,
+    white
+  );
+  pointer-events: none;
+}
+
+.electric-overlay-2 {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 24px;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  transform: scale(1.1);
+  filter: blur(16px);
+  background: linear-gradient(
+    -30deg,
+    white,
+    transparent 30%,
+    transparent 70%,
+    white
+  );
+  pointer-events: none;
+}
+
+/* Background glow */
+.electric-bg-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 24px;
+  filter: blur(32px);
+  transform: scale(1.1);
+  opacity: 0.3;
+  z-index: -1;
+  background: linear-gradient(
+    -30deg,
+    var(--electric-light-color),
+    transparent,
+    var(--electric-border-color)
+  );
+}
+
+/* Electric Glass Button */
+.electric-glass-btn {
+  background: radial-gradient(
+    47.2% 50% at 50.39% 88.37%,
+    rgba(236, 72, 153, 0.12) 0%,
+    rgba(236, 72, 153, 0) 100%
+  ),
+  rgba(236, 72, 153, 0.04);
+  position: relative;
+  transition: all 0.3s ease;
+  border-radius: 14px;
+  width: fit-content;
+  height: fit-content;
+  padding: 12px 24px;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  border: none;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.electric-glass-btn:hover {
+  background: radial-gradient(
+    47.2% 50% at 50.39% 88.37%,
+    rgba(236, 72, 153, 0.2) 0%,
+    rgba(236, 72, 153, 0) 100%
+  ),
+  rgba(236, 72, 153, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(236, 72, 153, 0.3);
+}
+
+.electric-glass-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1px;
+  background: linear-gradient(
+    150deg,
+    rgba(236, 72, 153, 0.8) 16.73%,
+    rgba(236, 72, 153, 0.2) 30.2%,
+    rgba(236, 72, 153, 0.2) 68.2%,
+    rgba(236, 72, 153, 0.9) 81.89%
+  );
+  border-radius: inherit;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}
+
+/* Electric Neon Text */
+.electric-neon-text {
+  color: var(--electric-border-color);
+  text-shadow: 
+    0 0 5px var(--electric-glow),
+    0 0 10px var(--electric-glow),
+    0 0 15px var(--electric-glow);
+  animation: electric-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes electric-pulse {
+  from {
+    text-shadow: 
+      0 0 5px var(--electric-glow),
+      0 0 10px var(--electric-glow),
+      0 0 15px var(--electric-glow);
+  }
+  to {
+    text-shadow: 
+      0 0 10px var(--electric-glow),
+      0 0 20px var(--electric-glow),
+      0 0 30px var(--electric-glow);
+  }
+}
+
+/* Electric Loading Animation */
+.electric-loading {
+  position: relative;
+  display: inline-block;
+}
+
+.electric-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid transparent;
+  border-top: 2px solid var(--electric-border-color);
+  border-radius: 50%;
+  animation: electric-spin 1s linear infinite;
+}
+
+@keyframes electric-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Electric Card Hover Effect */
+.electric-hover-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.electric-hover-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 
+    0 20px 40px rgba(236, 72, 153, 0.2),
+    0 0 20px rgba(236, 72, 153, 0.1);
+}
+
+.electric-hover-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent,
+    rgba(236, 72, 153, 0.1),
+    transparent 30%
+  );
+  animation: electric-rotate 6s linear infinite;
+  z-index: -1;
+}
+
+@keyframes electric-rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Electric Gradient Background */
+.electric-gradient-bg {
+  background: linear-gradient(
+    135deg,
+    rgba(236, 72, 153, 0.1) 0%,
+    rgba(168, 85, 247, 0.1) 50%,
+    rgba(236, 72, 153, 0.1) 100%
+  );
+}
+
+/* Electric Border Animation */
+.electric-border-animate {
+  position: relative;
+  border: 2px solid transparent;
+  background: linear-gradient(var(--color-neutral-900), var(--color-neutral-900)) padding-box,
+              linear-gradient(45deg, var(--electric-border-color), var(--electric-accent)) border-box;
+  animation: electric-border-flow 3s linear infinite;
+}
+
+@keyframes electric-border-flow {
+  0% {
+    background: linear-gradient(var(--color-neutral-900), var(--color-neutral-900)) padding-box,
+                linear-gradient(45deg, var(--electric-border-color), var(--electric-accent)) border-box;
+  }
+  50% {
+    background: linear-gradient(var(--color-neutral-900), var(--color-neutral-900)) padding-box,
+                linear-gradient(225deg, var(--electric-accent), var(--electric-border-color)) border-box;
+  }
+  100% {
+    background: linear-gradient(var(--color-neutral-900), var(--color-neutral-900)) padding-box,
+                linear-gradient(45deg, var(--electric-border-color), var(--electric-accent)) border-box;
+  }
+}
+
+/* Electric Shimmer Effect */
+.electric-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.electric-shimmer::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 20%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(236, 72, 153, 0.4),
+    transparent
+  );
+  transform: rotate(25deg);
+  animation: electric-shimmer-move 2s infinite;
+}
+
+@keyframes electric-shimmer-move {
+  0% {
+    left: -60%;
+  }
+  100% {
+    left: 120%;
+  }
+}
+
+/* Electric Status Indicators */
+.electric-status-active {
+  background: linear-gradient(45deg, #10b981, #34d399);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.electric-status-premium {
+  background: linear-gradient(45deg, var(--electric-border-color), var(--electric-accent));
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Electric Download Button */
+.electric-download-btn {
+  background: linear-gradient(135deg, var(--electric-border-color), var(--electric-accent));
+  border: none;
+  color: white;
+  padding: 16px 32px;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.electric-download-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 15px 30px rgba(236, 72, 153, 0.4),
+    0 0 30px rgba(236, 72, 153, 0.2);
+}
+
+.electric-download-btn:active {
+  transform: translateY(-1px);
+}
+
+.electric-download-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.electric-download-btn:hover::before {
+  left: 100%;
+}
+
+/* Electric Responsive Design */
+@media (max-width: 768px) {
+  .electric-card {
+    padding: 1px;
+    border-radius: 16px;
+  }
+  
+  .electric-main-card {
+    border-radius: 16px;
+  }
+  
+  .electric-glass-btn {
+    padding: 10px 20px;
+    font-size: 12px;
+  }
+  
+  .electric-download-btn {
+    padding: 14px 28px;
+    font-size: 14px;
+  }
+}
+
+/* Electric Dark Mode Enhancements */
+@media (prefers-color-scheme: dark) {
+  .electric-card {
+    background: linear-gradient(
+      -30deg,
+      rgba(236, 72, 153, 0.1),
+      transparent,
+      rgba(236, 72, 153, 0.1)
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.9),
+      rgba(0, 0, 0, 0.9)
+    );
+  }
+}

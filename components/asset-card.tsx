@@ -8,6 +8,7 @@ import Link from "next/link"
 import { useState, memo, useCallback, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { SnowPile } from "@/components/snow-pile"
+import { ForumBadge } from "@/components/forum-badge"
 
 interface AssetCardProps {
   asset: {
@@ -55,9 +56,9 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
   const [imageError, setImageError] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   
-  const imageUrl = asset.thumbnail || asset.image
+  const imageUrl = asset.thumbnail_url || asset.thumbnail || asset.image
   const hasImage = imageUrl && !imageError
-  const isPremium = asset.isPremium || (asset.price && Number(asset.price) > 0)
+  const isPremium = asset.isPremium || (asset.price && asset.price !== 'free') || (asset.coinPrice && asset.coinPrice > 0)
   
   const formatNumber = useCallback((num: number | string | undefined) => {
     if (!num) return "0"
@@ -151,16 +152,28 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
             
             {/* Quick action overlay */}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-              <Link href={asset.id ? `/asset/${asset.id}` : "#"}>
+              {asset.id ? (
+                <Link href={`/asset/${asset.id}`}>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-5 py-2.5 rounded-xl bg-white/90 text-gray-900 font-semibold text-sm flex items-center gap-2 shadow-xl backdrop-blur-sm"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Quick View
+                  </motion.button>
+                </Link>
+              ) : (
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-5 py-2.5 rounded-xl bg-white/90 text-gray-900 font-semibold text-sm flex items-center gap-2 shadow-xl backdrop-blur-sm"
+                  className="px-5 py-2.5 rounded-xl bg-white/90 text-gray-900 font-semibold text-sm flex items-center gap-2 shadow-xl backdrop-blur-sm opacity-50 cursor-not-allowed"
+                  disabled
                 >
                   <Eye className="w-4 h-4" />
-                  Quick View
+                  No ID
                 </motion.button>
-              </Link>
+              )}
             </div>
 
             {/* Category badge */}
@@ -184,7 +197,7 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
                 ? "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/30" 
                 : "bg-green-500/20 text-green-400 border border-green-500/30"
             )}>
-              {isPremium ? `$${asset.price}` : "FREE"}
+              {isPremium ? `${asset.coinPrice || 0} coins` : "FREE"}
             </span>
           </div>
 
@@ -206,6 +219,7 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
                   <span className="font-medium text-foreground text-[11px]">
                     {authorObj.username || "Unknown"}
                   </span>
+                  <ForumBadge userId={authorObj.id || ""} size="sm" />
                   {authorObj.membership === "vip" && (
                     <Crown className="w-3 h-3 text-primary" />
                   )}

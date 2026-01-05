@@ -1,17 +1,16 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Manrope } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import { SpeedInsights } from "@vercel/speed-insights/next"
 import { AuthProvider } from "@/components/auth-provider"
 import { ModernLayout } from "@/components/modern-layout"
 import { AppWrapper } from "@/components/app-wrapper"
-import { SpinWinNotifications } from "@/components/spin-win-notifications"
+// import { SpinWinNotifications } from "@/components/spin-win-notifications" // Event sudah berakhir
 import { ToastContainer } from "@/components/modern-toast"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { HolidayBanner } from "@/components/holiday-banner"
 import { SeasonalWrapper } from "@/components/seasonal-wrapper"
 import { LanguageProvider } from "@/components/language-provider"
+import { AnalyticsWrapper } from "@/components/analytics-wrapper"
 import { SITE_NAME, SITE_DESCRIPTION, SITE_URL, SITE_LOGO, SEO_KEYWORDS } from "@/lib/constants"
 import { ClientSessionProvider } from "@/components/client-session-provider"
 import "./globals.css"
@@ -271,6 +270,16 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             __html: `
               (function() {
                 try {
+                  // Fix cookie domain issues
+                  const fixCookies = () => {
+                    document.cookie.split(';').forEach(cookie => {
+                      const [name] = cookie.trim().split('=');
+                      if (name === '__cf_bm' || name.startsWith('_vercel')) {
+                        document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname;
+                      }
+                    });
+                  };
+                  
                   const cookies = document.cookie.split(';');
                   for (let cookie of cookies) {
                     const [name, value] = cookie.trim().split('=');
@@ -279,7 +288,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                       break;
                     }
                   }
-                } catch(e) { console.error('CSRF token error:', e); }
+                  
+                  fixCookies();
+                } catch(e) { console.error('Cookie setup error:', e); }
               })();
             `,
           }}
@@ -353,7 +364,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   <ModernLayout>
                     <AppWrapper>
                       {children}
-                      <SpinWinNotifications />
+                      {/* SpinWinNotifications dinonaktifkan - event sudah berakhir */}
                       <ToastContainer />
                     </AppWrapper>
                   </ModernLayout>
@@ -362,8 +373,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </LanguageProvider>
           </AuthProvider>
         </ClientSessionProvider>
-        <Analytics />
-        <SpeedInsights />
+        <AnalyticsWrapper />
       </body>
     </html>
   )

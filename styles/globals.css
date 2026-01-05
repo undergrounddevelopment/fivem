@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import './electric-modern.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -10,19 +11,19 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: hsl(330, 100%, 65%); /* Modern pink color */
+  --primary: #ec4899; /* Electric pink color */
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: hsl(330, 100%, 94%); /* Lighter pink */
+  --accent: #f472b6; /* Electric accent pink */
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: hsl(330, 100%, 65%); /* Pink ring */
+  --ring: #ec4899; /* Electric pink ring */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -31,7 +32,7 @@
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: hsl(330, 100%, 65%); /* Pink sidebar primary */
+  --sidebar-primary: #ec4899; /* Electric pink sidebar primary */
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
@@ -40,38 +41,38 @@
 }
 
 .dark {
-  --background: #0a0a0a; /* Dark background as per specification */
+  --background: oklch(0.145 0 0); /* Electric dark background */
   --foreground: oklch(0.985 0 0);
-  --card: #1a1a1a; /* Dark card background */
+  --card: rgba(26, 26, 26, 0.8); /* Semi-transparent dark card */
   --card-foreground: oklch(0.985 0 0);
-  --popover: #1a1a1a;
+  --popover: rgba(26, 26, 26, 0.95);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: hsl(330, 100%, 65%); /* Modern pink color */
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: #2d2d2d; /* Darker secondary */
+  --primary: #ec4899; /* Electric pink color */
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: rgba(45, 45, 45, 0.8); /* Semi-transparent secondary */
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: #2d2d2d; /* Dark muted */
+  --muted: rgba(45, 45, 45, 0.6); /* Semi-transparent muted */
   --muted-foreground: oklch(0.708 0 0);
-  --accent: hsl(330, 100%, 25%); /* Darker pink accent */
+  --accent: #f472b6; /* Electric accent pink */
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: #2d2d2d; /* Darker border */
-  --input: #2d2d2d; /* Darker input */
-  --ring: hsl(330, 100%, 65%); /* Pink ring */
+  --border: rgba(236, 72, 153, 0.2); /* Electric pink border */
+  --input: rgba(45, 45, 45, 0.8); /* Semi-transparent input */
+  --ring: #ec4899; /* Electric pink ring */
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: #111111; /* Dark sidebar */
+  --sidebar: rgba(17, 17, 17, 0.95); /* Semi-transparent sidebar */
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: hsl(330, 100%, 65%); /* Pink sidebar primary */
+  --sidebar-primary: #ec4899; /* Electric pink sidebar primary */
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: #2d2d2d; /* Dark sidebar accent */
+  --sidebar-accent: rgba(45, 45, 45, 0.8); /* Semi-transparent sidebar accent */
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: #2d2d2d; /* Dark sidebar border */
-  --sidebar-ring: hsl(330, 100%, 65%); /* Pink sidebar ring */
+  --sidebar-border: rgba(236, 72, 153, 0.2); /* Electric pink sidebar border */
+  --sidebar-ring: #ec4899; /* Electric pink sidebar ring */
 }
 
 /* Modern design elements */

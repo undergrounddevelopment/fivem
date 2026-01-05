@@ -19,7 +19,7 @@ interface Stats {
 const quickLinks = [
   { title: "Banners", href: "/admin/banners", icon: ImageIcon, color: "from-blue-500 to-cyan-500" },
   { title: "Announcements", href: "/admin/announcements", icon: Activity, color: "from-green-500 to-emerald-500" },
-  { title: "Spin Wheel", href: "/admin/spin-wheel", icon: Sparkles, color: "from-yellow-500 to-orange-500" },
+  // { title: "Spin Wheel", href: "/admin/spin-wheel", icon: Sparkles, color: "from-yellow-500 to-orange-500" }, // Event sudah habis
   { title: "Users", href: "/admin/users", icon: Users, color: "from-cyan-500 to-blue-500" },
   { title: "Assets", href: "/admin/assets", icon: FileText, color: "from-orange-500 to-red-500" },
   { title: "Coins", href: "/admin/coins", icon: Coins, color: "from-purple-500 to-pink-500" },

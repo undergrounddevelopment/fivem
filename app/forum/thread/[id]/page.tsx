@@ -26,6 +26,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useRealtimeReplies } from "@/hooks/use-realtime";
 import { formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
+import { BadgesDisplay } from "@/components/badges-display";
+import { ForumBadge } from "@/components/forum-badge";
 import {
   ArrowLeft,
   MessageSquare,
@@ -69,6 +71,8 @@ interface Author {
   avatar: string | null;
   membership: string;
   reputation?: number;
+  xp?: number;
+  level?: number;
 }
 
 interface ReplyData {
@@ -119,7 +123,9 @@ export default function ThreadPage() {
   const [submitting, setSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likingThread, setLikingThread] = useState(false);
+  const [dislikingThread, setDislikingThread] = useState(false);
   const [likingReplyIds, setLikingReplyIds] = useState<Record<string, boolean>>({});
+  const [dislikingReplyIds, setDislikingReplyIds] = useState<Record<string, boolean>>({});
   const [reportOpen, setReportOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState<{ type: "thread" | "reply"; id: string } | null>(null);
   const [reportReason, setReportReason] = useState<string>("spam");
@@ -128,6 +134,13 @@ export default function ThreadPage() {
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showLinkInsert, setShowLinkInsert] = useState(false);
+  const [showMentionSearch, setShowMentionSearch] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkText, setLinkText] = useState("");
+  const [mentionSearch, setMentionSearch] = useState("");
+  const [mentionResults, setMentionResults] = useState<any[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Fetch thread data
   useEffect(() => {
@@ -198,6 +211,42 @@ export default function ThreadPage() {
         description: "Unable to copy link automatically",
         variant: "destructive",
       });
+    }
+  };
+
+  const toggleDislike = async (targetType: "thread" | "reply", targetId: string) => {
+    if (!session?.user) {
+      toast({ title: "Login Required", description: "Please login to dislike content", variant: "destructive" });
+      return;
+    }
+
+    if (targetType === "thread") {
+      if (dislikingThread) return;
+      setDislikingThread(true);
+    } else {
+      if (dislikingReplyIds[targetId]) return;
+      setDislikingReplyIds((prev) => ({ ...prev, [targetId]: true }));
+    }
+
+    try {
+      const res = await fetch("/api/dislikes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetId, targetType }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to update dislike");
+
+      toast({ title: data.disliked ? "Disliked" : "Dislike removed" });
+    } catch (error) {
+      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to update dislike", variant: "destructive" });
+    } finally {
+      if (targetType === "thread") {
+        setDislikingThread(false);
+      } else {
+        setDislikingReplyIds((prev) => ({ ...prev, [targetId]: false }));
+      }
     }
   };
 
@@ -443,11 +492,111 @@ export default function ThreadPage() {
     }
   };
 
+  const insertLink = () => {
+    if (!linkUrl.trim()) return;
+    const text = linkText.trim() || linkUrl;
+    const markdown = `[${text}](${linkUrl})`;
+    setReplyContent(prev => prev + markdown);
+    setLinkUrl("");
+    setLinkText("");
+    setShowLinkInsert(false);
+    toast({ title: "Link inserted" });
+  };
+
+  const searchMentions = async (query: string) => {
+    if (query.length < 2) {
+      setMentionResults([]);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}&limit=5`);
+      const data = await res.json();
+      setMentionResults(data.users || []);
+    } catch (error) {
+      console.error("Mention search error:", error);
+    }
+  };
+
+  const insertMention = (username: string) => {
+    setReplyContent(prev => prev + `@${username} `);
+    setShowMentionSearch(false);
+    setMentionSearch("");
+    setMentionResults([]);
+  };
+
+  const deleteReply = async (replyId: string) => {
+    if (!session?.user) return;
+    if (!confirm("Delete this reply?")) return;
+
+    try {
+      const res = await fetch(`/api/forum/replies/${replyId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to delete");
+
+      setThread(prev => prev ? {
+        ...prev,
+        replies: prev.replies.filter(r => r.id !== replyId),
+        repliesCount: prev.repliesCount - 1
+      } : null);
+
+      toast({ title: "Reply deleted" });
+      refetchReplies();
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete reply", variant: "destructive" });
+    }
+  };
+
   const prevImage = () => {
     if (thread?.images) {
       setCurrentImageIndex(
         (prev) => (prev - 1 + thread.images.length) % thread.images.length,
       );
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!session?.user) {
+      toast({ title: "Login Required", description: "Please login to upload images", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Max file size is 5MB", variant: "destructive" });
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload/image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Upload failed");
+      }
+
+      const { url } = await res.json();
+      setReplyContent(prev => prev + `\n![image](${url})\n`);
+      toast({ title: "Image uploaded", description: "Image added to your reply" });
+    } catch (error) {
+      toast({ 
+        title: "Upload failed", 
+        description: error instanceof Error ? error.message : "Failed to upload image",
+        variant: "destructive" 
+      });
+    } finally {
+      setUploadingImage(false);
+      e.target.value = "";
     }
   };
 
@@ -578,6 +727,7 @@ export default function ThreadPage() {
                 <span className="font-semibold text-foreground">
                   {thread.author?.username || "Unknown User"}
                 </span>
+                <ForumBadge userId={thread.author?.id || ""} size="md" />
                 {thread.author?.membership === "vip" && (
                   <Badge className="bg-primary/20 text-primary text-[10px] px-1.5 py-0">
                     <Crown className="h-3 w-3 mr-0.5" />
@@ -672,6 +822,8 @@ export default function ThreadPage() {
                   variant="ghost"
                   size="sm"
                   className="h-9 gap-1.5 rounded-full hover:bg-secondary"
+                  onClick={() => toggleDislike("thread", thread.id)}
+                  disabled={dislikingThread}
                 >
                   <ThumbsDown className="h-4 w-4" />
                 </Button>
@@ -778,6 +930,7 @@ export default function ThreadPage() {
                             <span className="font-semibold text-foreground">
                               {reply.author?.username || "Unknown"}
                             </span>
+                            <ForumBadge userId={reply.author?.id || ""} size="sm" />
                             {reply.author?.membership === "vip" && (
                               <Badge className="bg-primary/20 text-primary text-[10px] px-1.5 py-0 gap-0.5">
                                 <Crown className="h-3 w-3" />
@@ -800,6 +953,16 @@ export default function ThreadPage() {
                             )}
                           </div>
                           <div className="flex items-center gap-1">
+                            {session?.user?.id === reply.author?.id || session?.user?.email?.includes('admin') ? (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-red-400 rounded-lg"
+                                onClick={() => deleteReply(reply.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            ) : null}
                             <Button
                               variant="ghost"
                               size="icon"
@@ -883,14 +1046,29 @@ export default function ThreadPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                    className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground relative"
+                    disabled={uploadingImage}
+                    title="Upload image"
                   >
-                    <ImageIcon className="h-5 w-5" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      disabled={uploadingImage}
+                    />
+                    {uploadingImage ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <ImageIcon className="h-5 w-5" />
+                    )}
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowLinkInsert(true)}
+                    title="Insert link"
                   >
                     <Link2 className="h-5 w-5" />
                   </Button>
@@ -898,6 +1076,8 @@ export default function ThreadPage() {
                     variant="ghost"
                     size="icon"
                     className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowMentionSearch(true)}
+                    title="Mention user"
                   >
                     <AtSign className="h-5 w-5" />
                   </Button>
@@ -1047,6 +1227,83 @@ export default function ThreadPage() {
               {reportSubmitting ? "Submitting..." : "Submit Report"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Link Insert Dialog */}
+      <Dialog open={showLinkInsert} onOpenChange={setShowLinkInsert}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Insert Link</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>URL</Label>
+              <input
+                type="url"
+                className="w-full mt-2 h-10 rounded-lg border border-border bg-secondary/30 px-3"
+                placeholder="https://example.com"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Text (optional)</Label>
+              <input
+                type="text"
+                className="w-full mt-2 h-10 rounded-lg border border-border bg-secondary/30 px-3"
+                placeholder="Link text"
+                value={linkText}
+                onChange={(e) => setLinkText(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLinkInsert(false)}>Cancel</Button>
+            <Button onClick={insertLink} disabled={!linkUrl.trim()}>Insert</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mention Search Dialog */}
+      <Dialog open={showMentionSearch} onOpenChange={setShowMentionSearch}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mention User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <input
+              type="text"
+              className="w-full h-10 rounded-lg border border-border bg-secondary/30 px-3"
+              placeholder="Search username..."
+              value={mentionSearch}
+              onChange={(e) => {
+                setMentionSearch(e.target.value);
+                searchMentions(e.target.value);
+              }}
+            />
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {mentionResults.map((user) => (
+                <button
+                  key={user.id}
+                  onClick={() => insertMention(user.username)}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+                >
+                  <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    {user.avatar ? (
+                      <img src={user.avatar} alt="" className="h-full w-full rounded-full object-cover" />
+                    ) : (
+                      <span className="font-bold">{user.username[0].toUpperCase()}</span>
+                    )}
+                  </div>
+                  <span className="font-medium">{user.username}</span>
+                </button>
+              ))}
+              {mentionSearch.length >= 2 && mentionResults.length === 0 && (
+                <p className="text-center text-muted-foreground py-4">No users found</p>
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -9,5 +9,16 @@
         "QVERIS_API_KEY": "sk-3RYgI3xP2afGUq5f_m-qylCcKv2-oNVLj5iTF6qNgpQ"
       }
     }
+  },
+  "servers": {
+    "qveris": {
+      "command": "npx",
+      "args": [
+        "@qverisai/mcp"
+      ],
+      "env": {
+        "QVERIS_API_KEY": "sk-3RYgI3xP2afGUq5f_m-qylCcKv2-oNVLj5iTF6qNgpQ"
+      }
+    }
   }
 }

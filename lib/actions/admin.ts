@@ -1,7 +1,6 @@
 "use server"
 
-import { db } from "@/lib/db"
-import { createAdminClient, createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
@@ -10,12 +9,7 @@ async function getUser() {
   if (session?.user?.id) {
     return { id: session.user.id }
   }
-
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  return user
+  return null
 }
 
 async function checkAdmin() {
@@ -38,11 +32,11 @@ export async function getAdminStats() {
   await checkAdmin()
 
   const supabase = createAdminClient()
-  const [usersCount, threadsCount, repliesCount, ticketsCount, coinsSum] = await Promise.all([
+  const [usersCount, threadsCount, repliesCount, assetsCount, coinsSum] = await Promise.all([
     supabase.from("users").select("*", { count: "exact", head: true }),
     supabase.from("forum_threads").select("*", { count: "exact", head: true }),
     supabase.from("forum_replies").select("*", { count: "exact", head: true }),
-    supabase.from("spin_wheel_tickets").select("*", { count: "exact", head: true }).eq("is_used", false),
+    supabase.from("assets").select("*", { count: "exact", head: true }),
     supabase.from("coin_transactions").select("amount"),
   ])
 
@@ -53,9 +47,9 @@ export async function getAdminStats() {
     totalUsers: usersCount.count || 0,
     totalThreads: threadsCount.count || 0,
     totalReplies: repliesCount.count || 0,
+    totalAssets: assetsCount.count || 0,
     totalTransactions,
     totalCoins,
-    activeTickets: ticketsCount.count || 0,
   }
 }
 
