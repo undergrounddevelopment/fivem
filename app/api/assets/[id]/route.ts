@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from "@/lib/supabase/server"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-)
+// Remove global client
+// const supabase = ...
 
 export async function GET(
   request: NextRequest,
@@ -20,7 +17,7 @@ export async function GET(
       return NextResponse.json({ error: 'Asset ID is required' }, { status: 400 })
     }
 
-    // Get asset first without foreign key join
+    const supabase = createAdminClient()
     const { data: asset, error } = await supabase
       .from('assets')
       .select('*')
@@ -98,6 +95,9 @@ export async function PUT(
     const { id } = await params
     const data = await request.json()
 
+    // Instantiate client
+    const supabase = createAdminClient()
+
     // Check if user owns the asset or is admin
     const { data: asset } = await supabase
       .from('assets')
@@ -129,20 +129,27 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Update asset
+    // Update asset with all fields
     const { data: updatedAsset, error } = await supabase
       .from('assets')
       .update({
         title: data.title,
         description: data.description,
+        features: data.features,
+        installation: data.installation,
+        changelog: data.changelog,
         category: data.category,
         framework: data.framework,
         version: data.version,
-        coin_price: data.coinPrice,
+        coin_price: data.coin_price || data.coinPrice || 0,
+        thumbnail: data.thumbnail,
         thumbnail_url: data.thumbnail,
-        download_url: data.downloadLink,
-        file_size: data.fileSize,
-        tags: data.tags,
+        download_link: data.download_link || data.downloadLink,
+        download_url: data.download_link || data.downloadLink,
+        youtube_link: data.youtube_link || data.youtubeLink,
+        github_link: data.github_link || data.githubLink,
+        docs_link: data.docs_link || data.docsLink,
+        tags: data.tags || [],
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
@@ -172,6 +179,8 @@ export async function DELETE(
     }
 
     const { id } = await params
+
+    const supabase = createAdminClient()
 
     // Check if user owns the asset or is admin
     const { data: asset } = await supabase

@@ -48,12 +48,18 @@ export async function GET(
       .order("created_at", { ascending: false })
       .limit(10)
 
+    // Get real warnings count from database
+    const { count: warningsCount } = await supabase
+      .from("user_warnings")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", params.id)
+
     const enhancedUser = {
       ...(user as any),
       isOnline: (user as any).last_seen ? 
         new Date((user as any).last_seen).getTime() > Date.now() - (60 * 60 * 1000) : false,
-      reputation: Math.floor(Math.random() * 1000), // Mock reputation
-      warningsCount: Math.floor(Math.random() * 3), // Mock warnings
+      reputation: (user as any).xp || 0, // Use real XP as reputation
+      warningsCount: warningsCount || 0, // Real warnings from database
       recentActivity: recentActivity || []
     }
 

@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { createClient } from '@supabase/supabase-js'
+import { generateLinkvertiseUrl } from '@/lib/linkvertise'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-export async function POST(
+export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -61,7 +62,7 @@ export async function POST(
     // Check if asset is premium and user hasn't purchased yet
     if (asset.coin_price > 0 && !existingDownload) {
       if (user.coins < asset.coin_price) {
-        return NextResponse.json({ 
+        return NextResponse.json({
           error: 'Insufficient coins',
           required: asset.coin_price,
           available: user.coins
@@ -122,19 +123,54 @@ export async function POST(
         })
     } catch { /* ignore */ }
 
-    // Return download URL
-    const downloadUrl = asset.download_url || asset.download_link
-    if (!downloadUrl) {
-      return NextResponse.json({ error: 'Download URL not available' }, { status: 404 })
+    // Verify download token if required
+    const token = _request.nextUrl.searchParams.get('token')
+    
+    // Check if Linkvertise is required
+    if (asset.require_linkvertise) {
+       // Import dynamically to avoid circular deps if any, though not expected here
+       const { verifyDownloadToken } = await import('@/lib/token')
+       
+       if (!token) {
+         console.warn(`[API Download] Missing token for protected asset ${id}`)
+         return NextResponse.json({ error: 'Download token required' }, { status: 403 })
+       }
+
+       const validToken = verifyDownloadToken(token)
+       if (!validToken || validToken.userId !== session.user.id || validToken.assetId !== id) {
+         console.warn(`[API Download] Invalid token for asset ${id} user ${session.user.id}`)
+         return NextResponse.json({ error: 'Invalid or expired download token' }, { status: 403 })
+       }
     }
 
-    console.log(`[API Download] Success: ${asset.title}`)
+    // Redirect to the actual download URL
+    // console.log(`[API Download] Success: ${asset.title} - Redirecting to ${asset.download_url}`)
+    // return NextResponse.redirect(asset.download_url)
 
-    return NextResponse.json({ 
-      downloadUrl,
-      coinsSpent,
-      message: existingDownload ? 'Already purchased' : 'Download started successfully'
-    })
+    // PROXY DOWNLOAD - Stream the file to the user without exposing the URL
+    try {
+      const fileResponse = await fetch(asset.download_url)
+      
+      if (!fileResponse.ok) {
+        console.error(`[API Download] Failed to fetch file from source: ${fileResponse.status}`)
+        throw new Error('Failed to fetch file from source')
+      }
+
+      const contentType = fileResponse.headers.get('content-type') || 'application/octet-stream'
+      const contentDisposition = `attachment; filename="${asset.title.replace(/[^a-zA-Z0-9.-]/g, '_')}.zip"`
+
+      return new NextResponse(fileResponse.body, {
+        headers: {
+          'Content-Type': contentType,
+          'Content-Disposition': contentDisposition,
+        },
+      })
+    } catch (proxyError) {
+      console.error('[API Download] Proxy error:', proxyError)
+      // Fallback to redirect if proxy fails (optional, but maybe safer to fail secure)
+      // return NextResponse.redirect(asset.download_url) 
+      return NextResponse.json({ error: 'Failed to download file' }, { status: 500 })
+    }
 
   } catch (error) {
     console.error('[API Download] Error:', error)

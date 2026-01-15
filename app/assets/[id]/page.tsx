@@ -5,18 +5,19 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
 import { FormattedText } from "@/components/formatted-text"
-import { Download, Star, Eye, Package, Sparkles, FileText, History, 
+import {
+  Star, Eye, Package, Sparkles, FileText, History,
   ArrowLeft, Heart, Share2, Shield, Crown, CheckCircle, Clock,
-  Users, Zap, ExternalLink, Copy, Check, Coins, Loader2, MessageSquare
+  Users, Zap, ExternalLink, Check, Loader2, MessageSquare, Download
 } from "lucide-react"
 import { CoinIcon, COIN_ICON_URL } from "@/components/coin-icon"
 import Image from "next/image"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
+import { LinkvertiseDownloadButton } from "@/components/linkvertise-download-button"
+import { AssetComments } from "@/components/asset-comments"
 
 export default function AssetDetailPage() {
   const params = useParams()
@@ -44,11 +45,7 @@ export default function AssetDetailPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"description" | "features" | "installation" | "changelog">("description")
   const [isLiked, setIsLiked] = useState(false)
-  const [downloading, setDownloading] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [showCommentDialog, setShowCommentDialog] = useState(false)
-  const [comment, setComment] = useState("")
-  const [submittingComment, setSubmittingComment] = useState(false)
 
   useEffect(() => {
     if (params?.id) {
@@ -71,82 +68,12 @@ export default function AssetDetailPage() {
           setAsset(null)
           setLoading(false)
         })
+
     }
   }, [params?.id])
 
-  const handleDownload = async () => {
-    if (!session) {
-      toast.error("Login Required", {
-        description: "Please login with Discord to download.",
-        duration: 5000,
-      })
-      return
-    }
-    
-    setDownloading(true)
-    try {
-      const res = await fetch(`/api/download/${params?.id}`, { 
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: session.user.id })
-      })
-      
-      const data = await res.json()
-      
-      if (res.status === 403 && data.error === 'Comment required') {
-        setDownloading(false)
-        setShowCommentDialog(true)
-        toast.info("Comment Required", {
-          description: "Please leave a comment to download this free asset"
-        })
-        return
-      }
-      
-      if (res.ok && data.downloadUrl) {
-        window.open(data.downloadUrl, "_blank")
-        toast.success("Download Started!")
-      } else {
-        toast.error("Download Failed", {
-          description: data.error || "Please try again."
-        })
-      }
-    } catch (error) {
-      console.error("Download error:", error)
-      toast.error("Download Failed")
-    } finally {
-      setDownloading(false)
-    }
-  }
 
-  const handleSubmitComment = async () => {
-    if (!comment.trim()) {
-      toast.error("Please write a comment")
-      return
-    }
 
-    setSubmittingComment(true)
-    try {
-      const res = await fetch(`/api/assets/${params?.id}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ comment: comment.trim() })
-      })
-
-      if (res.ok) {
-        toast.success("Comment posted!")
-        setShowCommentDialog(false)
-        setComment("")
-        // Retry download
-        handleDownload()
-      } else {
-        toast.error("Failed to post comment")
-      }
-    } catch (error) {
-      toast.error("Failed to post comment")
-    } finally {
-      setSubmittingComment(false)
-    }
-  }
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href)
@@ -193,14 +120,6 @@ export default function AssetDetailPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-      <CommentDialog 
-        open={showCommentDialog}
-        onOpenChange={setShowCommentDialog}
-        comment={comment}
-        setComment={setComment}
-        onSubmit={handleSubmitComment}
-        submitting={submittingComment}
-      />
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
         <Link href="/assets" className="hover:text-primary transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/5">
@@ -220,98 +139,106 @@ export default function AssetDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Hero Section */}
           <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-card to-card/50 border border-border">
-            {/* Cover Image */}
+            {/* Cover Image - Full Width */}
             {asset.thumbnail && (
-              <div className="relative aspect-video w-full">
-                <Image 
-                  src={asset.thumbnail} 
-                  alt={asset.title} 
-                  fill 
-                  className="object-cover" 
-                  unoptimized 
+              <div className="relative w-full h-[400px] md:h-[500px]">
+                <Image
+                  src={asset.thumbnail}
+                  alt={asset.title}
+                  fill
+                  className="object-cover"
+                  priority
+                  unoptimized
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
-                
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+
                 {/* Badges on image */}
-                <div className="absolute top-4 left-4 flex gap-2">
+                <div className="absolute top-6 left-6 flex gap-2">
                   {isPremium && (
-                    <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 gap-1.5 px-3 py-1">
+                    <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 gap-1.5 px-3 py-1.5 shadow-lg">
                       <Crown className="h-3.5 w-3.5" />
                       Premium
                     </Badge>
                   )}
-                  <Badge className="bg-black/50 backdrop-blur-sm text-white border-0 capitalize">
+                  <Badge className="bg-black/70 backdrop-blur-md text-white border-0 capitalize px-3 py-1.5 shadow-lg">
                     {asset.category}
                   </Badge>
                 </div>
-              </div>
-            )}
 
-            {/* Content */}
-            <div className="p-6">
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div className="flex-1">
-                  <h1 className="text-2xl md:text-3xl font-bold mb-3">{asset.title}</h1>
+                {/* Title & Info Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                  <h1 className="text-3xl md:text-4xl font-bold mb-3 text-white drop-shadow-lg">{asset.title}</h1>
                   <div className="flex items-center gap-3 flex-wrap">
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                    <Badge variant="outline" className="bg-primary/20 backdrop-blur-md text-white border-primary/50 shadow-lg">
                       {asset.framework}
                     </Badge>
-                    <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    <span className="text-sm text-white/90 flex items-center gap-1.5 bg-black/30 backdrop-blur-md px-3 py-1 rounded-lg">
                       <Clock className="h-3.5 w-3.5" />
                       v{asset.version || "1.0.0"}
                     </span>
                     {asset.status === "active" && (
-                      <span className="text-sm text-green-400 flex items-center gap-1.5">
+                      <span className="text-sm text-green-400 flex items-center gap-1.5 bg-black/30 backdrop-blur-md px-3 py-1 rounded-lg">
                         <CheckCircle className="h-3.5 w-3.5" />
                         Active
                       </span>
                     )}
                   </div>
                 </div>
-                
+              </div>
+            )}
+
+            {/* Stats & Actions Bar */}
+            <div className="p-6 bg-card/50 backdrop-blur-sm">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                {/* Stats */}
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="p-2 rounded-lg bg-blue-500/10">
+                      <Download className="h-4 w-4 text-blue-400" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">{(asset.downloads || 0).toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">downloads</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="p-2 rounded-lg bg-purple-500/10">
+                      <Eye className="h-4 w-4 text-purple-400" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">{(asset.views || 0).toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">views</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="p-2 rounded-lg bg-amber-500/10">
+                      <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">{asset.rating || "5.0"}</div>
+                      <div className="text-xs text-muted-foreground">rating</div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Action buttons */}
                 <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="rounded-xl bg-transparent border-border hover:border-pink-500/50 hover:text-pink-400"
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-xl bg-card/50 border-border hover:border-pink-500/50 hover:text-pink-400"
                     onClick={() => setIsLiked(!isLiked)}
                   >
                     <Heart className={`h-5 w-5 ${isLiked ? "fill-pink-500 text-pink-500" : ""}`} />
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="rounded-xl bg-transparent border-border"
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-xl bg-card/50 border-border"
                     onClick={handleShare}
                   >
                     {copied ? <Check className="h-5 w-5 text-green-400" /> : <Share2 className="h-5 w-5" />}
                   </Button>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="flex items-center gap-6 pt-4 border-t border-border/50">
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="p-1.5 rounded-lg bg-blue-500/10">
-                    <Download className="h-4 w-4 text-blue-400" />
-                  </div>
-                  <span className="font-semibold">{(asset.downloads || 0).toLocaleString()}</span>
-                  <span className="text-muted-foreground">downloads</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="p-1.5 rounded-lg bg-purple-500/10">
-                    <Eye className="h-4 w-4 text-purple-400" />
-                  </div>
-                  <span className="font-semibold">{(asset.views || 0).toLocaleString()}</span>
-                  <span className="text-muted-foreground">views</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="p-1.5 rounded-lg bg-amber-500/10">
-                    <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                  </div>
-                  <span className="font-semibold">{asset.rating || "5.0"}</span>
-                  <span className="text-muted-foreground">rating</span>
                 </div>
               </div>
             </div>
@@ -329,11 +256,10 @@ export default function AssetDetailPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as "description" | "features" | "installation" | "changelog")}
-                  className={`flex items-center gap-2 px-5 py-4 text-sm font-medium transition-all whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? "text-primary border-b-2 border-primary bg-primary/5"
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                  }`}
+                  className={`flex items-center gap-2 px-5 py-4 text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id
+                    ? "text-primary border-b-2 border-primary bg-primary/5"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                    }`}
                 >
                   <tab.icon className="h-4 w-4" />
                   <span className="hidden sm:inline">{tab.label}</span>
@@ -358,6 +284,16 @@ export default function AssetDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Modern Asset Comments Section */}
+          <AssetComments
+            assetId={params?.id as string}
+            isFreeAsset={!isPremium}
+            onCommentPosted={() => {
+              // Comment posted - any global UI updates can go here
+              console.log("Comment posted on asset detail page")
+            }}
+          />
         </div>
 
         {/* Sidebar */}
@@ -376,28 +312,25 @@ export default function AssetDetailPage() {
                 </p>
               </div>
 
-              {/* Download Button */}
-              <Button 
-                onClick={handleDownload}
-                disabled={downloading}
-                className={`w-full h-14 text-lg font-bold rounded-xl gap-3 transition-all ${
-                  isPremium 
-                    ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-lg shadow-amber-500/25"
-                    : "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white shadow-lg shadow-green-500/25"
-                }`}
-              >
-                {downloading ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Downloading...
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-5 w-5" />
-                    {isPremium ? "Get Access" : "Download Free"}
-                  </>
-                )}
-              </Button>
+              {/* Linkvertise Download Button */}
+              {session ? (
+                <LinkvertiseDownloadButton
+                  assetId={params?.id as string}
+                  downloadUrl={asset.download_url || ''}
+                  title={asset.title}
+                  className="w-full"
+                />
+              ) : (
+                <Button
+                  onClick={() => toast.error("Login Required", {
+                    description: "Please login with Discord to download."
+                  })}
+                  className="w-full h-14 text-lg font-bold rounded-xl gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  <Download className="h-5 w-5 mr-2" />
+                  Login to Download
+                </Button>
+              )}
 
               {/* Quick Info */}
               <div className="mt-6 pt-6 border-t border-border/50 space-y-3">
@@ -501,62 +434,5 @@ export default function AssetDetailPage() {
         </div>
       </div>
     </div>
-  )
-}
-
-// Comment Dialog Component
-function CommentDialog({ 
-  open, 
-  onOpenChange, 
-  comment, 
-  setComment, 
-  onSubmit, 
-  submitting 
-}: { 
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  comment: string
-  setComment: (comment: string) => void
-  onSubmit: () => void
-  submitting: boolean
-}) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary" />
-            Leave a Comment
-          </DialogTitle>
-          <DialogDescription>
-            Please share your thoughts about this asset before downloading
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <Textarea
-            placeholder="Write your comment here... (minimum 3 characters)"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            rows={4}
-            className="resize-none"
-          />
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
-              Cancel
-            </Button>
-            <Button onClick={onSubmit} disabled={submitting || comment.trim().length < 3}>
-              {submitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Posting...
-                </>
-              ) : (
-                "Post & Download"
-              )}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   )
 }

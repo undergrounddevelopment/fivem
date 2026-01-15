@@ -125,7 +125,7 @@ export function DailyCoinsButton() {
       <AnimatePresence>
         {showModal && (
           <Dialog open={showModal} onOpenChange={setShowModal}>
-            <DialogContent className="max-w-md glass border-2" style={{ background: 'rgba(255, 255, 255, 0.05)', borderColor: 'var(--primary)' }}>
+            <DialogContent className="max-w-md">
               <VisuallyHidden>
                 <DialogTitle>Daily Coins</DialogTitle>
               </VisuallyHidden>

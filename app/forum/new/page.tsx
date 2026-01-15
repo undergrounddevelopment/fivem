@@ -10,8 +10,10 @@ import { useRouter } from "next/navigation"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { 
   MessageSquare, Send, AlertCircle, CheckCircle, Tag, Sparkles, 
-  ArrowLeft, Eye, FileText, Image, Hash, Info, Zap, PenLine
+  ArrowLeft, Eye, FileText, Image, Hash, Info, Zap, PenLine,
+  LayoutGrid
 } from "lucide-react"
+import { THREAD_TYPES } from "@/lib/thread-types"
 
 interface Category {
   id: string
@@ -35,6 +37,7 @@ export default function NewThreadPage() {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [categoryId, setCategoryId] = useState("")
+  const [threadType, setThreadType] = useState("discussion")
   const [categories, setCategories] = useState<Category[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitResult, setSubmitResult] = useState<{ success: boolean; message: string } | null>(null)
@@ -68,7 +71,8 @@ export default function NewThreadPage() {
       const thread = await createForumThread({
         categoryId,
         title,
-        content
+        content,
+        threadType
       })
 
       setSubmitResult({
@@ -228,6 +232,35 @@ export default function NewThreadPage() {
                         }`}
                       >
                         {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Thread Type Selection */}
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-3">
+                    <LayoutGrid className="h-4 w-4 text-cyan-400" />
+                    Select Thread Type
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    {Object.values(THREAD_TYPES).map((type) => (
+                      <button
+                        key={type.id}
+                        type="button"
+                        onClick={() => setThreadType(type.id)}
+                        className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
+                          threadType === type.id
+                            ? "text-white shadow-lg shadow-primary/10"
+                            : "bg-white/[0.03] border-white/10 text-muted-foreground hover:bg-white/[0.06] hover:text-white"
+                        }`}
+                        style={threadType === type.id ? { 
+                          backgroundColor: type.color,
+                          borderColor: 'transparent'
+                        } : {}}
+                      >
+                        <span className="text-sm">{type.icon}</span>
+                        {type.name}
                       </button>
                     ))}
                   </div>

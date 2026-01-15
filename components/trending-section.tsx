@@ -30,24 +30,16 @@ export function TrendingSection() {
 
   return (
     <section className="mt-10">
-      <motion.div 
+      <motion.div
         className="mb-6 flex items-center justify-between"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         <div className="flex items-center gap-3">
-          <motion.div 
+          <motion.div
             className="h-10 w-10 rounded-xl flex items-center justify-center glow-sm relative"
             style={{ background: "rgba(236, 72, 153, 0.2)" }}
-            animate={{ 
-              boxShadow: [
-                "0 0 10px var(--primary)",
-                "0 0 20px var(--primary)",
-                "0 0 10px var(--primary)"
-              ]
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
           >
             <Flame className="h-5 w-5 text-[var(--primary)]" />
           </motion.div>
@@ -68,8 +60,8 @@ export function TrendingSection() {
       {isLoading ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <motion.div 
-              key={i} 
+            <motion.div
+              key={i}
               className="glass rounded-2xl overflow-hidden"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -83,6 +75,16 @@ export function TrendingSection() {
               </div>
             </motion.div>
           ))}
+        </div>
+      ) : assets.length === 0 ? (
+        <div className="glass rounded-2xl p-8 border-dashed border-2 border-white/10 flex flex-col items-center justify-center text-center h-[300px]">
+          <div className="h-16 w-16 rounded-full bg-secondary/30 flex items-center justify-center mb-4">
+            <TrendingUp className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">No Trending Assets</h3>
+          <p className="text-muted-foreground max-w-sm mb-6">
+            Check back later to see what's popular this week!
+          </p>
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">

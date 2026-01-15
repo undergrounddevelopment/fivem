@@ -1,64 +1,73 @@
 import type { Metadata } from "next"
 import { TrendingSection } from "@/components/trending-section"
-import { RecentAssets } from "@/components/recent-assets-real"
-import { ActivityFeed } from "@/components/activity-feed-real"
+import { RecentAssets } from "@/components/recent-assets"
+import { ActivityFeed } from "@/components/activity-feed"
 import { LinkvertiseAd } from "@/components/linkvertise-ad"
-import { StatsSection } from "@/components/stats-section-real"
+import { StatsSection } from "@/components/stats-section"
 import { ModernFeatures } from "@/components/modern-features"
 import { ModernHero } from "@/components/modern-hero"
-import { CategoriesSection } from "@/components/categories-section-real"
+import { CategoriesSection } from "@/components/categories-section"
+import { TestimonialsSection } from "@/components/testimonials-section"
+import { CommunityBanners } from "@/components/community-banners"
 
 export const metadata: Metadata = {
-  title: "FiveM Tools V7 - Free Scripts, MLO, Vehicles, Decrypt CFX, Upvotes Bot",
+  title: "FiveM Tools V7 - #1 Automatic Leaks, Scripts, MLO, Decrypt CFX, Upvotes",
   description:
-    "Download Free FiveM Scripts, MLO Maps, Vehicles, EUP Clothing. CFX V7 Decrypt Tool, FiveM Upvotes Bot, Leak Scripts. QBCore, ESX, QBox Framework. #1 FiveM Resource Hub.",
+    "The World's #1 FiveM Leaks Community. Download premium Scripts, MLOs, Vehicles, EUP for Free. Automatic updates, instant access. Unlock QBCore, ESX, QBox resources now. #FiveMLeaks #FiveMFree",
   keywords: [
-    "fivem tools",
+    "fivem leaks",
+    "fivem automatic leak",
     "fivem scripts free",
-    "fivem mlo free",
+    "fivem mlo leak",
     "fivem vehicles",
     "fivem decrypt",
     "cfx decrypt",
     "fivem upvotes",
     "fivem leak",
-    "qbcore scripts",
+    "qbcore leaks",
     "esx scripts",
     "fivem resources",
     "fivem download",
     "gta v fivem",
     "fivem roleplay",
     "fivem server",
+    "fivem global",
   ],
   openGraph: {
-    title: "FiveM Tools V7 - #1 Free FiveM Resource Hub",
-    description: "Free FiveM Scripts, MLO, Vehicles, EUP, Decrypt CFX V7, Upvotes. QBCore, ESX, QBox Resources.",
+    title: "FiveM Tools V7 - #1 Free FiveM Leaks & Resource Hub",
+    description: "Free FiveM Scripts, MLO, Vehicles, EUP, Decrypt CFX V7, Upvotes. QBCore, ESX, QBox Resources. #1 Global Leaks.",
   },
 }
 
 export default function HomePage() {
   return (
     <div className="relative">
-      {/* Hero Section with Modern Design */}
+      {/* Hero Section */}
       <ModernHero />
-      
-      <div className="container mx-auto px-4 py-12">
+
+      <div className="container mx-auto px-4 py-12 space-y-12">
+        {/* Categories */}
+        <CategoriesSection />
+
+        {/* Main Content Grid - Clean 2/3 + 1/3 Layout */}
         <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-8">
-            <CategoriesSection />
+          <div className="lg:col-span-2 space-y-12">
             <TrendingSection />
             <RecentAssets />
           </div>
-          <div className="space-y-6">
+          <aside className="lg:sticky lg:top-20 h-fit">
             <ActivityFeed />
-          </div>
+          </aside>
         </div>
-        
-        <div className="mt-12 space-y-8">
-          <StatsSection />
-          <LinkvertiseAd />
-          <ModernFeatures />
-        </div>
+
+        {/* Additional Sections - Lighter Spacing */}
+        <StatsSection />
+        <TestimonialsSection />
+        <CommunityBanners />
+        <LinkvertiseAd />
+        <ModernFeatures />
       </div>
     </div>
   )
 }
+

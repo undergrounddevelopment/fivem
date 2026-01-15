@@ -1,1 +1,0 @@
-INSERT INTO announcements (id, title, message, type, is_active, is_dismissible, sort_order, created_at, updated_at) VALUES (1, 'Welcome!', '🔥 LIFETIME DEAL ALERT! Boost your FiveM server visibility with V 7.0 and claim your Permanent 15% Discount. Time to climb the ranks!', 'promo', true, true, 2, '2025-12-12T12:32:30.242909+00:00', '2025-12-12T12:32:30.242909+00:00');

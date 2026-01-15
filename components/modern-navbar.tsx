@@ -22,9 +22,8 @@ export function ModernNavbar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const menuItems = [
-    { label: "Services", href: "/assets", icon: Sparkles },
-    { label: "Pricing", href: "/membership" },
+    { label: "Community", href: "/forum" },
+    { label: "Staff", href: "/staff" },
     { label: "Features", href: "/#features" },
     { label: "About us", href: "/#about" },
   ]
@@ -57,7 +56,7 @@ export function ModernNavbar() {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-8">
             {menuItems.map((item, index) => (
-              <Link key={index} href={item.href}>
+              <Link key={item.href} href={item.href}>
                 <motion.span
                   whileHover={{ scale: 1.05, color: "var(--text)" }}
                   className="text-sm text-[var(--textDim)] hover:text-[var(--text)] cursor-pointer transition-colors"
@@ -151,7 +150,7 @@ export function ModernNavbar() {
             >
               <div className="py-4 px-2 space-y-1 border-t border-white/10">
                 {menuItems.map((item, index) => (
-                  <Link key={index} href={item.href} onClick={() => setMobileMenuOpen(false)}>
+                  <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}>
                     <motion.div 
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}

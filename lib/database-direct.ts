@@ -1,12 +1,22 @@
 import { createAdminClient } from '@/lib/supabase/server'
 
 // Users
-export async function getUsers() {
+export async function getUsers(filter?: 'all' | 'active' | 'banned') {
   const supabase = createAdminClient()
-  const { data, error } = await supabase
+  let query = supabase
     .from('users')
     .select('*')
     .order('created_at', { ascending: false })
+
+  // Apply filter if provided
+  if (filter === 'active') {
+    query = query.eq('is_banned', false)
+  } else if (filter === 'banned') {
+    query = query.eq('is_banned', true)
+  }
+  // 'all' or undefined = no filter
+
+  const { data, error } = await query
   if (error) throw error
   return data
 }
@@ -39,10 +49,7 @@ export async function getAssets() {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('assets')
-    .select(`
-      *,
-      users:author_id(username, avatar)
-    `)
+    .select('*')
     .order('created_at', { ascending: false })
   if (error) throw error
   return data
@@ -52,10 +59,7 @@ export async function getAssetById(id: string) {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('assets')
-    .select(`
-      *,
-      users:author_id(username, avatar)
-    `)
+    .select('*')
     .eq('id', id)
     .single()
   if (error) throw error
@@ -226,18 +230,18 @@ export async function deleteSpinWheelPrize(id: string) {
 export async function getSpinHistory(userId?: string) {
   const supabase = createAdminClient()
   let query = supabase
-    .from('spin_history')
+    .from('spin_wheel_history')
     .select(`
       *,
-      users(username, avatar),
+      users!spin_wheel_history_user_discord_id_fkey(username, avatar),
       spin_wheel_prizes(name, type, value)
     `)
     .order('created_at', { ascending: false })
-  
+
   if (userId) {
-    query = query.eq('user_id', userId)
+    query = query.eq('user_discord_id', userId)
   }
-  
+
   const { data, error } = await query
   if (error) throw error
   return data
@@ -246,7 +250,7 @@ export async function getSpinHistory(userId?: string) {
 export async function createSpinHistory(spin: any) {
   const supabase = createAdminClient()
   const { data, error } = await supabase
-    .from('spin_history')
+    .from('spin_wheel_history')
     .insert(spin)
     .select()
     .single()
@@ -303,11 +307,11 @@ export async function getForumThreads(categoryId?: string) {
     .from('forum_threads')
     .select('*')
     .order('created_at', { ascending: false })
-  
+
   if (categoryId) {
     query = query.eq('category_id', categoryId)
   }
-  
+
   const { data, error } = await query
   if (error) throw error
   return data || []
@@ -317,11 +321,7 @@ export async function getForumThreadById(id: string) {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('forum_threads')
-    .select(`
-      *,
-      users(username, avatar),
-      forum_categories(name, slug)
-    `)
+    .select('*')
     .eq('id', id)
     .single()
   if (error) throw error
@@ -367,11 +367,11 @@ export async function getNotifications(userId?: string) {
     .from('notifications')
     .select('*')
     .order('created_at', { ascending: false })
-  
+
   if (userId) {
     query = query.eq('user_id', userId)
   }
-  
+
   const { data, error } = await query
   if (error) throw error
   return data
@@ -412,7 +412,7 @@ export async function deleteNotification(id: string) {
 // Analytics & Stats
 export async function getAnalytics() {
   const supabase = createAdminClient()
-  
+
   const [
     { count: totalUsers },
     { count: totalAssets },
@@ -424,7 +424,7 @@ export async function getAnalytics() {
     supabase.from('downloads').select('*', { count: 'exact', head: true }),
     supabase.from('users').select('*', { count: 'exact', head: true }).gte('last_seen', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
   ])
-  
+
   return {
     totalUsers: totalUsers || 0,
     totalAssets: totalAssets || 0,
@@ -435,14 +435,14 @@ export async function getAnalytics() {
 
 export async function getDashboardStats() {
   const supabase = createAdminClient()
-  
+
   const [users, assets, announcements, banners] = await Promise.all([
     supabase.from('users').select('*', { count: 'exact', head: true }),
     supabase.from('assets').select('*', { count: 'exact', head: true }),
     supabase.from('announcements').select('*', { count: 'exact', head: true }),
     supabase.from('banners').select('*', { count: 'exact', head: true })
   ])
-  
+
   return {
     users: users.count || 0,
     assets: assets.count || 0,

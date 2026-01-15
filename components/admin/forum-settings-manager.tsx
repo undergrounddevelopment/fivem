@@ -286,7 +286,7 @@ export function ForumSettingsManager({ onUpdate }: ForumSettingsManagerProps) {
           if (!open) resetForm()
         }}
       >
-        <DialogContent className="bg-card border-border max-w-lg">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Category" : "Create Category"}</DialogTitle>
           </DialogHeader>

@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
 import { Search, Filter, MoreHorizontal, MessageSquare, Users, Eye, Edit, Trash2, Pin, Lock, Flag, Shield, AlertTriangle, CheckCircle, XCircle, Star, Calendar, User, Hash, TrendingUp, Activity, Zap } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { FormattedText } from "@/components/formatted-text"
 
 interface ForumThread {
   id: string
@@ -365,7 +366,12 @@ export function ForumManagement() {
             <CardContent>
               <div className="prose max-w-none">
                 <div className="p-4 bg-muted rounded-lg">
-                  {thread.content}
+                  <FormattedText 
+                    content={thread.content}
+                    enableYouTube={true}
+                    enableImages={true}
+                    enableLinks={true}
+                  />
                 </div>
               </div>
             </CardContent>

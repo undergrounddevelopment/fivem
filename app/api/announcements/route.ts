@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
+export const revalidate = 600 // Cache for 10 minutes
+
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient()
-    
+    const supabase = await createClient()
+
     const { data: announcements, error } = await supabase
       .from("announcements")
       .select("*")
@@ -30,8 +32,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Announcements API error:", error)
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: "Failed to fetch announcements",
         data: []
       }

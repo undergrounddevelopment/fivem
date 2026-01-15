@@ -36,7 +36,6 @@ const nextConfig = {
     minimumCacheTTL: 86400,
     dangerouslyAllowSVG: true,
     contentDispositionType: 'inline',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       { protocol: 'https', hostname: 'cdn3d.iconscout.com' },
       { protocol: 'https', hostname: 'r2.fivemanage.com' },
@@ -47,6 +46,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
       { protocol: 'https', hostname: 'cdn.discordapp.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'www.sky-systems.net' },
       { protocol: 'https', hostname: '**' },
     ],
   },
@@ -58,9 +58,9 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: [
-      'lucide-react', 
-      '@radix-ui/react-icons', 
-      '@radix-ui/react-dialog', 
+      'lucide-react',
+      '@radix-ui/react-icons',
+      '@radix-ui/react-dialog',
       '@radix-ui/react-dropdown-menu',
       '@radix-ui/react-tabs',
       '@radix-ui/react-select',
@@ -93,9 +93,9 @@ const nextConfig = {
         { key: 'X-XSS-Protection', value: '1; mode=block' },
         { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-        { 
-          key: 'Content-Security-Policy', 
-          value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; media-src 'self' https://r2.fivemanage.com https://cdn.discordapp.com https:; connect-src 'self' https://api.supabase.co https://supabase.co https://www.google-analytics.com https://va.vercel-scripts.com wss: ws:; frame-src 'self' https://www.googletagmanager.com https://publisher.linkvertise.com https://linkvertise.com; object-src 'none'; base-uri 'self'; form-action 'self';" 
+        {
+          key: 'Content-Security-Policy',
+          value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; media-src 'self' https://r2.fivemanage.com https://cdn.discordapp.com https:; connect-src 'self' https://api.supabase.co https://supabase.co https://www.google-analytics.com https://va.vercel-scripts.com wss: ws:; frame-src 'self' https://www.googletagmanager.com https://publisher.linkvertise.com https://linkvertise.com; object-src 'none'; base-uri 'self'; form-action 'self';"
         },
       ],
     },
@@ -138,40 +138,4 @@ const nextConfig = {
   ],
 }
 
-export default withSentryConfig(nextConfig, {
-  // For all available options, see:
-  // https://www.npmjs.com/package/@sentry/webpack-plugin#options
-
-  org: "fivem-tools",
-
-  project: "javascript-nextjs",
-
-  // Only print logs for uploading source maps in CI
-  silent: !process.env.CI,
-
-  // For all available options, see:
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
-
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
-  widenClientFileUpload: true,
-
-  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
-  // This can increase your server load as well as your hosting bill.
-  // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
-  // side errors will fail.
-  tunnelRoute: "/monitoring",
-
-  webpack: {
-    // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
-    // See the following for more information:
-    // https://docs.sentry.io/product/crons/
-    // https://vercel.com/docs/cron-jobs
-    automaticVercelMonitors: true,
-
-    // Tree-shaking options for reducing bundle size
-    treeshake: {
-      // Automatically tree-shake Sentry logger statements to reduce bundle size
-      removeDebugLogging: true,
-    },
-  },
-});
+export default nextConfig;

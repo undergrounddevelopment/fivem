@@ -3,14 +3,10 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { createClient } from "@supabase/supabase-js"
 
-// Direct Supabase - 100% working
+import { createAdminClient } from "@/lib/supabase/server"
+
 function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_fivemvip_SUPABASE_URL || 
-              process.env.fivemvip_SUPABASE_URL || 
-              process.env.SUPABASE_URL!
-  const key = process.env.fivemvip_SUPABASE_SERVICE_ROLE_KEY || 
-              process.env.SUPABASE_SERVICE_ROLE_KEY!
-  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } })
+  return createAdminClient()
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -87,6 +83,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     console.log("[Reply POST] Discord ID:", discordId, "Thread:", threadId)
 
+    // Auto-Ban Check
+    const { checkAutoBan } = await import('@/lib/autoBan')
+    const isBanned = await checkAutoBan(discordId, content, 'comment')
+    if (isBanned) {
+      return NextResponse.json({ error: 'Account banned due to policy violation' }, { status: 403 })
+    }
+
     // Get user UUID from discord_id
     const { data: user, error: userErr } = await supabase
       .from("users")
@@ -118,12 +121,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "Thread locked" }, { status: 403 })
     }
 
-    // Insert reply with discord_id
+    // Insert reply with DB UUID
     const { data: reply, error: insertErr } = await supabase
       .from("forum_replies")
       .insert({
         thread_id: threadId,
-        author_id: discordId, // Discord ID directly
+        author_id: user.id, // Use DB UUID
         content: content.trim(),
         likes: 0,
         is_deleted: false,
@@ -137,9 +140,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: insertErr.message }, { status: 500 })
     }
 
-    // Update thread timestamp
+    // Update thread timestamp AND increment replies_count
+    const { data: threadData } = await supabase.from("forum_threads")
+      .select("replies_count")
+      .eq("id", threadId)
+      .single()
+    
     await supabase.from("forum_threads")
-      .update({ updated_at: new Date().toISOString() })
+      .update({ 
+        updated_at: new Date().toISOString(),
+        replies_count: (threadData?.replies_count || 0) + 1
+      })
       .eq("id", threadId)
 
     return NextResponse.json({

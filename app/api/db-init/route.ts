@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-const SUPABASE_URL = "https://linnqtixdfjwbrixitrb.supabase.co"
+const SUPABASE_URL = "https://elukwjlwmfgdfywjpzkd.supabase.co"
 const SUPABASE_SERVICE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxpbm5xdGl4ZGZqd2JyaXhpdHJiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNDUzMTA2NywiZXhwIjoyMDUwMTA3MDY3fQ.TdLBWCXn4z1VKMvh9Cd7oGv3sVyEk9eJXZp8Y33EiVA"
+  "sb_secret_WziEjlBmkNr0Xz2ezSWALQ_eDTEtOXp"
 
 export async function POST() {
   try {
@@ -26,11 +26,11 @@ export async function POST() {
     const setupInstructions = `
 Please run the following SQL in Supabase SQL Editor:
 
-1. Go to https://supabase.com/dashboard/project/linnqtixdfjwbrixitrb/editor
+1. Go to https://supabase.com/dashboard/project/elukwjlwmfgdfywjpzkd/editor
 2. Run the SQL script at: scripts/010-admin-features-complete.sql
 
 Or use the Supabase CLI:
-supabase db push --db-url "postgresql://postgres.linnqtixdfjwbrixitrb:06Zs04s8vCBrW4XE@aws-1-us-east-1.pooler.supabase.com:6543/postgres"
+supabase db push --db-url "postgresql://postgres.elukwjlwmfgdfywjpzkd:Arunk%40123456789%40%40@aws-1-ap-south-1.pooler.supabase.com:6543/postgres"
     `
 
     return NextResponse.json({

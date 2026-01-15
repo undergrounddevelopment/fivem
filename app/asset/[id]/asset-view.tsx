@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormattedText } from "@/components/formatted-text"
-import { 
-  Download, Star, Eye, Package, Sparkles, FileText, History, 
+import {
+  Download, Star, Eye, Package, Sparkles, FileText, History,
   ArrowLeft, Heart, Share2, Shield, Crown, CheckCircle, Clock,
   Users, Zap, ExternalLink, Copy, Check, Coins, Loader2
 } from "lucide-react"
 import { CoinIcon } from "@/components/coin-icon"
 import { StarRating } from "@/components/star-rating"
+import { OptimizedImage } from "@/components/optimized-image"
 import Image from "next/image"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
@@ -77,19 +78,19 @@ export default function AssetView({ assetData: asset }) {
       })
       return
     }
-    
+
     setDownloading(true)
-    
+
     try {
       const url = `/api/download/${asset.id}`
-      const res = await fetch(url, { 
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: session.user.id })
       })
-      
+
       const data = await res.json()
-      
+
       if (res.ok && data.downloadUrl) {
         window.open(data.downloadUrl, "_blank")
         toast.success("Download Started!", {
@@ -164,15 +165,15 @@ export default function AssetView({ assetData: asset }) {
             {/* Cover Image */}
             {asset.thumbnail && (
               <div className="relative aspect-video w-full">
-                <Image 
-                  src={asset.thumbnail} 
-                  alt={asset.title} 
-                  fill 
-                  className="object-cover" 
-                  unoptimized 
+                <Image
+                  src={asset.thumbnail}
+                  alt={asset.title}
+                  fill
+                  className="object-cover"
+                  unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
-                
+
                 {/* Badges on image */}
                 <div className="absolute top-4 left-4 flex gap-2">
                   {isPremium && (
@@ -209,20 +210,20 @@ export default function AssetView({ assetData: asset }) {
                     )}
                   </div>
                 </div>
-                
+
                 {/* Action buttons */}
                 <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
                     className="rounded-xl bg-transparent border-border hover:border-pink-500/50 hover:text-pink-400"
                     onClick={() => setIsLiked(!isLiked)}
                   >
                     <Heart className={`h-5 w-5 ${isLiked ? "fill-pink-500 text-pink-500" : ""}`} />
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
                     className="rounded-xl bg-transparent border-border"
                     onClick={handleShare}
                   >
@@ -270,11 +271,10 @@ export default function AssetView({ assetData: asset }) {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as "description" | "features" | "installation" | "changelog")}
-                  className={`flex items-center gap-2 px-5 py-4 text-sm font-medium transition-all whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? "text-primary border-b-2 border-primary bg-primary/5"
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                  }`}
+                  className={`flex items-center gap-2 px-5 py-4 text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id
+                    ? "text-primary border-b-2 border-primary bg-primary/5"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                    }`}
                 >
                   <tab.icon className="h-4 w-4" />
                   <span className="hidden sm:inline">{tab.label}</span>
@@ -309,10 +309,17 @@ export default function AssetView({ assetData: asset }) {
               <div className="space-y-4">
                 {reviews.map(review => (
                   <div key={review.id} className="flex gap-4">
-                    <Image src={review.users.avatar || '/placeholder.svg'} alt={review.users.username} width={40} height={40} className="rounded-full" />
+                    <OptimizedImage
+                      src={review.users?.avatar || '/placeholder.svg'}
+                      alt={review.users?.username || 'User'}
+                      width={40}
+                      height={40}
+                      className="rounded-full flex-shrink-0"
+                      unoptimized
+                    />
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold">{review.users.username}</span>
+                        <span className="font-semibold">{review.users?.username || 'Deleted User'}</span>
                         <StarRating rating={review.rating} readOnly />
                       </div>
                       <p className="text-muted-foreground text-sm">{review.comment}</p>
@@ -354,14 +361,13 @@ export default function AssetView({ assetData: asset }) {
               </div>
 
               {/* Download Button */}
-              <Button 
+              <Button
                 onClick={handleDownload}
                 disabled={downloading}
-                className={`w-full h-14 text-lg font-bold rounded-xl gap-3 transition-all ${
-                  isPremium 
-                    ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-lg shadow-amber-500/25"
-                    : "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white shadow-lg shadow-green-500/25"
-                }`}
+                className={`w-full h-14 text-lg font-bold rounded-xl gap-3 transition-all ${isPremium
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-lg shadow-amber-500/25"
+                  : "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white shadow-lg shadow-green-500/25"
+                  }`}
               >
                 {downloading ? (
                   <>

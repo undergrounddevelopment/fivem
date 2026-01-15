@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
-  
+
   try {
     const health = {
       status: "healthy",
@@ -31,13 +31,13 @@ export async function GET(request: NextRequest) {
     // Test Supabase connection
     try {
       const { createClient } = await import("@/lib/supabase/client")
-      const supabase = createClient()
-      
+      const supabase = await createClient()
+
       const { data, error } = await supabase
         .from("users")
         .select("count")
         .limit(1)
-      
+
       if (!error) {
         health.checks.supabase = true
         health.checks.database = true
@@ -72,21 +72,21 @@ export async function GET(request: NextRequest) {
     // Determine overall status
     const criticalChecks = [health.checks.api]
     const allCriticalPassed = criticalChecks.every(check => check === true)
-    
+
     if (!allCriticalPassed) {
       health.status = "unhealthy"
     } else if (!health.checks.database || !health.checks.supabase) {
       health.status = "degraded"
     }
 
-    const statusCode = health.status === "healthy" ? 200 : 
-                      health.status === "degraded" ? 200 : 503
+    const statusCode = health.status === "healthy" ? 200 :
+      health.status === "degraded" ? 200 : 503
 
     return NextResponse.json(health, { status: statusCode })
 
   } catch (error) {
     console.error("Health check error:", error)
-    
+
     return NextResponse.json({
       status: "unhealthy",
       timestamp: new Date().toISOString(),

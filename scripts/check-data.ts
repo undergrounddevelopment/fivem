@@ -1,46 +1,36 @@
-import { createClient } from '@supabase/supabase-js'
-import * as dotenv from 'dotenv'
-import { resolve } from 'path'
 
-dotenv.config({ path: resolve(__dirname, '../.env') })
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+async function main() {
+  const { createAdminClient } = await import('../lib/supabase/server');
+  const supabase = createAdminClient();
+  
+  // Debug: Print config (masked)
+  console.log('Supabase Config:', {
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '***' : 'missing',
+    serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? '***' : 'missing'
+  });
 
-async function checkData() {
-  console.log('📊 Checking database data...\n')
+  // Try standard client first
+  const { createClient } = await import('@supabase/supabase-js');
+  const simpleClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
-  const { data: users, error: userError } = await supabase
+  console.log('--- Simple Client Verification ---');
+  const { count: simpleCount, error: simpleError } = await simpleClient
     .from('users')
-    .select('*')
+    .select('*', { count: 'exact', head: true });
+    
+  if (simpleError) console.error('Simple Client Error:', simpleError);
+  else console.log('Simple Client Users Count:', simpleCount);
 
-  console.log('Users:', users?.length || 0)
-  if (users) users.forEach(u => console.log(`  - ${u.username} (${u.membership})`))
+  // Then try admin
+  // const supabase = createAdminClient(); ...
 
-  const { data: categories, error: catError } = await supabase
-    .from('forum_categories')
-    .select('*')
-
-  console.log('\nForum Categories:', categories?.length || 0)
-  if (categories) categories.forEach(c => console.log(`  - ${c.name}`))
-
-  const { data: assets, error: assetError } = await supabase
-    .from('assets')
-    .select('*')
-
-  console.log('\nAssets:', assets?.length || 0)
-  if (assets) assets.forEach(a => console.log(`  - ${a.title}`))
-
-  const { data: testimonials, error: testError } = await supabase
-    .from('testimonials')
-    .select('*')
-
-  console.log('\nTestimonials:', testimonials?.length || 0)
-  if (testimonials) testimonials.forEach(t => console.log(`  - ${t.content.substring(0, 50)}...`))
-
-  console.log('\n✅ Check complete!')
 }
 
-checkData().catch(console.error)
+main();

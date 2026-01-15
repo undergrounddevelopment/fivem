@@ -93,7 +93,7 @@ export function GlobalSearch() {
       <AnimatePresence>
         {open && (
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="max-w-2xl p-0 gap-0 glass border" style={{ background: 'rgba(0, 0, 0, 0.95)', borderColor: 'var(--primary)' }}>
+            <DialogContent className="max-w-2xl p-0 gap-0">
               <VisuallyHidden>
                 <DialogTitle>Search</DialogTitle>
               </VisuallyHidden>

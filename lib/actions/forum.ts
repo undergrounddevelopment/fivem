@@ -158,7 +158,7 @@ export async function getForumReplies(threadId: string) {
   }
 }
 
-export async function createForumThread(data: { categoryId: string; title: string; content: string }) {
+export async function createForumThread(data: { categoryId: string; title: string; content: string; threadType?: string }) {
   const user = await getUser()
   if (!user) throw new Error("Unauthorized")
 
@@ -169,7 +169,14 @@ export async function createForumThread(data: { categoryId: string; title: strin
 
     const { data: thread, error } = await supabase
       .from("forum_threads")
-      .insert({ category_id: data.categoryId, author_id: dbUser.id, title: data.title, content: data.content, status: "approved" })
+      .insert({ 
+        category_id: data.categoryId, 
+        author_id: dbUser.id, 
+        title: data.title, 
+        content: data.content, 
+        status: "approved",
+        thread_type: data.threadType || "discussion"
+      })
       .select()
       .single()
 

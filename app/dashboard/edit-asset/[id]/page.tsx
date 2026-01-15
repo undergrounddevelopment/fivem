@@ -70,8 +70,9 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
         if (!response.ok) throw new Error("Asset not found")
         const data = await response.json()
 
-        // Check ownership
-        if (data.author_id !== user?.discordId) {
+        // Check ownership - compare discord_id
+        const userDiscordId = (session.user as any).discord_id || session.user.id
+        if (data.author_id !== userDiscordId && data.author_discord_id !== userDiscordId) {
           toast.error("You don't have permission to edit this asset")
           router.push(`/asset/${resolvedParams.id}`)
           return
@@ -182,8 +183,14 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
   }
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="container max-w-6xl mx-auto px-4">
+    <div className="min-h-screen bg-transparent relative py-8 overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/20 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
+      <div className="container max-w-6xl mx-auto px-4 relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -215,7 +222,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
               {/* Basic Info */}
-              <Card>
+              <Card className="glass-morphism border-white/5 shadow-2xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-primary" />
@@ -301,7 +308,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
               </Card>
 
               {/* Content Tabs */}
-              <Card>
+              <Card className="glass-morphism border-white/5 shadow-2xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-primary" />

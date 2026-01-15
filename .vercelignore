@@ -1,5 +1,10 @@
-node_modules
-.next
-.env.local
+*.sql
 *.log
+node_modules
 .git
+.next
+.DS_Store
+backup_*.sql
+temp_restore.sql
+scripts/
+tests/

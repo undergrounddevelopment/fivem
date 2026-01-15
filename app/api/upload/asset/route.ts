@@ -1,47 +1,50 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { getSupabaseAdminClient } from "@/lib/supabase/server"
-import { security } from "@/lib/security"
-import { logger } from "@/lib/logger"
-import { XP_CONFIG, getLevelFromXP } from "@/lib/xp-badges"
-import { broadcastEvent } from "@/lib/realtime/broadcast"
-import { hasPgConnection, pgPool } from "@/lib/db/postgres"
-import { sendDiscordNotification } from "@/lib/discord-webhook"
+import { createClient } from "@supabase/supabase-js"
+import { notifyAssetUpload } from "@/lib/discord-webhook"
+
+// Initialize Supabase client - 100% Supabase only
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  return createClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("🚀 [Upload Asset] Starting upload process")
+    
     const session = await getServerSession(authOptions)
     if (!session?.user) {
+      console.log("❌ [Upload Asset] No session")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    console.log("✅ [Upload Asset] User authenticated:", session.user.id)
+
     const body = await request.json()
+    console.log("📥 [Upload Asset] Received data:", body)
+    
     const {
       title,
       description,
       features,
       installation,
-      changelog,
       category,
       framework,
       coinPrice = 0,
-      tags = [],
       fileUrl,
       thumbnailUrl,
-      fileSize,
       version,
       youtubeLink,
-      githubLink,
-      docsLink,
     } = body
 
+    // Validation
     if (!title || title.trim().length < 3) {
       return NextResponse.json({ error: "Title must be at least 3 characters" }, { status: 400 })
-    }
-
-    if (title.length > 200) {
-      return NextResponse.json({ error: "Title must be less than 200 characters" }, { status: 400 })
     }
 
     if (!description || description.trim().length < 10) {
@@ -57,296 +60,247 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Download link is required" }, { status: 400 })
     }
 
-    const supabase = getSupabaseAdminClient()
+    console.log("✅ [Upload Asset] Validation passed")
 
-    // Get user UUID from database (session.user.id is discord_id)
-    let user: { id: string; membership?: string | null; username?: string | null } | null = null
-    if (hasPgConnection && pgPool) {
-      const res = await pgPool.query('SELECT id, membership, username FROM users WHERE discord_id = $1 LIMIT 1', [session.user.id])
-      user = res.rows?.[0] || null
+    const supabase = getSupabaseClient()
+
+    // Get user from database using multiple lookup methods
+    console.log("🔍 [Upload Asset] Looking up user:", session.user.id)
+    
+    // Try multiple lookup methods to find the user
+    let user = null
+    let userError = null
+    
+    // Method 1: Look up by discord_id
+    const { data: userByDiscordId, error: discordIdError } = await supabase
+      .from("users")
+      .select("id, membership, username, avatar, coins, discord_id")
+      .eq("discord_id", session.user.id)
+      .single()
+    
+    if (userByDiscordId && !discordIdError) {
+      user = userByDiscordId
+      console.log("✅ [Upload Asset] User found by discord_id:", user.id)
     } else {
-      const { data: supaUser, error: userError } = await supabase
+      console.log("⚠️ [Upload Asset] User not found by discord_id, trying by id...")
+      
+      // Method 2: Look up by id field
+      const { data: userById, error: idError } = await supabase
         .from("users")
-        .select("id, membership, username")
-        .eq("discord_id", session.user.id)
+        .select("id, membership, username, avatar, coins, discord_id")
+        .eq("id", session.user.id)
         .single()
-
-      if (userError || !supaUser) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 })
+      
+      if (userById && !idError) {
+        user = userById
+        console.log("✅ [Upload Asset] User found by id:", user.id)
+      } else {
+        console.log("⚠️ [Upload Asset] User not found by id, creating new user...")
+        
+        // Method 3: Create new user if not found
+        const { data: newUser, error: createError } = await supabase
+          .from("users")
+          .insert({
+            discord_id: session.user.id,
+            username: session.user.name || "Unknown User",
+            email: session.user.email,
+            avatar: session.user.image,
+            coins: 1000, // Starting coins
+            xp: 0,
+            level: 1,
+            is_admin: session.user.id === process.env.ADMIN_DISCORD_ID,
+            membership: session.user.id === process.env.ADMIN_DISCORD_ID ? "admin" : "free",
+            role: session.user.id === process.env.ADMIN_DISCORD_ID ? "admin" : "member",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select("id, membership, username, avatar, coins, discord_id")
+          .single()
+        
+        if (newUser && !createError) {
+          user = newUser
+          console.log("✅ [Upload Asset] New user created:", user.id)
+        } else {
+          userError = createError
+          console.error("❌ [Upload Asset] Failed to create user:", createError)
+        }
       }
-      user = supaUser
     }
 
-    if (!user?.id) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    if (!user) {
+      console.error("❌ [Upload Asset] User lookup/creation failed:", userError)
+      
+      // Try to send webhook anyway with session data
+      try {
+        await logActivity(
+          "User Lookup Failed",
+          `Failed to find/create user with Discord ID: ${session.user.id}`,
+          session.user.id,
+          { error: userError?.message || "Unknown error" }
+        )
+      } catch (webhookError) {
+        console.error("Failed to send error webhook:", webhookError)
+      }
+      
+      return NextResponse.json({ 
+        error: "User registration failed. Please try logging out and back in." 
+      }, { status: 404 })
     }
 
-    // VIP and admin assets are auto-approved (Akamai v7 uses pending/approved/rejected/featured)
+    console.log("✅ [Upload Asset] User found:", user.id)
+
+    // Prepare data
     const assetStatus = user?.membership === "vip" || user?.membership === "admin" ? "approved" : "pending"
-
-    const sanitize = (text: string | null | undefined, maxLen = 50000) => {
-      if (!text) return null
-      return text.trim().slice(0, maxLen)
-    }
-
-    const safeTags = Array.isArray(tags) ? tags.slice(0, 20).map((t: string) => String(t).trim().slice(0, 50)) : []
     const safeThumbnail = thumbnailUrl || `/placeholder.svg?height=400&width=600&query=${encodeURIComponent(title)}`
     const safeCoinPrice = Math.max(0, Math.min(10000, Number(coinPrice) || 0))
-    const parsedFileSize = fileSize ? Number.parseInt(String(fileSize), 10) : NaN
-    const safeFileSize = Number.isFinite(parsedFileSize) ? parsedFileSize : null
 
-    const metadata = {
-      features: features ? String(features) : null,
-      installation: installation ? String(installation) : null,
-      changelog: changelog ? String(changelog) : null,
-      youtubeLink: youtubeLink ? String(youtubeLink) : null,
-      githubLink: githubLink ? String(githubLink) : null,
-      docsLink: docsLink ? String(docsLink) : null,
-      version: version ? String(version) : null,
+    // Determine notification priority based on asset characteristics
+    let notificationPriority: 'low' | 'normal' | 'high' = 'normal'
+    
+    if (user.membership === 'admin' || user.membership === 'vip') {
+      notificationPriority = 'high' // VIP/Admin uploads get high priority
+    }
+    if (safeCoinPrice === 0) {
+      notificationPriority = 'normal' // Free assets get normal priority
+    }
+    if (safeCoinPrice > 100) {
+      notificationPriority = 'high' // Expensive assets get high priority
+    }
+    if (category === 'scripts' && framework === 'qbcore') {
+      notificationPriority = 'high' // Popular combination gets high priority
     }
 
-    let asset: any = null
-    if (hasPgConnection && pgPool) {
-      const res = await pgPool.query(
-        `
-          INSERT INTO assets (
-            title,
-            description,
-            category,
-            framework,
-            coin_price,
-            download_url,
-            thumbnail_url,
-            tags,
-            file_size,
-            creator_id,
-            metadata,
-            status,
-            virus_scan_status,
-            rating,
-            rating_count,
-            downloads,
-            is_verified,
-            is_featured
-          ) VALUES (
-            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17
-          )
-          RETURNING *
-        `,
-        [
-          sanitize(title, 200),
-          sanitize(description),
+    const assetData = {
+      title: title.trim(),
+      description: description.trim(),
+      features: features?.trim() || null,
+      installation: installation?.trim() || null,
+      category,
+      framework: framework || "standalone",
+      coin_price: safeCoinPrice,
+      download_link: fileUrl,
+      thumbnail: safeThumbnail,
+      author_id: user.id,
+      version: version || "1.0.0",
+      status: assetStatus,
+      virus_scan_status: "pending",
+      youtube_link: youtubeLink || null,
+      rating: 5.0,
+      rating_count: 0,
+      downloads: 0,
+      is_verified: false,
+      is_featured: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    console.log("📤 [Upload Asset] Inserting asset:", assetData)
+
+    // Insert asset using Supabase client only
+    const { data: asset, error: insertError } = await supabase
+      .from("assets")
+      .insert(assetData)
+      .select("*")
+      .single()
+
+    if (insertError || !asset) {
+      console.error("❌ [Upload Asset] Insert failed:", insertError)
+      
+      // Log error to Discord
+      await logActivity(
+        "Asset Insert Failed",
+        `Failed to insert asset: ${title}`,
+        session.user.id,
+        { 
+          error: insertError?.message,
+          title,
           category,
-          framework || "standalone",
-          safeCoinPrice,
-          fileUrl,
-          safeThumbnail,
-          safeTags,
-          safeFileSize,
-          user.id,
-          metadata,
-          assetStatus,
-          "pending",
-          5.0,
-          0,
-          0,
-          false,
-          false,
-        ],
+          framework
+        }
       )
-      asset = res.rows?.[0] || null
-    } else {
-      const { data: supaAsset, error } = await supabase
-        .from("assets")
-        .insert({
-          title: sanitize(title, 200),
-          description: sanitize(description),
-          features: sanitize(features),
-          installation: sanitize(installation),
-          changelog: sanitize(changelog),
-          category,
-          framework: framework || "standalone",
-          coin_price: safeCoinPrice,
-          download_link: fileUrl,
-          thumbnail: safeThumbnail,
-          tags: safeTags,
-          file_size: fileSize || "Unknown",
-          author_id: user.id, // Use UUID from database, not discord_id
-          version: version || "1.0.0",
-          status: assetStatus,
-          virus_scan_status: "pending",
-          youtube_link: youtubeLink || null,
-          github_link: githubLink || null,
-          docs_link: docsLink || null,
-          rating: 5.0,
-          rating_count: 0,
-          downloads: 0,
-          is_verified: false,
-          is_featured: false,
-        })
-        .select("*")
-        .single()
-
-      if (error) {
-        logger.error("Asset insert failed", error)
-        return NextResponse.json({ error: "Failed to save asset: " + error.message }, { status: 500 })
-      }
-      asset = supaAsset
+      
+      return NextResponse.json({ 
+        error: "Failed to save asset: " + (insertError?.message || "Unknown error") 
+      }, { status: 500 })
     }
 
-    if (!asset) {
-      return NextResponse.json({ error: "Failed to save asset" }, { status: 500 })
-    }
+    console.log("✅ [Upload Asset] Asset created:", asset.id)
 
-    // Log activity
-    await supabase.from("activities").insert({
-      user_id: session.user.id,
-      type: "upload",
-      action: `uploaded ${title}`,
-      target_id: asset.id,
-    })
-
-    // Award XP for uploading asset
+    // Log activity using Supabase client only
     try {
-      const xpReward = XP_CONFIG.rewards.UPLOAD_ASSET
-
-      if (hasPgConnection && pgPool) {
-        const cur = await pgPool.query('SELECT xp, level FROM users WHERE discord_id = $1 LIMIT 1', [session.user.id])
-        const currentUser = cur.rows?.[0]
-        if (currentUser) {
-          const newXP = (currentUser.xp || 0) + xpReward
-          const levelInfo = getLevelFromXP(newXP)
-
-          await pgPool.query(
-            'UPDATE users SET xp = $1, level = $2, current_badge = $3, updated_at = NOW() WHERE discord_id = $4',
-            [newXP, levelInfo.level, levelInfo.title.toLowerCase(), session.user.id],
-          )
-
-          // Log XP transaction (xp_transactions.user_id references users.discord_id)
-          await pgPool.query(
-            'INSERT INTO xp_transactions (user_id, amount, activity_type, description) VALUES ($1,$2,$3,$4)',
-            [session.user.id, xpReward, 'UPLOAD_ASSET', `Earned ${xpReward} XP for uploading asset "${title}"`],
-          )
-        }
-      } else {
-        const { data: currentUser } = await supabase
-          .from("users")
-          .select("xp, level")
-          .eq("discord_id", session.user.id)
-          .single()
-
-        if (currentUser) {
-          const newXP = (currentUser.xp || 0) + xpReward
-          const levelInfo = getLevelFromXP(newXP)
-
-          await supabase
-            .from("users")
-            .update({
-              xp: newXP,
-              level: levelInfo.level,
-              current_badge: levelInfo.title.toLowerCase(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq("discord_id", session.user.id)
-
-          // Log XP transaction
-          await supabase.from("xp_transactions").insert({
-            user_id: session.user.id,
-            amount: xpReward,
-            activity_type: "UPLOAD_ASSET",
-            description: `Earned ${xpReward} XP for uploading asset "${title}"`,
-          })
-        }
-      }
-    } catch (xpError) {
-      console.error("[XP] Error awarding XP for upload:", xpError)
-    }
-
-    if (assetStatus === "approved") {
-      const categoryLabels: Record<string, string> = {
-        scripts: "Script",
-        mlo: "MLO Map",
-        vehicles: "Vehicle",
-        clothing: "Clothing",
-      }
-
-      const notification = {
-        title: `New ${categoryLabels[category] || "Asset"} Available!`,
-        message: `${user?.username || "A user"} just uploaded "${title}" - ${Number(coinPrice) === 0 ? "FREE" : `${coinPrice} Coins`}`,
-        type: "new_asset",
-        link: `/asset/${asset.id}`,
-        asset_id: asset.id,
-        created_by: session.user.id,
-        is_active: true,
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Expires in 24 hours
-      }
-
-      if (hasPgConnection && pgPool) {
-        await pgPool.query(
-          `
-            INSERT INTO public_notifications (title, message, type, link, asset_id, created_by, is_active, expires_at)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-          `,
-          [
-            notification.title,
-            notification.message,
-            notification.type,
-            notification.link,
-            notification.asset_id,
-            notification.created_by,
-            notification.is_active,
-            notification.expires_at,
-          ],
-        )
-      } else {
-        await supabase.from("public_notifications").insert(notification)
-      }
-    }
-
-    security.logSecurityEvent(
-      "Asset uploaded successfully",
-      {
-        userId: session.user.id,
-        assetId: asset.id,
-        title: asset.title,
-        category: asset.category,
-      },
-      "low",
-    )
-
-    // Send Discord notification for ALL uploads (pending and approved)
-    try {
-      await sendDiscordNotification({
-        title: asset.title || title,
-        description: asset.description || description,
-        category: asset.category || category,
-        thumbnail: asset.thumbnail || safeThumbnail,
-        author: { username: user?.username || session.user.name || "Unknown User" },
-        id: asset.id,
+      await supabase.from("activities").insert({
+        user_id: session.user.id,
+        type: "upload",
+        action: `uploaded ${title}`,
+        target_id: asset.id,
+        created_at: new Date().toISOString()
       })
-      console.log("✅ Discord notification sent for asset:", asset.title)
-    } catch (discordError) {
-      console.error("❌ Discord notification failed:", discordError)
-      // Don't fail the upload if Discord notification fails
+    } catch (activityError) {
+      console.error("⚠️ [Upload Asset] Activity log failed:", activityError)
+      // Don't fail the upload for this
     }
 
-    // Realtime notification (works even after migrating DB away from Supabase)
-    broadcastEvent("scripts-page-assets", "assets_changed", {
-      id: asset.id,
-      category: asset.category,
-      status: asset.status,
-    }).catch(() => {})
+    // 🎉 SEND SINGLE DISCORD NOTIFICATION ONLY
+    try {
+      console.log("📢 [Upload Asset] Sending Discord notification...")
+      
+      // Prepare user data for webhook
+      const webhookUser = {
+        id: user.id,
+        username: user.username || session.user.name,
+        name: session.user.name,
+        avatar: user.avatar || session.user.image,
+        membership: user.membership,
+        coins: user.coins
+      }
+      
+      // Send ONLY ONE notification
+      const notificationSent = await notifyAssetUpload(asset, webhookUser)
+      
+      if (notificationSent) {
+        console.log("✅ [Upload Asset] Discord notification sent successfully")
+      } else {
+        console.log("⚠️ [Upload Asset] Discord notification failed")
+      }
+      
+      console.log("✅ [Upload Asset] Notification process completed")
+      
+    } catch (webhookError) {
+      console.error("⚠️ [Upload Asset] Discord webhook failed:", webhookError)
+      // Don't fail the upload for webhook errors
+    }
+
+    console.log("🎉 [Upload Asset] Upload completed successfully")
 
     return NextResponse.json({
       success: true,
       asset,
       message: assetStatus === "approved" ? "Asset uploaded and published!" : "Asset uploaded and pending approval",
+      notification: {
+        status: "sent",
+        mentions: "everyone, here"
+      }
     })
   } catch (error: any) {
-    logger.error("Asset upload failed", error, {
-      endpoint: "/api/upload/asset",
-      ip: request.headers.get("x-forwarded-for") || "unknown",
-    })
-    return NextResponse.json({ error: "Upload failed: " + (error.message || "Unknown error") }, { status: 500 })
+    console.error("❌ [Upload Asset] Unexpected error:", error)
+    
+    // Log critical error to Discord
+    try {
+      await logActivity(
+        "Critical Upload Error",
+        `Unexpected error during asset upload: ${error.message}`,
+        undefined,
+        {
+          "Error": error.message,
+          "Stack": error.stack?.substring(0, 500)
+        }
+      )
+    } catch (webhookError) {
+      console.error("Failed to send error webhook:", webhookError)
+    }
+    
+    return NextResponse.json({ 
+      error: "Upload failed: " + (error.message || "Unknown error") 
+    }, { status: 500 })
   }
 }

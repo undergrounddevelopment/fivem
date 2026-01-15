@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-const SUPABASE_URL = "https://linnqtixdfjwbrixitrb.supabase.co"
+const SUPABASE_URL = "https://elukwjlwmfgdfywjpzkd.supabase.co"
 const SUPABASE_SERVICE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxpbm5xdGl4ZGZqd2JyaXhpdHJiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNDUzMTA2NywiZXhwIjoyMDUwMTA3MDY3fQ.TdLBWCXn4z1VKMvh9Cd7oGv3sVyEk9eJXZp8Y33EiVA"
+  "sb_secret_WziEjlBmkNr0Xz2ezSWALQ_eDTEtOXp"
 
 let setupExecuted = false
 

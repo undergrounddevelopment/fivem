@@ -14,27 +14,21 @@ interface SmartImageProps {
 }
 
 export default function SmartImage({ src, alt, className, fill, priority, width, height }: SmartImageProps) {
-  const [imgSrc, setImgSrc] = useState(src || "/fivem-asset-thumbnail.jpg")
   const [hasError, setHasError] = useState(false)
 
-  const fallbackImage = "/fivem-asset-thumbnail.jpg"
-
   const handleError = () => {
-    if (!hasError) {
-      setHasError(true)
-      setImgSrc(fallbackImage)
-    }
+    setHasError(true)
   }
 
-  // Reset state when src changes
-  if (src && src !== imgSrc && !hasError) {
-    setImgSrc(src)
+  // If no src provided or error occurred, render nothing (100% real data only)
+  if (!src || hasError) {
+    return null
   }
 
   if (fill) {
     return (
       <Image
-        src={imgSrc || fallbackImage}
+        src={src}
         alt={alt}
         fill
         className={className}
@@ -47,7 +41,7 @@ export default function SmartImage({ src, alt, className, fill, priority, width,
 
   return (
     <Image
-      src={imgSrc || fallbackImage}
+      src={src}
       alt={alt}
       width={width || 400}
       height={height || 300}
@@ -58,3 +52,4 @@ export default function SmartImage({ src, alt, className, fill, priority, width,
     />
   )
 }
+

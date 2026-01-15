@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-export const dynamic = "force-dynamic"
-export const revalidate = 0
+// export const dynamic = "force-dynamic"
+export const revalidate = 600 // Cache for 10 minutes
 
 // Direct Supabase - 100% working
 function getSupabase() {

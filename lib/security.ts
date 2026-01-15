@@ -54,8 +54,10 @@ export const security = {
   generateCSRFToken(sessionId: string): string {
     const timestamp = Date.now().toString()
     const data = `${sessionId}:${timestamp}:csrf`
+    const secret = process.env.SESSION_SECRET
+    if (!secret) throw new Error('SESSION_SECRET required')
     return crypto
-      .createHmac("sha256", process.env.SESSION_SECRET || "fallback")
+      .createHmac("sha256", secret)
       .update(data)
       .digest("base64url")
   },
@@ -118,9 +120,11 @@ export const security = {
 
   encrypt(data: string, key?: string): string {
     try {
+      const secret = key || process.env.SESSION_SECRET
+      if (!secret) throw new Error('SESSION_SECRET required')
       const secretKey = crypto
         .createHash("sha256")
-        .update(key || process.env.SESSION_SECRET || "fallback-key")
+        .update(secret)
         .digest()
       const iv = crypto.randomBytes(16)
       const cipher = crypto.createCipheriv("aes-256-cbc", secretKey, iv)
@@ -134,9 +138,11 @@ export const security = {
 
   decrypt(encrypted: string, key?: string): string {
     try {
+      const secret = key || process.env.SESSION_SECRET
+      if (!secret) throw new Error('SESSION_SECRET required')
       const secretKey = crypto
         .createHash("sha256")
-        .update(key || process.env.SESSION_SECRET || "fallback-key")
+        .update(secret)
         .digest()
       const [ivHex, encryptedData] = encrypted.split(":")
       if (!ivHex || !encryptedData) return ""

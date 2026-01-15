@@ -10,6 +10,34 @@ function getSupabase() {
   return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } })
 }
 
+async function checkAdminAccess(userId: string) {
+  const supabase = getSupabase()
+  
+  // Try discord_id first
+  let { data } = await supabase
+    .from('users')
+    .select('is_admin, membership')
+    .eq('discord_id', userId)
+    .single()
+
+  // Try UUID if not found
+  if (!data) {
+    const { data: byUuid } = await supabase
+      .from('users')
+      .select('is_admin, membership')
+      .eq('id', userId)
+      .single()
+    data = byUuid
+  }
+
+  // Check admin status
+  const isAdmin = data?.is_admin === true || 
+                  data?.membership === 'admin' ||
+                  userId === process.env.ADMIN_DISCORD_ID
+
+  return isAdmin
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -17,17 +45,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if admin
-    const supabase = getSupabase()
-    const { data: adminUser } = await supabase
-      .from("users")
-      .select("is_admin")
-      .eq("discord_id", session.user.id)
-      .single()
-
-    if (!adminUser?.is_admin && !session.user.isAdmin) {
+    // Check if admin using improved logic
+    const isAdmin = await checkAdminAccess(session.user.id)
+    if (!isAdmin) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
+
+    const supabase = getSupabase()
 
     const body = await request.json()
     const userId = String(body.userId || "")
@@ -176,18 +200,13 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = getSupabase()
-
-    // Check if admin
-    const { data: adminUser } = await supabase
-      .from("users")
-      .select("is_admin")
-      .eq("discord_id", session.user.id)
-      .single()
-
-    if (!adminUser?.is_admin && !session.user.isAdmin) {
+    // Check if admin using improved logic
+    const isAdmin = await checkAdminAccess(session.user.id)
+    if (!isAdmin) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
+
+    const supabase = getSupabase()
 
     const body = await request.json()
 

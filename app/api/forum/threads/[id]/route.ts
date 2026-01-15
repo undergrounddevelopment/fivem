@@ -1,13 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
+import { createAdminClient } from "@/lib/supabase/server"
+
 function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_fivemvip_SUPABASE_URL || 
-              process.env.fivemvip_SUPABASE_URL || 
-              process.env.SUPABASE_URL!
-  const key = process.env.fivemvip_SUPABASE_SERVICE_ROLE_KEY || 
-              process.env.SUPABASE_SERVICE_ROLE_KEY!
-  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } })
+  return createAdminClient()
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -38,35 +35,56 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
     if (authorIds.length > 0) {
       const uniqueIds = [...new Set(authorIds)]
-      const { data: users } = await supabase
-        .from("users")
-        .select("id, discord_id, username, avatar, membership, xp, level")
-        .in("discord_id", uniqueIds)
-      
-      for (const u of users || []) {
-        authorsMap[u.discord_id] = u
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      const uuids = uniqueIds.filter(id => uuidRegex.test(id))
+      const discordIds = uniqueIds.filter(id => !uuidRegex.test(id))
+
+      const fetchedUsers: any[] = []
+
+      // 1. Fetch by UUID
+      if (uuids.length > 0) {
+        const { data: u1 } = await supabase
+          .from("users")
+          .select("id, discord_id, username, avatar, membership, xp, level")
+          .in("id", uuids)
+        if (u1) fetchedUsers.push(...u1)
+      }
+
+      // 2. Fetch by Discord ID (safely)
+      if (discordIds.length > 0) {
+        const { data: u2 } = await supabase
+          .from("users")
+          .select("id, discord_id, username, avatar, membership, xp, level")
+          .in("discord_id", discordIds)
+        if (u2) fetchedUsers.push(...u2)
+      }
+
+      for (const u of fetchedUsers) {
+        if (u.discord_id) authorsMap[u.discord_id] = u
+        authorsMap[u.id] = u
       }
     }
 
     // Increment views
-    supabase.from("forum_threads").update({ views: (thread.views || 0) + 1 }).eq("id", id).then(() => {})
+    supabase.from("forum_threads").update({ views: (thread.views || 0) + 1 }).eq("id", id).then(() => { })
 
     const author = authorsMap[thread.author_id]
     return NextResponse.json({
       id: thread.id, title: thread.title, content: thread.content,
       categoryId: thread.category_id, category: categoryName, categoryColor: categoryColor,
       authorId: thread.author_id,
-      author: { id: author?.discord_id || thread.author_id, username: author?.username, avatar: author?.avatar, membership: author?.membership || "member" },
+      author: { id: author?.discord_id || thread.author_id, username: author?.username || "Unknown", avatar: author?.avatar, membership: author?.membership || "member" },
       replies: (replies || []).map(r => {
         const a = authorsMap[r.author_id]
         return {
           id: r.id, content: r.content, authorId: r.author_id,
-          author: { id: a?.discord_id || r.author_id, username: a?.username, avatar: a?.avatar, membership: a?.membership || "member" },
+          author: { id: a?.discord_id || r.author_id, username: a?.username || "Unknown", avatar: a?.avatar, membership: a?.membership || "member" },
           likes: r.likes || 0, isEdited: r.is_edited || false, createdAt: r.created_at, updatedAt: r.updated_at,
         }
       }),
       repliesCount: thread.replies_count || thread.replies || 0, likes: thread.likes || 0, views: (thread.views || 0) + 1,
       isPinned: thread.is_pinned || false, isLocked: thread.is_locked || false, images: thread.images || [],
+      threadType: thread.thread_type || "discussion",
       createdAt: thread.created_at, updatedAt: thread.updated_at,
     })
   } catch (e: any) {

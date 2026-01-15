@@ -16,7 +16,7 @@ export async function GET(
 
   const hash = req.nextUrl.searchParams.get('hash');
   const supabase = await createClient();
-  
+
   const { data: asset } = await supabase
     .from('assets')
     .select('*, require_linkvertise')
@@ -29,33 +29,47 @@ export async function GET(
 
   const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
   const userAgent = req.headers.get('user-agent') || 'unknown';
+
+  // Check global settings
+  const { data: settings } = await supabase
+    .from('site_settings')
+    .select('value')
+    .eq('key', 'linkvertise')
+    .single();
+
+  const isGlobalEnabled = settings?.value?.enabled;
   
-  if (asset.require_linkvertise && hash) {
-    const verified = await verifyLinkvertiseHash(hash);
-    
-    await logDownloadAttempt(
-      id,
-      session.user.id,
-      hash,
-      Boolean(verified),
-      ipAddress,
-      userAgent
-    );
-    
-    if (!verified) {
-      return NextResponse.json({ error: 'Invalid or expired hash' }, { status: 403 });
+  // Only enforce if globally enabled
+  if (isGlobalEnabled && asset.require_linkvertise) {
+    if (hash) {
+      const verified = await verifyLinkvertiseHash(hash);
+
+      await logDownloadAttempt(
+        id,
+        session.user.id as string,
+        Boolean(verified),
+        hash,
+        'Linkvertise verification'
+      );
+
+      if (!verified) {
+        return NextResponse.json({ error: 'Invalid or expired hash' }, { status: 403 });
+      }
+    } else {
+      await logDownloadAttempt(
+        id,
+        session.user.id,
+        false,
+        null,
+        `Missing hash (IP: ${ipAddress})`
+      );
+      return NextResponse.json({ error: 'Hash required' }, { status: 403 });
     }
-  } else if (asset.require_linkvertise && !hash) {
-    await logDownloadAttempt(
-      id,
-      session.user.id,
-      null,
-      false,
-      ipAddress,
-      userAgent
-    );
-    return NextResponse.json({ error: 'Hash required' }, { status: 403 });
   }
 
-  return NextResponse.redirect(new URL(`/api/download/${id}`, req.url));
+  // Generate signed download token
+  const { generateDownloadToken } = await import('@/lib/token');
+  const token = generateDownloadToken(session.user.id, id);
+
+  return NextResponse.redirect(new URL(`/api/download/${id}?token=${token}`, req.url));
 }

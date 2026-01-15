@@ -1,3 +1,4 @@
+// Note: This middleware will be migrated to proxy convention in Next.js 16+
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/components/auth-provider"
 import { MessageSquare, CheckCircle, XCircle, Clock, User, Eye, AlertTriangle, Loader2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
+import { FormattedText } from "@/components/formatted-text"
 
 interface PendingThread {
   id: string
@@ -232,7 +233,12 @@ export default function AdminForumPage() {
                         </span>
                       </div>
                       <div className="prose prose-sm max-w-none text-muted-foreground bg-secondary/30 rounded-xl p-4 max-h-64 overflow-y-auto">
-                        {selectedThread.content}
+                        <FormattedText 
+                          content={selectedThread.content}
+                          enableYouTube={true}
+                          enableImages={true}
+                          enableLinks={true}
+                        />
                       </div>
                     </div>
 

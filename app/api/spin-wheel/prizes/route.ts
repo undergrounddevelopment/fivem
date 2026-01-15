@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// Optimized for performance - 30s cache for spin wheel prizes
+export const revalidate = 600 // Cache for 10 minutes
 
 export async function GET() {
   try {

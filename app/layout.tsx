@@ -4,6 +4,8 @@ import { Geist, Geist_Mono, Manrope } from "next/font/google"
 import { AuthProvider } from "@/components/auth-provider"
 import { ModernLayout } from "@/components/modern-layout"
 import { AppWrapper } from "@/components/app-wrapper"
+import { FloatingReviewNotifications } from "@/components/floating-review-notifications"
+import { FloatingReviews } from "@/components/floating-reviews"
 // import { SpinWinNotifications } from "@/components/spin-win-notifications" // Event sudah berakhir
 import { ToastContainer } from "@/components/modern-toast"
 import { ErrorBoundary } from "@/components/error-boundary"
@@ -13,6 +15,9 @@ import { LanguageProvider } from "@/components/language-provider"
 import { AnalyticsWrapper } from "@/components/analytics-wrapper"
 import { SITE_NAME, SITE_DESCRIPTION, SITE_URL, SITE_LOGO, SEO_KEYWORDS } from "@/lib/constants"
 import { ClientSessionProvider } from "@/components/client-session-provider"
+import { LinkvertiseScript } from "@/components/linkvertise-script"
+import { OptimizedLayout } from "@/components/optimized-layout"
+import "@/lib/performance-init" // Initialize performance optimizations
 import "./globals.css"
 
 const geist = Geist({
@@ -37,110 +42,109 @@ const manrope = Manrope({
   weight: ["400", "700"],
 })
 
-export const metadata: Metadata = {
-  title: {
-    default: `${SITE_NAME} - FiveM Scripts, MLO, Vehicles, Decrypt CFX, Upvotes Free`,
-    template: `%s | ${SITE_NAME} - FiveM Resources`,
-  },
-  description: `${SITE_DESCRIPTION} #FiveMRoles #FiveMPopulation #FiveMServer #FiveMCommunity #FiveMRanking #ServerBoost #FiveMAdvertise #FiveMTools #FiveMUpvotes #FiveMScripts #FiveMResources #FiveMCustomization #GTARP #FiveM #GTAV #GrandTheftAuto #GTAOnline #GamingCommunity`,
-  keywords: `${SEO_KEYWORDS}, FiveM Roles, FiveM Population, FiveM Server, FiveM Community, FiveM Ranking, Server Boost, FiveM Advertise, FiveM Tools, FiveM Upvotes, FiveM Scripts, FiveM Resources, FiveM Customization, GTA RP, FiveM, GTA V, Grand Theft Auto, GTA Online, Gaming Community`,
-  authors: [{ name: "FiveM Tools Team", url: SITE_URL }],
-  creator: "FiveM Tools V7",
-  publisher: "FiveM Tools",
-  metadataBase: new URL(SITE_URL),
-  alternates: {
-    canonical: SITE_URL,
-    languages: {
-      "en-US": SITE_URL,
-      "id-ID": `${SITE_URL}/id`,
-      "es-ES": `${SITE_URL}/es`,
-      "pt-BR": `${SITE_URL}/pt`,
-      "de-DE": `${SITE_URL}/de`,
-      "fr-FR": `${SITE_URL}/fr`,
-      "ru-RU": `${SITE_URL}/ru`,
-      "zh-CN": `${SITE_URL}/zh`,
-      "ja-JP": `${SITE_URL}/ja`,
-      "ko-KR": `${SITE_URL}/ko`,
-      "tr-TR": `${SITE_URL}/tr`,
-      "ar-SA": `${SITE_URL}/ar`,
+export async function generateMetadata(): Promise<Metadata> {
+  const { getSiteSettings } = await import("@/lib/settings")
+  const settings = await getSiteSettings()
+
+  const siteName = settings.site_info.name || SITE_NAME
+  const siteDescription = settings.site_info.description || SITE_DESCRIPTION
+  const siteLogo = settings.site_info.logo || SITE_LOGO
+
+  return {
+    title: {
+      default: `${siteName} - #1 FiveM Automatic Leaks, Scripts, MLO, Decrypt CFX, Free Resources`,
+      template: `%s | ${siteName} - #1 FiveM Leaks & Resources`,
     },
-  },
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    alternateLocale: ["id_ID"],
-    url: SITE_URL,
-    title: `${SITE_NAME} - #1 FiveM Resource Hub | Scripts, MLO, Decrypt, Upvotes #FiveMTools #GTARP`,
-    description:
-      "Download Free FiveM Scripts, MLO Maps, Vehicles, EUP Clothing. Decrypt CFX V7, FiveM Upvotes Bot, Leak Scripts. QBCore, ESX, QBox Framework Resources. #FiveMScripts #FiveMServer #FiveMCommunity #GTAV #GTAOnline",
-    siteName: SITE_NAME,
-    images: [
-      {
-        url: SITE_LOGO,
-        width: 512,
-        height: 512,
-        alt: "FiveM Tools V7 - Premium FiveM Resource Hub",
-        type: "image/png",
+    description: `${siteDescription} #1 Source for FiveM Automatic Leaks, Free Scripts, MLO Maps, Exclusive Vehicles, CFX Decrypter. Auto-updated leaks, QBCore, ESX, QBox. Global access, daily updates. #FiveMLeaks #FiveMFree #GTARP #FiveMTools`,
+    keywords: `${SEO_KEYWORDS}, FiveM Leaks, FiveM Automatic Leak, Free FiveM Scripts, FiveM MLO Leak, FiveM Decrypt, CFX Decrypter, FiveM Cheats, FiveM Mods, FiveM Resources, QBCore Leaks, ESX Scripts Free, FiveM Server Dump, GTA V RP Leaks, FiveM Global`,
+    authors: [{ name: "FiveM Tools Global", url: SITE_URL }],
+    creator: `${siteName} Global`,
+    publisher: "FiveM Tools Network",
+    metadataBase: new URL(SITE_URL),
+    alternates: {
+      canonical: SITE_URL,
+      languages: {
+        "en-US": SITE_URL,
+        "x-default": SITE_URL,
       },
-      {
-        url: "https://r2.fivemanage.com/GTB2ekcdxMdnkeOh40eMi/fivembanner.gif",
-        width: 1200,
-        height: 630,
-        alt: "FiveM Tools V7 Banner - Scripts, MLO, Decrypt, Upvotes",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${SITE_NAME} - FiveM Scripts, MLO, Decrypt CFX, Upvotes #FiveMTools #GTARP`,
-    description:
-      "Free FiveM Resources: Scripts, MLO, Vehicles, EUP, Decrypt CFX V7, Upvotes Bot. QBCore, ESX, QBox. #FiveMCommunity #GTAOnline",
-    images: [SITE_LOGO],
-    creator: "@fivemtools",
-    site: "@fivemtools",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    nocache: false,
-    googleBot: {
+    },
+    openGraph: {
+      type: "website",
+      locale: "en_US",
+      alternateLocale: ["en_GB", "es_ES", "fr_FR", "de_DE", "pt_BR", "ru_RU", "id_ID"],
+      url: SITE_URL,
+      title: `${siteName} - #1 FiveM Automatic Leaks & Scripts | Global Hub`,
+      description:
+        "The World's #1 FiveM Leaks Community. Download premium Scripts, MLOs, Vehicles, and EUP for Free. Automatic updates, instant access. Unlock QBCore & ESX resources now.",
+      siteName: siteName,
+      images: [
+        {
+          url: siteLogo,
+          width: 512,
+          height: 512,
+          alt: `${siteName} - #1 Global Leaks Hub`,
+          type: "image/png",
+        },
+        {
+          url: "https://r2.fivemanage.com/GTB2ekcdxMdnkeOh40eMi/fivembanner.gif",
+          width: 1200,
+          height: 630,
+          alt: `${siteName} Banner - Automatic Leaks & Scripts`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${siteName} - #1 FiveM Automatic Leaks & Free Resources`,
+      description:
+        "Access the largest collection of FiveM Leaks, Scripts, and MLOs. Global daily updates. #FiveMLeaks #FiveMScripts",
+      images: ["https://r2.fivemanage.com/GTB2ekcdxMdnkeOh40eMi/fivembanner.gif"],
+      creator: "@fivemtools",
+      site: "@fivemtools",
+    },
+    robots: {
       index: true,
       follow: true,
-      noimageindex: false,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
+      nocache: false,
+      googleBot: {
+        index: true,
+        follow: true,
+        noimageindex: false,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
     },
-  },
-  icons: {
-    icon: SITE_LOGO,
-    shortcut: SITE_LOGO,
-    apple: SITE_LOGO,
+    icons: {
+      icon: siteLogo,
+      shortcut: siteLogo,
+      apple: siteLogo,
+      other: {
+        rel: "apple-touch-icon-precomposed",
+        url: siteLogo,
+      },
+    },
+    verification: {
+      google: "1C9OLiOYFZjjSl2iE84XV83Ga4pT7ScpQxcUnKETTj0",
+    },
+    category: "Gaming",
+    classification: "FiveM Leaks, Gaming Resources, GTA V Mods",
+    generator: "Next.js",
+    applicationName: siteName,
+    referrer: "no-referrer",
+    formatDetection: {
+      email: false,
+      address: false,
+      telephone: false,
+    },
+    manifest: "/manifest.json",
     other: {
-      rel: "apple-touch-icon-precomposed",
-      url: SITE_LOGO,
+      "theme-color": "#0d1117",
+      "msapplication-TileColor": "#0d1117",
+      "apple-mobile-web-app-capable": "yes",
+      "apple-mobile-web-app-status-bar-style": "black-translucent",
     },
-  },
-  verification: {
-    google: "1C9OLiOYFZjjSl2iE84XV83Ga4pT7ScpQxcUnKETTj0",
-  },
-  category: "Gaming",
-  classification: "FiveM Resources, GTA V Mods, Gaming Tools",
-  generator: "Next.js",
-  applicationName: SITE_NAME,
-  referrer: "no-referrer",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  manifest: "/manifest.json",
-  other: {
-    "theme-color": "#0d1117",
-    "msapplication-TileColor": "#0d1117",
-    "apple-mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-status-bar-style": "black-translucent",
-  },
+  }
 }
 
 export const viewport: Viewport = {
@@ -257,6 +261,23 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           }}
         />
         <meta name="google-site-verification" content="1C9OLiOYFZjjSl2iE84XV83Ga4pT7ScpQxcUnKETTj0" />
+
+        <link rel="alternate" hrefLang="en" href="https://www.fivemtools.net/en" />
+        <link rel="alternate" hrefLang="en-US" href="https://www.fivemtools.net/en" />
+        <link rel="alternate" hrefLang="en-GB" href="https://www.fivemtools.net/en" />
+        <link rel="alternate" hrefLang="id" href="https://www.fivemtools.net/id" />
+        <link rel="alternate" hrefLang="es" href="https://www.fivemtools.net/es" />
+        <link rel="alternate" hrefLang="pt" href="https://www.fivemtools.net/pt" />
+        <link rel="alternate" hrefLang="de" href="https://www.fivemtools.net/de" />
+        <link rel="alternate" hrefLang="fr" href="https://www.fivemtools.net/fr" />
+        <link rel="alternate" hrefLang="ru" href="https://www.fivemtools.net/ru" />
+        <link rel="alternate" hrefLang="zh" href="https://www.fivemtools.net/zh" />
+        <link rel="alternate" hrefLang="ja" href="https://www.fivemtools.net/ja" />
+        <link rel="alternate" hrefLang="ko" href="https://www.fivemtools.net/ko" />
+        <link rel="alternate" hrefLang="tr" href="https://www.fivemtools.net/tr" />
+        <link rel="alternate" hrefLang="ar" href="https://www.fivemtools.net/ar" />
+        <link rel="alternate" hrefLang="x-default" href="https://www.fivemtools.net" />
+
         <link rel="dns-prefetch" href="https://cdn.discordapp.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://r2.fivemanage.com" />
@@ -355,6 +376,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           />
         </noscript>
 
+        <LinkvertiseScript />
+
         <ClientSessionProvider>
           <AuthProvider>
             <LanguageProvider>
@@ -363,8 +386,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   <HolidayBanner />
                   <ModernLayout>
                     <AppWrapper>
-                      {children}
-                      {/* SpinWinNotifications dinonaktifkan - event sudah berakhir */}
+                      <OptimizedLayout pageName="root">
+                        {children}
+                      </OptimizedLayout>
+                      <FloatingReviewNotifications />
+                      <FloatingReviews />
+                      {/* SpinWinNotifications disabled - event ended */}
                       <ToastContainer />
                     </AppWrapper>
                   </ModernLayout>

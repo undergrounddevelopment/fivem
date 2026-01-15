@@ -1,4 +1,0 @@
-@echo off
-echo Starting FiveM Tools V7 Development Server...
-echo.
-node "node_modules\.pnpm\next@16.0.10_@babel+core@7.28.5_@opentelemetry+api@1.9.0_react-dom@19.2.3_react@19.2.3__react@19.2.3\node_modules\next\dist\bin\next" dev

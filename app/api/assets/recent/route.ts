@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdminClient } from "@/lib/supabase/server"
 import { security } from "@/lib/security"
 
+export const revalidate = 600 // Cache for 10 minutes
+
 export async function GET(request: NextRequest) {
   const clientIP = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown"
 

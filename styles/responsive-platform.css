@@ -1,0 +1,504 @@
+/* ============================================
+   RESPONSIVE PLATFORM CSS - ALL DEVICES
+   Android, iOS, Tablet, Windows - 100% Support
+   Lightweight & Non-Destructive
+   ============================================ */
+
+/* ============================================
+   1. DEVICE-SPECIFIC BREAKPOINTS
+   ============================================ */
+:root {
+  /* Mobile Small (iPhone SE, small Android) */
+  --breakpoint-xs: 320px;
+  /* Mobile Medium (iPhone 12/13/14, most Android) */
+  --breakpoint-sm: 480px;
+  /* Mobile Large / Small Tablet */
+  --breakpoint-md: 768px;
+  /* Tablet (iPad, Android Tablet) */
+  --breakpoint-lg: 1024px;
+  /* Desktop / Large Tablet */
+  --breakpoint-xl: 1280px;
+  /* Large Desktop / Windows */
+  --breakpoint-2xl: 1536px;
+  
+  /* Safe Area for Notched Devices (iPhone X+, Android with notch) */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  
+  /* Touch Target Sizes */
+  --touch-target-min: 44px;
+  --touch-target-comfortable: 48px;
+}
+
+/* ============================================
+   2. SAFE AREA SUPPORT (iPhone Notch, Android)
+   ============================================ */
+@supports (padding: env(safe-area-inset-top)) {
+  .safe-area-top {
+    padding-top: var(--safe-area-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: var(--safe-area-bottom);
+  }
+  
+  .safe-area-left {
+    padding-left: var(--safe-area-left);
+  }
+  
+  .safe-area-right {
+    padding-right: var(--safe-area-right);
+  }
+  
+  .safe-area-all {
+    padding-top: var(--safe-area-top);
+    padding-bottom: var(--safe-area-bottom);
+    padding-left: var(--safe-area-left);
+    padding-right: var(--safe-area-right);
+  }
+}
+
+/* ============================================
+   3. TOUCH-FRIENDLY ELEMENTS
+   ============================================ */
+/* Minimum touch target size for accessibility */
+.touch-target {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+}
+
+.touch-target-comfortable {
+  min-width: var(--touch-target-comfortable);
+  min-height: var(--touch-target-comfortable);
+}
+
+/* Prevent text selection on touch devices */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Smooth scrolling for touch devices */
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Prevent zoom on input focus (iOS) */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* ============================================
+   4. MOBILE SMALL (< 480px) - iPhone SE, Small Android
+   ============================================ */
+@media screen and (max-width: 479px) {
+  /* Typography scaling */
+  html {
+    font-size: 14px;
+  }
+  
+  /* Container padding */
+  .container-responsive {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  
+  /* Card adjustments */
+  .card-responsive {
+    padding: 12px;
+    border-radius: 12px;
+  }
+  
+  /* Grid single column */
+  .grid-responsive {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  
+  /* Button full width */
+  .btn-responsive {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  /* Header compact */
+  .header-responsive {
+    padding: 8px 12px;
+    height: auto;
+    min-height: 56px;
+  }
+  
+  /* Hide non-essential elements */
+  .hide-xs {
+    display: none !important;
+  }
+  
+  /* Stack flex items */
+  .flex-stack-xs {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  
+  /* Text truncation */
+  .truncate-xs {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ============================================
+   5. MOBILE MEDIUM (480px - 767px) - Standard Phones
+   ============================================ */
+@media screen and (min-width: 480px) and (max-width: 767px) {
+  html {
+    font-size: 15px;
+  }
+  
+  .container-responsive {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  .card-responsive {
+    padding: 16px;
+    border-radius: 14px;
+  }
+  
+  .grid-responsive {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  
+  .btn-responsive {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+  
+  .header-responsive {
+    padding: 10px 16px;
+    height: 60px;
+  }
+  
+  .hide-sm {
+    display: none !important;
+  }
+  
+  .flex-stack-sm {
+    flex-direction: column !important;
+  }
+}
+
+/* ============================================
+   6. TABLET (768px - 1023px) - iPad, Android Tablet
+   ============================================ */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  html {
+    font-size: 16px;
+  }
+  
+  .container-responsive {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  
+  .card-responsive {
+    padding: 20px;
+    border-radius: 16px;
+  }
+  
+  .grid-responsive {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  /* Tablet-specific grid for 3 columns */
+  .grid-tablet-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .btn-responsive {
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+  
+  .header-responsive {
+    padding: 12px 24px;
+    height: 64px;
+  }
+  
+  .hide-md {
+    display: none !important;
+  }
+  
+  /* Sidebar adjustments for tablet */
+  .sidebar-tablet {
+    width: 240px;
+  }
+  
+  .main-content-tablet {
+    margin-left: 240px;
+  }
+}
+
+/* ============================================
+   7. DESKTOP (1024px - 1279px) - Small Desktop, Large Tablet
+   ============================================ */
+@media screen and (min-width: 1024px) and (max-width: 1279px) {
+  html {
+    font-size: 16px;
+  }
+  
+  .container-responsive {
+    padding-left: 32px;
+    padding-right: 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .card-responsive {
+    padding: 24px;
+    border-radius: 16px;
+  }
+  
+  .grid-responsive {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  
+  .grid-desktop-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .btn-responsive {
+    padding: 12px 28px;
+    font-size: 15px;
+  }
+  
+  .header-responsive {
+    padding: 12px 32px;
+    height: 64px;
+  }
+  
+  .hide-lg {
+    display: none !important;
+  }
+}
+
+/* ============================================
+   8. LARGE DESKTOP (1280px - 1535px) - Windows, Mac
+   ============================================ */
+@media screen and (min-width: 1280px) and (max-width: 1535px) {
+  html {
+    font-size: 16px;
+  }
+  
+  .container-responsive {
+    padding-left: 40px;
+    padding-right: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+  .card-responsive {
+    padding: 24px;
+    border-radius: 18px;
+  }
+  
+  .grid-responsive {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+  
+  .btn-responsive {
+    padding: 14px 32px;
+    font-size: 16px;
+  }
+  
+  .header-responsive {
+    padding: 14px 40px;
+    height: 68px;
+  }
+  
+  .hide-xl {
+    display: none !important;
+  }
+}
+
+/* ============================================
+   9. EXTRA LARGE DESKTOP (1536px+) - Large Monitors
+   ============================================ */
+@media screen and (min-width: 1536px) {
+  html {
+    font-size: 17px;
+  }
+  
+  .container-responsive {
+    padding-left: 48px;
+    padding-right: 48px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  
+  .card-responsive {
+    padding: 28px;
+    border-radius: 20px;
+  }
+  
+  .grid-responsive {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+  }
+  
+  .grid-2xl-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  .btn-responsive {
+    padding: 14px 36px;
+    font-size: 16px;
+  }
+  
+  .header-responsive {
+    padding: 16px 48px;
+    height: 72px;
+  }
+  
+  .hide-2xl {
+    display: none !important;
+  }
+}
+
+/* ============================================
+   10. ORIENTATION HANDLING
+   ============================================ */
+/* Portrait Mode */
+@media screen and (orientation: portrait) {
+  .portrait-stack {
+    flex-direction: column !important;
+  }
+  
+  .portrait-full-width {
+    width: 100% !important;
+  }
+  
+  .hide-portrait {
+    display: none !important;
+  }
+}
+
+/* Landscape Mode */
+@media screen and (orientation: landscape) {
+  .landscape-row {
+    flex-direction: row !important;
+  }
+  
+  .hide-landscape {
+    display: none !important;
+  }
+  
+  /* Adjust sidebar in landscape mobile */
+  @media screen and (max-height: 500px) {
+    .sidebar-landscape-compact {
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+    
+    .sidebar-landscape-compact .nav-item {
+      padding: 8px 12px;
+    }
+  }
+}
+
+/* ============================================
+   11. HIGH DPI / RETINA DISPLAYS
+   ============================================ */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Sharper borders */
+  .border-retina {
+    border-width: 0.5px;
+  }
+  
+  /* Optimized shadows */
+  .shadow-retina {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  }
+}
+
+/* ============================================
+   12. REDUCED MOTION (Accessibility)
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .animate-shimmer,
+  .animate-float,
+  .animate-pulse-glow,
+  .animate-snowfall {
+    animation: none !important;
+  }
+}
+
+/* ============================================
+   13. DARK MODE ENHANCEMENTS
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+  .auto-dark {
+    background-color: var(--background);
+    color: var(--text);
+  }
+  
+  .auto-dark-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* ============================================
+   14. PRINT STYLES
+   ============================================ */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .glass,
+  .glass-card {
+    background: white !important;
+    backdrop-filter: none !important;
+  }
+}

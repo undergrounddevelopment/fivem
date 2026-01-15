@@ -26,24 +26,12 @@ export async function POST(req: NextRequest) {
       .eq('key', 'linkvertise')
       .single();
 
-    if (!settings?.value?.enabled || !settings?.value?.userId) {
-      // Report to Sentry
-      import('@sentry/nextjs').then(Sentry => {
-        Sentry.captureMessage('Linkvertise not configured properly', {
-          contexts: {
-            linkvertise: {
-              assetId,
-              userId: sessionUserId,
-              action: 'generateLink'
-            }
-          }
-        });
-      });
-      
-      return NextResponse.json({ error: 'Linkvertise not configured' }, { status: 400 });
-    }
+    const targetUrl = `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/linkvertise/download/${assetId}`;
 
-    const targetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/linkvertise/download/${assetId}`;
+    if (!settings?.value?.enabled || !settings?.value?.userId) {
+       // Fallback: If disabled, return the target URL directly (which will skip verification if we update that route too)
+       return NextResponse.json({ url: targetUrl });
+    }
     const linkvertiseUrl = generateLinkvertiseUrl(settings.value.userId, targetUrl);
 
     return NextResponse.json({ url: linkvertiseUrl });

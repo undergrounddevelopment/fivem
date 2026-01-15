@@ -2,6 +2,43 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { getSupabaseAdminClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
+
+async function checkAdminAccess(userId: string) {
+  const supabase = getSupabase()
+  
+  // Try discord_id first
+  let { data } = await supabase
+    .from('users')
+    .select('is_admin, membership')
+    .eq('discord_id', userId)
+    .single()
+
+  // Try UUID if not found
+  if (!data) {
+    const { data: byUuid } = await supabase
+      .from('users')
+      .select('is_admin, membership')
+      .eq('id', userId)
+      .single()
+    data = byUuid
+  }
+
+  // Check admin status
+  const isAdmin = data?.is_admin === true || 
+                  data?.membership === 'admin' ||
+                  userId === process.env.ADMIN_DISCORD_ID
+
+  return isAdmin
+}
 
 export async function GET() {
   try {
@@ -11,21 +48,14 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check admin status
-    const supabase = getSupabaseAdminClient()
-    
-    // Verify admin
-    const { data: userData } = await supabase
-      .from("users")
-      .select("is_admin")
-      .eq("discord_id", session.user.id)
-      .single()
-
-    if (!userData?.is_admin && !session.user.isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    // Check admin status using improved logic
+    const isAdmin = await checkAdminAccess(session.user.id)
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
 
     // Get pending threads - handle case where status column might not exist
+    const supabase = getSupabaseAdminClient()
     let threads: any[] = []
     let fetchError: any = null
     
@@ -119,18 +149,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = getSupabaseAdminClient()
-    
-    // Verify admin
-    const { data: userData } = await supabase
-      .from("users")
-      .select("is_admin")
-      .eq("discord_id", session.user.id)
-      .single()
-
-    if (!userData?.is_admin && !session.user.isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    // Check admin status using improved logic
+    const isAdmin = await checkAdminAccess(session.user.id)
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
+
+    const supabase = getSupabaseAdminClient()
 
     const { threadId, action, reason } = await request.json()
 

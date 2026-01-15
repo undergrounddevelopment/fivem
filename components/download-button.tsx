@@ -9,6 +9,7 @@ import { Download, AlertTriangle, CheckCircle, Loader2, XCircle, Sparkles, Zap }
 import { CoinIcon } from "@/components/coin-icon"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { autoConvertToLinkvertise, generateLinkvertiseUrl } from "@/lib/linkvertise"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface DownloadButtonProps {
@@ -44,13 +45,13 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
 
       try {
         const res = await fetch(`/api/assets/${assetId}/check-purchase`)
-        
+
         if (!res.ok) {
           console.error("Failed to check purchase status:", res.status, res.statusText)
           setCheckingError(`API error: ${res.status} - ${res.statusText}`)
           return
         }
-        
+
         const data = await res.json()
         setIsPurchased(data.purchased)
       } catch (error) {
@@ -133,9 +134,9 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
     setError("")
 
     try {
-      const res = await fetch(`/api/download/${assetId}`, {
+      const res = await fetch(`/api/assets/${assetId}/download`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           // Tambahkan authorization header jika diperlukan
         },
@@ -145,6 +146,26 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
       const data = await res.json()
 
       if (!res.ok) {
+        // Handle comment requirement for free assets
+        if (data.requireComment) {
+          toast.error("Comment Required", {
+            description: "Please leave a comment before downloading this free asset. Scroll down to the comments section.",
+            duration: 7000,
+            action: {
+              label: "Got it",
+              onClick: () => {
+                // Scroll to comment section if exists
+                const commentSection = document.getElementById('comments-section')
+                if (commentSection) {
+                  commentSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
+              },
+            },
+          })
+          setShowModal(false)
+          return
+        }
+
         if (data.error === "Insufficient coins") {
           toast.error("Insufficient Coins", {
             description: `You need ${data.required} coins but only have ${data.available} coins`,
@@ -153,7 +174,7 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
           setShowModal(false)
           return
         }
-        
+
         toast.error("Download Failed", {
           description: data.error || "Download failed",
           duration: 5000,
@@ -178,16 +199,17 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
             description: "Your download will begin shortly",
           })
         }
-        
+
         // Buka URL download di tab baru
+        const finalUrl = data.downloadUrl
         const link = document.createElement('a');
-        link.href = data.downloadUrl;
+        link.href = finalUrl;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         setShowModal(false)
       } else {
         throw new Error("No download URL received from server")
@@ -270,11 +292,11 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
       <AnimatePresence>
         {showModal && (
           <Dialog open={showModal} onOpenChange={setShowModal}>
-            <DialogContent className="max-w-md glass border-2" style={{ background: 'rgba(0, 0, 0, 0.9)', borderColor: 'var(--primary)' }}>
+            <DialogContent className="max-w-md">
               <VisuallyHidden>
                 <DialogTitle>Confirm Purchase</DialogTitle>
               </VisuallyHidden>
-              <motion.div 
+              <motion.div
                 className="p-6 space-y-4"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -301,7 +323,7 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
                 ) : (
                   <>
                     <div className="text-center">
-                      <motion.div 
+                      <motion.div
                         className="h-16 w-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
                         style={{ background: 'rgba(236, 72, 153, 0.2)' }}
                         animate={{ rotate: [0, 5, -5, 0] }}
@@ -314,7 +336,7 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
                         This asset costs <CoinIcon size="sm" /> {coinPrice} coins
                       </p>
                       <div className="glass rounded-xl p-4 space-y-3">
-                        <motion.div 
+                        <motion.div
                           className="flex items-center justify-between"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
@@ -326,7 +348,7 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
                             {user?.coins || 0}
                           </span>
                         </motion.div>
-                        <motion.div 
+                        <motion.div
                           className="flex items-center justify-between"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
@@ -338,7 +360,7 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
                           </span>
                         </motion.div>
                         <div className="border-t border-border/50 pt-2">
-                          <motion.div 
+                          <motion.div
                             className="flex items-center justify-between"
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -356,7 +378,7 @@ export function DownloadButton({ assetId, price, coinPrice = 0, downloadLink, cl
                       </div>
 
                       {(user?.coins || 0) - coinPrice < 50 && (user?.coins || 0) - coinPrice >= 0 && (
-                        <motion.p 
+                        <motion.p
                           className="text-xs text-warning mt-3 flex items-center justify-center gap-1"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}

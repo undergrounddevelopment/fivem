@@ -117,7 +117,7 @@ export function ReportDialog({
   if (isControlled) {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md glass border" style={{ background: 'rgba(0, 0, 0, 0.95)', borderColor: 'var(--primary)' }}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-[var(--text)]">Report {reportType}</DialogTitle>
             <DialogDescription>
@@ -179,7 +179,7 @@ export function ReportDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md glass border" style={{ background: 'rgba(0, 0, 0, 0.95)', borderColor: 'var(--primary)' }}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-[var(--text)]">Report {reportType}</DialogTitle>
           <DialogDescription>

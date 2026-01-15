@@ -173,6 +173,60 @@ export default function ProfilePage() {
 
   const levelInfo = getLevelFromXP(user.xp || 0)
 
+  // Social State
+  const [socialStats, setSocialStats] = useState({ followers: 0, following: 0, isFollowing: false })
+  const [socialLoading, setSocialLoading] = useState(true)
+  const [followPending, setFollowPending] = useState(false)
+
+  // Fetch social stats
+  useEffect(() => {
+    if (userId) {
+      fetch(`/api/social/check?userId=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.error) {
+            setSocialStats({
+               followers: data.followersCount,
+               following: data.followingCount,
+               isFollowing: data.isFollowing
+            })
+          }
+        })
+        .catch(console.error)
+        .finally(() => setSocialLoading(false))
+    }
+  }, [userId])
+
+  const handleFollow = async () => {
+    if (!currentUser) return // Or prompt login
+    if (followPending) return
+
+    setFollowPending(true)
+    const action = socialStats.isFollowing ? "unfollow" : "follow"
+
+    try {
+      const res = await fetch("/api/social/follow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUserId: userId, action })
+      })
+
+      if (res.ok) {
+        setSocialStats(prev => ({
+          ...prev,
+          isFollowing: !prev.isFollowing,
+          followers: prev.followers + (action === "follow" ? 1 : -1)
+        }))
+      }
+    } catch (error) {
+       console.error("Follow error:", error)
+    } finally {
+      setFollowPending(false)
+    }
+  }
+
+  if (loading) {
+// ...
   const achievements = [
     { id: "1", name: "First Download", icon: "🏆", unlocked: downloadCount > 0 },
     { id: "2", name: "First Post", icon: "💬", unlocked: postCount > 0 },
@@ -180,6 +234,7 @@ export default function ProfilePage() {
     { id: "4", name: "Helpful Member", icon: "❤️", unlocked: likeCount >= 10 },
     { id: "5", name: "VIP Member", icon: "👑", unlocked: user.membership === "vip" },
     { id: "6", name: "Admin", icon: "🛡️", unlocked: user.isAdmin },
+    { id: "7", name: "Influencer", icon: "🌟", unlocked: socialStats.followers >= 10 },
   ].filter((a) => a.unlocked)
 
   return (
@@ -202,108 +257,174 @@ export default function ProfilePage() {
           </Link>
         </motion.div>
 
+        {/* Banner */}
+        {user.banner && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full h-48 md:h-64 rounded-2xl overflow-hidden mb-6 relative group"
+          >
+            <Image
+              src={user.banner}
+              alt="Profile Banner"
+              fill
+              className="object-cover"
+              unoptimized
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+          </motion.div>
+        )}
+
         {/* Profile Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="glass rounded-2xl border-white/10 p-6 mb-6"
+          className="glass rounded-2xl border-white/10 p-6 mb-6 relative"
         >
-            <div className="flex items-start gap-6">
-              <div className="relative">
+            {currentUser?.id === user.id && (
+              <Link href="/settings" className="absolute top-4 right-4">
+                <Button variant="outline" size="sm" className="gap-2 bg-secondary/30 hover:bg-secondary/50">
+                  <Settings className="h-4 w-4" /> Edit Profile
+                </Button>
+              </Link>
+            )}
+            
+            <div className="flex flex-col md:flex-row items-start gap-6">
+              <div className="relative shrink-0">
                 <Image
                   src={user.avatar || "/placeholder.svg"}
                   alt={user.username}
                   width={112}
                   height={112}
-                  className="h-28 w-28 rounded-full object-cover border-4 border-primary/20"
+                  className="h-28 w-28 rounded-full object-cover border-4 border-primary/20 bg-background"
                   unoptimized
                 />
                 {user.membership === "vip" && (
-                  <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+                  <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary flex items-center justify-center ring-4 ring-background">
                     <Crown className="h-4 w-4 text-white" />
                   </div>
                 )}
                 {user.isAdmin && (
-                  <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-destructive flex items-center justify-center">
+                  <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-destructive flex items-center justify-center ring-4 ring-background">
                     <Shield className="h-4 w-4 text-white" />
                   </div>
                 )}
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
+              
+              <div className="flex-1 w-full">
+                <div className="flex flex-wrap items-center gap-3 mb-2">
                   <h1 className="text-2xl font-bold text-foreground">{user.username}</h1>
                   {user.membership === "vip" && (
-                    <Badge className="bg-primary/20 text-primary">
+                    <Badge className="bg-primary/20 text-primary hover:bg-primary/30">
                       <Crown className="h-3 w-3 mr-1" />
                       VIP
                     </Badge>
                   )}
                   {user.isAdmin && (
-                    <Badge className="bg-destructive/20 text-destructive">
+                    <Badge className="bg-destructive/20 text-destructive hover:bg-destructive/30">
                       <Shield className="h-3 w-3 mr-1" />
                       Admin
                     </Badge>
                   )}
                   {user.isBanned && <Badge variant="destructive">Banned</Badge>}
                 </div>
-                <div className="flex items-center gap-6 text-sm text-muted-foreground mt-4">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
+
+                {user.bio && (
+                  <p className="text-muted-foreground text-sm max-w-2xl mb-4 whitespace-pre-wrap">
+                    {user.bio}
+                  </p>
+                )}
+
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground mt-4">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4 opacity-70" />
                     Joined {new Date(user.createdAt).toLocaleDateString()}
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1.5">
                     <Star className="h-4 w-4 text-yellow-500" />
                     {user.reputation || 0} reputation
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1.5">
                     <CoinIcon size="xs" />
                     {points || 0} coins
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1.5">
                     <Zap className="h-4 w-4 text-primary" />
                     {user.xp || 0} XP
                   </span>
                 </div>
+
+                {/* Social Links */}
+                {user.social_links && Object.values(user.social_links).some(v => v) && (
+                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5">
+                    {user.social_links.github && (
+                      <a href={`https://github.com/${user.social_links.github}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 text-foreground transition-colors">
+                        <Github className="h-4 w-4" />
+                      </a>
+                    )}
+                    {user.social_links.instagram && (
+                      <a href={`https://instagram.com/${user.social_links.instagram}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 text-foreground transition-colors">
+                        <Instagram className="h-4 w-4" />
+                      </a>
+                    )}
+                    {user.social_links.youtube && (
+                      <a href={user.social_links.youtube} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 text-foreground transition-colors">
+                        <Youtube className="h-4 w-4" />
+                      </a>
+                    )}
+                    {user.social_links.website && (
+                      <a href={user.social_links.website} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 text-foreground transition-colors">
+                        <Globe className="h-4 w-4" />
+                      </a>
+                    )}
+                  </div>
+                )}
+
                 {/* Level Badge */}
-                <div className="mt-3">
+                <div className="mt-4 flex items-center gap-3">
                   <LevelBadge 
                     level={user.level || 1} 
                     title={getLevelFromXP(user.xp || 0).title} 
-                    size="md" 
+                    size="sm" 
                   />
-                </div>
-
-                {/* XP Progress Bar (Profile Only) */}
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <Zap className="h-3.5 w-3.5 text-primary" />
-                      XP Progress
-                    </span>
-                    <span className="text-muted-foreground">
-                      {Math.round(levelInfo.progress)}% • Next at {levelInfo.nextLevelXP.toLocaleString()} XP
-                    </span>
+                  <div className="h-1.5 w-24 rounded-full bg-secondary overflow-hidden">
+                     <div className="h-full bg-primary" style={{ width: `${Math.min(levelInfo.progress, 100)}%` }} />
                   </div>
-                  <div className="relative h-3 rounded-full overflow-hidden bg-black/20 border border-white/10 backdrop-blur">
-                    <div
-                      className="h-full bg-gradient-to-r from-primary via-pink-500 to-purple-500"
-                      style={{ width: `${Math.min(levelInfo.progress, 100)}%` }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent animate-pulse" />
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span>{(user.xp || 0).toLocaleString()} XP</span>
-                    <span>Level {levelInfo.level}</span>
-                  </div>
+                  <span className="text-xs text-muted-foreground">{Math.round(levelInfo.progress)}%</span>
                 </div>
               </div>
-              <Link href={`/messages?to=${user.discordId}`}>
-                <Button className="bg-gradient-to-r from-primary to-pink-600 hover:opacity-90 gap-2 glow-sm">
-                  <MessageSquare className="h-4 w-4" />
-                  Send Message
-                </Button>
-              </Link>
+              
+              <div className="flex flex-col gap-2 min-w-[140px]">
+                  {currentUser?.id !== user.id && (
+                     <Button 
+                       onClick={handleFollow}
+                       disabled={followPending}
+                       variant={socialStats.isFollowing ? "outline" : "default"}
+                       className={`${socialStats.isFollowing ? "bg-transparent border-white/20 hover:bg-white/10" : "bg-white text-black hover:bg-white/90"} transition-all`}
+                     >
+                       {socialStats.isFollowing ? "Unfollow" : "Follow"}
+                     </Button>
+                  )}
+                <Link href={`/messages?to=${user.discordId}`} className="w-full">
+                  <Button className="w-full bg-gradient-to-r from-primary to-pink-600 hover:opacity-90 gap-2 glow-sm shadow-lg shadow-primary/20">
+                    <MessageSquare className="h-4 w-4" />
+                    Message
+                  </Button>
+                </Link>
+
+                  <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+                    <div className="text-center">
+                       <span className="block font-bold text-foreground text-sm">{socialStats.followers}</span>
+                       <span>Followers</span>
+                    </div>
+                    <div className="h-4 w-px bg-white/10" />
+                    <div className="text-center">
+                       <span className="block font-bold text-foreground text-sm">{socialStats.following}</span>
+                       <span>Following</span>
+                    </div>
+                  </div>
+              </div>
             </div>
           </motion.div>
 

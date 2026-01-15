@@ -17,7 +17,7 @@ export function StarRating({ rating, setRating, readOnly = false }: StarRatingPr
       {[...Array(5)].map((_, index) => {
         const ratingValue = index + 1;
         return (
-          <label key={index}>
+          <label key={ratingValue}>
             <input
               type="radio"
               name="rating"

@@ -28,12 +28,21 @@ interface EditAssetModalProps {
 export function EditAssetModal({ asset, onUpdate }: EditAssetModalProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string
+    description: string
+    category: string
+    status: string
+    coin_price: number
+    thumbnail: string
+    file?: File
+  }>({
     title: asset.title,
     description: asset.description,
     category: asset.category,
     status: asset.status,
     coin_price: asset.coin_price,
+    thumbnail: asset.thumbnail || '',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,21 +50,33 @@ export function EditAssetModal({ asset, onUpdate }: EditAssetModalProps) {
     setLoading(true)
 
     try {
+      const data = new FormData()
+      data.append('title', formData.title)
+      data.append('description', formData.description)
+      data.append('category', formData.category)
+      data.append('status', formData.status)
+      data.append('coin_price', formData.coin_price.toString())
+      if (formData.file) {
+        data.append('file', formData.file)
+      }
+
       const response = await fetch(`/api/admin/assets/${asset.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: data,
       })
 
       if (response.ok) {
+        const result = await response.json()
         toast.success('Asset updated successfully')
         setOpen(false)
         onUpdate()
       } else {
-        toast.error('Failed to update asset')
+        const error = await response.json()
+        toast.error(error.error || 'Failed to update asset')
       }
     } catch (error) {
       toast.error('Error updating asset')
+      console.error(error)
     } finally {
       setLoading(false)
     }
@@ -83,6 +104,30 @@ export function EditAssetModal({ asset, onUpdate }: EditAssetModalProps) {
             />
           </div>
           
+          <div>
+            <Label htmlFor="thumbnail">Thumbnail (Optional - Upload to Replace)</Label>
+            <div className="flex flex-col gap-2">
+              {(formData.thumbnail || formData.file) && (
+                 <div className="relative h-20 w-32 rounded-lg overflow-hidden border border-white/10">
+                    <img 
+                      src={formData.file ? URL.createObjectURL(formData.file) : formData.thumbnail} 
+                      alt="Preview" 
+                      className="h-full w-full object-cover"
+                    />
+                 </div>
+              )}
+              <Input
+                id="thumbnail"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) setFormData({ ...formData, file })
+                }}
+              />
+            </div>
+          </div>
+
           <div>
             <Label htmlFor="description">Description</Label>
             <Textarea

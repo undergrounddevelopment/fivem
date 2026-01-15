@@ -34,7 +34,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       try {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000)
+        const timeoutId = setTimeout(() => controller.abort(), 30000) // Increased to 30s
 
         const res = await fetch("/api/auth/check-admin", {
           signal: controller.signal,
@@ -54,13 +54,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           setError("You do not have admin privileges")
           setTimeout(() => router.push("/"), 2000)
         }
-      } catch (error) {
-        console.error("[v0] Error checking admin:", error)
-        if (error instanceof Error && error.name === "AbortError") {
-          setError("Request timeout. Please check your connection.")
-        } else {
-          setError("Failed to verify admin status. Please try again.")
+      } catch (error: any) {
+        if (error.name === "AbortError") {
+          console.log("Admin check aborted or timed out.")
+          return // Silently ignore aborts
         }
+        
+        console.error("[v0] Error checking admin:", error)
+        setError("Failed to verify admin status. Please try again.")
         setTimeout(() => router.push("/"), 3000)
       } finally {
         setLoading(false)

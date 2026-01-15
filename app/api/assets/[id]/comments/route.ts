@@ -34,7 +34,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     if (userIds.length > 0) {
       const { data: users } = await supabase
         .from('users')
-        .select('discord_id, username, avatar, level')
+        .select('discord_id, username, avatar, level, membership')
         .in('discord_id', userIds)
 
       for (const u of users || []) {
@@ -51,7 +51,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           id: user.discord_id,
           username: user.username,
           avatar: user.avatar,
-          level: user.level
+          level: user.level,
+          membership: user.membership
         } : null
       }
     })
@@ -84,6 +85,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const discordId = session.user.id // Discord ID from session
 
     console.log("[Comment POST] Discord ID:", discordId, "Asset:", assetId)
+
+    // Auto-Ban Check
+    const { checkAutoBan } = await import('@/lib/autoBan')
+    const isBanned = await checkAutoBan(discordId, content, 'comment')
+    if (isBanned) {
+      return NextResponse.json({ error: 'Account banned due to policy violation' }, { status: 403 })
+    }
 
     // Check asset exists
     const { data: asset, error: assetErr } = await supabase

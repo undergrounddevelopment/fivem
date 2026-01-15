@@ -2,10 +2,9 @@ import { createClient } from "@supabase/supabase-js"
 import * as Sentry from "@sentry/browser"
 
 const DB_URL =
-  "postgresql://postgres.linnqtixdfjwbrixitrb:06Zs04s8vCBrW4XE@aws-1-us-east-1.pooler.supabase.com:6543/postgres"
-const SUPABASE_URL = "https://linnqtixdfjwbrixitrb.supabase.co"
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxpbm5xdGl4ZGZqd2JyaXhpdHJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1MzEwNjcsImV4cCI6MjA1MDEwNzA2N30.w0mClq-Y2M6qRGp60HN2KWXC7vRc_yPQi8l2FN1kVy8"
+  "postgresql://postgres.elukwjlwmfgdfywjpzkd:Arunk%40123456789%40%40@aws-1-ap-south-1.pooler.supabase.com:6543/postgres"
+const SUPABASE_URL = "https://elukwjlwmfgdfywjpzkd.supabase.co"
+const SUPABASE_ANON_KEY = "sb_publishable_gEZMCB3IhYghO3x3xIzumQ_RX7Zach-"
 
 let isInitialized = false
 let initializationPromise: Promise<boolean> | null = null

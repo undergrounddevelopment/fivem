@@ -2,6 +2,43 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { createAdminClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
+
+async function checkAdminAccess(userId: string) {
+  const supabase = getSupabase()
+  
+  // Try discord_id first
+  let { data } = await supabase
+    .from('users')
+    .select('is_admin, membership')
+    .eq('discord_id', userId)
+    .single()
+
+  // Try UUID if not found
+  if (!data) {
+    const { data: byUuid } = await supabase
+      .from('users')
+      .select('is_admin, membership')
+      .eq('id', userId)
+      .single()
+    data = byUuid
+  }
+
+  // Check admin status
+  const isAdmin = data?.is_admin === true || 
+                  data?.membership === 'admin' ||
+                  userId === process.env.ADMIN_DISCORD_ID
+
+  return isAdmin
+}
 
 export async function GET() {
   try {
@@ -11,8 +48,9 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (!session.user.isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    const isAdmin = await checkAdminAccess(session.user.id)
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
     
     const supabase = createAdminClient()

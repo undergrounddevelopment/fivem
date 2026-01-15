@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/components/auth-provider"
+import { NotificationBell } from "@/components/notification-bell"
+import { AdvancedSearch } from "@/components/advanced-search"
 import { useNotificationStore } from "@/lib/store"
 import { GlobalSearch } from "@/components/global-search"
 import { LanguageSelector } from "@/components/language-selector"
@@ -74,7 +76,7 @@ export function Header() {
 
   return (
     <motion.header 
-      className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/10 glass backdrop-blur-xl px-6"
+      className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-white/10 glass backdrop-blur-xl px-3 sm:px-4 md:px-6 header-responsive safe-area-top"
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5, type: "spring" }}
@@ -82,7 +84,7 @@ export function Header() {
     >
       <GlobalSearch />
 
-      <div className="flex items-center gap-2 ml-6">
+      <div className="flex items-center gap-1 sm:gap-2 ml-2 sm:ml-4 md:ml-6">
         <LanguageSelector />
 
         {user && (

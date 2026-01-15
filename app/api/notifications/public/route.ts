@@ -3,8 +3,8 @@ import { createClient, createAdminClient } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
-    const supabase = createClient()
-    
+    const supabase = await createClient()
+
     // Use public_notifications table instead of notifications
     const { data: notifications, error } = await supabase
       .from("public_notifications")

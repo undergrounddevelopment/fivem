@@ -1,5 +1,10 @@
-@import "tailwindcss";
 @import "../styles/electric-card.css";
+@import "../styles/responsive-platform.css";
+@import "../styles/responsive-components.css";
+@import "../styles/performance-optimizations.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @custom-variant dark (&:is(.dark *));
 
@@ -168,7 +173,10 @@
   .glass {
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 105, 180, 0.2);
+    transform: translate3d(0, 0, 0);
+    will-change: transform, backdrop-filter;
   }
 
   .glass-hover:hover {
@@ -265,7 +273,11 @@
   .gradient-overlay {
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at center, var(--primary) 0%, transparent 70%);
+    background: radial-gradient(
+      circle at center,
+      var(--primary) 0%,
+      transparent 70%
+    );
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none;
@@ -337,10 +349,14 @@
   }
 
   .stats-card::before {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, transparent 0%, rgba(236, 72, 153, 0.05) 100%);
+    background: linear-gradient(
+      135deg,
+      transparent 0%,
+      rgba(236, 72, 153, 0.05) 100%
+    );
     opacity: 0;
     transition: opacity 0.3s ease;
   }
@@ -359,7 +375,7 @@
   }
 
   .btn-gradient::before {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
     background: linear-gradient(135deg, #ec4899, var(--primary));
@@ -558,5 +574,67 @@
   }
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     opacity: 0.5;
+  }
+
+  /* FakePlayer Tech UI Classes */
+  .tech-panel {
+    background: rgba(17, 17, 17, 0.4);
+    border: 1px solid rgba(34, 34, 34, 0.8);
+    backdrop-filter: blur(8px);
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+
+  .input-cyber {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(34, 34, 34, 1);
+    color: #e2e8f0;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+  }
+
+  .input-cyber:focus {
+    outline: none;
+    border-color: #dc2626;
+    box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.2);
+  }
+
+  .input-key {
+    background: rgba(234, 179, 8, 0.05) !important;
+    border-color: rgba(234, 179, 8, 0.2) !important;
+    color: #fff !important;
+    letter-spacing: 0.1em;
+  }
+
+  .input-key:focus {
+    border-color: #eab308 !important;
+    box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.2) !important;
+  }
+
+  .brand-logo {
+    width: 1rem;
+    height: 1rem;
+    object-fit: contain;
+    border-radius: 2px;
+  }
+
+  .player-table thead th {
+    padding: 0.5rem 1rem;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #4b5563;
+    border-bottom: 1px solid #222;
+  }
+
+  .player-table tbody td {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid rgba(34, 34, 34, 0.3);
+  }
+
+  .console-line {
+    margin-bottom: 0.25rem;
+    line-height: 1.4;
   }
 }

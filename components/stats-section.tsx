@@ -1,125 +1,179 @@
 "use client"
 
-import { useEffect } from "react"
-import { useStatsStore } from "@/lib/store"
-import { Package, Download, Users, Zap, TrendingUp } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Users, Package, MessageSquare, Download, TrendingUp, Activity } from "lucide-react"
 import { motion } from "framer-motion"
+import { cn, formatNumber } from "@/lib/utils"
+
+interface Stats {
+  totalUsers: number
+  totalAssets: number
+  totalThreads: number
+  totalPosts: number
+  totalDownloads: number
+  onlineUsers: number
+  totalUpvotes: number
+}
+
 
 export function StatsSection() {
-  const { stats, setStats } = useStatsStore()
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
-    let mounted = true
-    
-    async function fetchStats() {
-      try {
-        const res = await fetch('/api/stats')
-        if (!res.ok) throw new Error('Failed to fetch')
-        const data = await res.json()
-        
-        if (mounted) {
-          // Use real data from API response
-          const statsData = data.data || data
-          setStats({
-            totalMembers: statsData.totalUsers || statsData.users || 0,
-            totalAssets: statsData.totalAssets || statsData.assets || 0,
-            totalDownloads: statsData.totalDownloads || statsData.downloads || 0,
-            totalPosts: statsData.totalPosts || statsData.posts || 0,
-            onlineUsers: statsData.onlineUsers || 1 // Real online users count from database
-          })
-        }
-      } catch (error) {
-        console.error('Stats fetch error:', error)
-      }
-    }
-    
     fetchStats()
-    // Update stats every 15 seconds for realtime online users
-    const interval = setInterval(fetchStats, 15000)
-    
-    return () => {
-      mounted = false
-      clearInterval(interval)
+    const interval = setInterval(fetchStats, 30000) // Update every 30 seconds
+    return () => clearInterval(interval)
+  }, [])
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/stats', {
+        method: 'GET',
+        next: { revalidate: 60 }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch stats')
+      }
+
+      const result = await response.json()
+      
+      // Prevent flashing: If we have existing data and new data shows 0 users (likely DB error), ignore it
+      if (stats && stats.totalUsers > 0 && result.data?.totalUsers === 0) {
+        console.warn('Ignoring stats update with 0 users (likely temporary failure)')
+        return
+      }
+
+      setStats(result.data)
+      setError(false)
+    } catch (err) {
+      console.error('Failed to fetch stats:', err)
+      setError(true)
+    } finally {
+      setLoading(false)
     }
-  }, [setStats])
+  }
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {[...Array(6)].map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-4">
+              <div className="h-4 bg-gray-300 rounded mb-2"></div>
+              <div className="h-8 bg-gray-300 rounded"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  // Fallback to zeros instead of showing error
+  const displayStats = stats || {
+    totalUsers: 0,
+    totalAssets: 0,
+    totalThreads: 0,
+    totalPosts: 0,
+    totalDownloads: 0,
+    onlineUsers: 0
+  }
+
+  // Only show error if explicitly desired, otherwise just show 0s
+  // if (error) return ... (removed to prevent ugly red box)
 
   const statItems = [
-    { icon: Package, label: "Total Assets", value: stats.totalAssets, growth: "+12%" },
-    { icon: Download, label: "Downloads", value: stats.totalDownloads, growth: "+24%" },
-    { icon: Users, label: "Members", value: stats.totalMembers, growth: "+8%" },
-    { icon: Zap, label: "Online Now", value: stats.onlineUsers, isLive: true }
+    {
+      title: "Total Members",
+      value: displayStats.totalUsers,
+      icon: Users,
+      color: "text-blue-600",
+      bgColor: "bg-blue-100"
+    },
+    {
+      title: "Assets",
+      value: displayStats.totalAssets,
+      icon: Package,
+      color: "text-green-600",
+      bgColor: "bg-green-100"
+    },
+    {
+      title: "Forum Threads",
+      value: displayStats.totalThreads,
+      icon: MessageSquare,
+      color: "text-purple-600",
+      bgColor: "bg-purple-100"
+    },
+    {
+      title: "Forum Posts",
+      value: displayStats.totalPosts,
+      icon: MessageSquare,
+      color: "text-orange-600",
+      bgColor: "bg-orange-100"
+    },
+    {
+      title: "Downloads",
+      value: displayStats.totalDownloads,
+      icon: Download,
+      color: "text-indigo-600",
+      bgColor: "bg-indigo-100"
+    },
+    {
+      title: "Online Now",
+      value: displayStats.onlineUsers,
+      icon: Activity,
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-100"
+    }
   ]
 
   return (
-    <motion.div 
-      className="glass rounded-2xl p-6 border border-white/10"
-      style={{ background: 'rgba(255, 255, 255, 0.05)' }}
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="flex items-center gap-2 mb-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {statItems.map((item, index) => (
         <motion.div
-          animate={{ rotate: [0, 360] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          key={item.title}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: index * 0.1 }}
+          whileHover={{ y: -3, transition: { duration: 0.15 } }}
         >
-          <TrendingUp className="h-5 w-5 text-[var(--primary)]" />
-        </motion.div>
-        <h3 className="font-semibold text-[var(--text)]">Platform Stats</h3>
-      </div>
-      
-      <div className="space-y-4">
-        {statItems.map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            className="flex items-center justify-between group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: i * 0.1 }}
-          >
-            <div className="flex items-center gap-3">
-              <motion.div 
-                className="h-10 w-10 rounded-xl flex items-center justify-center relative"
-                style={{ background: 'rgba(236, 72, 153, 0.2)' }}
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <stat.icon className="h-5 w-5 text-[var(--primary)]" />
-                {stat.isLive && (
-                  <motion.div 
-                    className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full status-online"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  />
-                )}
-              </motion.div>
+          <div className="relative group overflow-hidden rounded-2xl bg-white/[0.03] border border-white/10 p-5 hover:bg-white/[0.05] hover:border-primary/20 transition-all duration-200 backdrop-blur-sm">
+            {/* Ambient Background Glow */}
+            <div className={`absolute -right-4 -bottom-4 w-20 h-20 rounded-full blur-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${item.bgColor.replace('bg-', 'bg-')}`} />
+
+            <div className="relative z-10 flex flex-col items-start gap-4">
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-200 group-hover:scale-105",
+                item.bgColor,
+                "border-white/10"
+              )}>
+                <item.icon className={cn("h-5 w-5", item.color)} />
+              </div>
+
               <div>
-                <p className="text-sm text-[var(--textDim)]">{stat.label}</p>
-                <motion.p 
-                  className="font-bold text-[var(--text)]"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
-                >
-                  {stat.value.toLocaleString()}
-                </motion.p>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">
+                  {item.title}
+                </p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-2xl font-black text-white tracking-tighter">
+                    {formatNumber(item.value)}
+                  </p>
+                  <span className="text-[10px] font-bold text-primary opacity-40 group-hover:opacity-100 transition-opacity">
+                    UNIT
+                  </span>
+                </div>
               </div>
             </div>
-            {stat.isLive ? (
-              <motion.span 
-                className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-                style={{ color: 'var(--primary)', background: 'var(--primaryBg)' }}
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                LIVE
-              </motion.span>
-            ) : (
-              <span className="text-xs font-medium text-[var(--primary)]">{stat.growth}</span>
-            )}
-          </motion.div>
-        ))}
-      </div>
-    </motion.div>
+
+            {/* Bottom Progress Bar Decor */}
+            <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-primary group-hover:w-full transition-all duration-500" />
+          </div>
+        </motion.div>
+      ))}
+    </div>
   )
 }

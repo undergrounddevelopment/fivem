@@ -4,7 +4,8 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import { CONFIG } from "@/lib/config"
 
 // PRODUCTION-READY SERVER CLIENT
-export function createClient() {
+export async function createClient() {
+  const cookieStore = await cookies()
   const url = CONFIG.supabase.url
   const anonKey = CONFIG.supabase.anonKey
 
@@ -14,11 +15,23 @@ export function createClient() {
     throw new Error("Supabase server configuration is required")
   }
 
-  // For API routes, use simple client without cookies
-  return createSupabaseClient(url, anonKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
+  // Proper Next.js App Router client with cookie handling
+  return createServerClient(url, anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll()
+      },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options)
+          })
+        } catch (error) {
+          // The `set` method was called from a Server Component.
+          // This can be ignored if you have middleware refreshing
+          // user sessions.
+        }
+      },
     },
     global: {
       headers: {
@@ -65,7 +78,7 @@ export function createAdminClient() {
 // CONNECTION TESTING
 export async function testServerConnection() {
   try {
-    const client = createClient()
+    const client = await createClient()
     const { data, error } = await client.from('users').select('count').limit(1)
     return { success: !error, error: error?.message }
   } catch (err) {

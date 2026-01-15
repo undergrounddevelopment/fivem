@@ -28,13 +28,19 @@ const TABLE_SCHEMAS = {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       discord_id TEXT UNIQUE NOT NULL,
       username TEXT NOT NULL,
-      avatar_url TEXT,
       email TEXT,
+      avatar TEXT,
+      membership TEXT DEFAULT 'free',
       coins INTEGER DEFAULT 100,
+      reputation INTEGER DEFAULT 0,
+      downloads INTEGER DEFAULT 0,
+      points INTEGER DEFAULT 0,
       xp INTEGER DEFAULT 0,
       level INTEGER DEFAULT 1,
-      role TEXT DEFAULT 'user',
+      is_banned BOOLEAN DEFAULT false,
+      ban_reason TEXT,
       is_admin BOOLEAN DEFAULT false,
+      last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
       last_daily_claim TIMESTAMP WITH TIME ZONE,
       last_spin TIMESTAMP WITH TIME ZONE,
       spins_today INTEGER DEFAULT 0,
@@ -49,18 +55,22 @@ const TABLE_SCHEMAS = {
       title TEXT NOT NULL,
       description TEXT,
       category TEXT NOT NULL,
-      framework TEXT DEFAULT 'esx',
-      price INTEGER DEFAULT 0,
-      image_url TEXT,
-      download_url TEXT,
-      file_size TEXT,
+      framework TEXT DEFAULT 'standalone',
       version TEXT DEFAULT '1.0.0',
-      author_id UUID REFERENCES users(id),
+      coin_price INTEGER DEFAULT 0,
+      thumbnail TEXT,
+      download_link TEXT,
+      file_size TEXT,
       downloads INTEGER DEFAULT 0,
       likes INTEGER DEFAULT 0,
+      views INTEGER DEFAULT 0,
+      rating DECIMAL DEFAULT 0.0,
+      status TEXT DEFAULT 'active',
+      is_verified BOOLEAN DEFAULT false,
       is_featured BOOLEAN DEFAULT false,
       is_approved BOOLEAN DEFAULT true,
       tags TEXT[],
+      author_id UUID REFERENCES users(id),
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
@@ -73,7 +83,9 @@ const TABLE_SCHEMAS = {
       description TEXT,
       icon TEXT,
       color TEXT DEFAULT '#3b82f6',
-      order_index INTEGER DEFAULT 0,
+      thread_count INTEGER DEFAULT 0,
+      post_count INTEGER DEFAULT 0,
+      sort_order INTEGER DEFAULT 0,
       is_active BOOLEAN DEFAULT true,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
@@ -86,11 +98,15 @@ const TABLE_SCHEMAS = {
       content TEXT NOT NULL,
       category_id UUID REFERENCES forum_categories(id),
       author_id UUID REFERENCES users(id),
+      thread_type TEXT DEFAULT 'discussion',
+      replies_count INTEGER DEFAULT 0,
+      likes INTEGER DEFAULT 0,
+      views INTEGER DEFAULT 0,
       is_pinned BOOLEAN DEFAULT false,
       is_locked BOOLEAN DEFAULT false,
-      views INTEGER DEFAULT 0,
-      replies_count INTEGER DEFAULT 0,
+      is_deleted BOOLEAN DEFAULT false,
       last_reply_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      last_reply_by UUID REFERENCES users(id),
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
@@ -99,11 +115,12 @@ const TABLE_SCHEMAS = {
   forum_replies: `
     CREATE TABLE IF NOT EXISTS forum_replies (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      content TEXT NOT NULL,
       thread_id UUID REFERENCES forum_threads(id) ON DELETE CASCADE,
       author_id UUID REFERENCES users(id),
-      parent_id UUID REFERENCES forum_replies(id),
+      content TEXT NOT NULL,
       likes INTEGER DEFAULT 0,
+      is_deleted BOOLEAN DEFAULT false,
+      is_edited BOOLEAN DEFAULT false,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
@@ -221,11 +238,16 @@ const TABLE_SCHEMAS = {
   testimonials: `
     CREATE TABLE IF NOT EXISTS testimonials (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id UUID REFERENCES users(id),
-      asset_id UUID REFERENCES assets(id),
-      rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-      comment TEXT,
-      is_approved BOOLEAN DEFAULT true,
+      username TEXT NOT NULL,
+      avatar TEXT,
+      content TEXT NOT NULL,
+      rating INTEGER DEFAULT 5,
+      server_name TEXT,
+      upvotes_received INTEGER DEFAULT 0,
+      is_featured BOOLEAN DEFAULT true,
+      is_verified BOOLEAN DEFAULT false,
+      badge TEXT,
+      image_url TEXT,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
@@ -270,6 +292,30 @@ const SAMPLE_DATA = {
       title: 'Featured Scripts',
       image_url: '/banner1.png',
       link_url: '/assets?category=scripts'
+    }
+  ],
+  testimonials: [
+    {
+      username: "Elite RP Admin",
+      content: "omfg this is actually insane. i was skeptical at first but after we hit 10k upvotes our server flooded with people. the stability is 10/10 worth every penny.",
+      rating: 5,
+      server_name: "Elite Roleplay",
+      upvotes_received: 10123,
+      is_featured: true,
+      is_verified: true,
+      badge: "Partner",
+      avatar: "https://frontend.cfx-services.net/api/servers/icon/lzy8l7/-976662786.png"
+    },
+    {
+      username: "Astro Roleplay",
+      content: "literally the only service that doesn't get your server blacklisted. we've been using the elite tools for 2 months now and we're consistently top 10.",
+      rating: 5,
+      server_name: "Astro RP",
+      upvotes_received: 7843,
+      is_featured: true,
+      is_verified: true,
+      badge: "Elite",
+      avatar: "https://frontend.cfx-services.net/api/servers/icon/gkd4kq/-1544803086.png"
     }
   ]
 }
@@ -382,6 +428,40 @@ export async function setupCompleteDatabase() {
       
       if (!announcementsError) {
         console.log('✅ Announcements seeded')
+        results.dataSeeded++
+      }
+    }
+
+    // Testimonials
+    const { data: existingTestimonials } = await supabase
+      .from('testimonials')
+      .select('id')
+      .limit(1)
+    
+    if (!existingTestimonials?.length) {
+      const { error: testimonialsError } = await supabase
+        .from('testimonials')
+        .insert(SAMPLE_DATA.testimonials)
+      
+      if (!testimonialsError) {
+        console.log('✅ Testimonials seeded')
+        results.dataSeeded++
+      }
+    }
+
+    // Banners
+    const { data: existingBanners } = await supabase
+      .from('banners')
+      .select('id')
+      .limit(1)
+    
+    if (!existingBanners?.length) {
+      const { error: bannersError } = await supabase
+        .from('banners')
+        .insert(SAMPLE_DATA.banners)
+      
+      if (!bannersError) {
+        console.log('✅ Banners seeded')
         results.dataSeeded++
       }
     }

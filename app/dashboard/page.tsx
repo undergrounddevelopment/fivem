@@ -6,11 +6,11 @@ import { useSession } from 'next-auth/react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { 
-  Package, 
-  Upload, 
-  Download, 
-  Star, 
+import {
+  Package,
+  Upload,
+  Download,
+  Star,
   TrendingUp,
   Plus,
   Edit,
@@ -19,12 +19,16 @@ import {
   Trophy,
   Activity,
   Coins,
-  Loader2
+  Loader2,
+  ChevronRight,
+  ArrowUpRight,
+  Clock
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { getLevelFromXP, getEarnedBadges, getRarityColor } from '@/lib/xp-badges'
 import { createClient } from '@/lib/supabase/client'
+import { AdminBanner } from '@/components/admin-banner'
 
 interface Asset {
   id: string
@@ -35,6 +39,15 @@ interface Asset {
   rating?: number
   status: string
   thumbnail?: string
+}
+
+interface DownloadHistory {
+  id: string
+  assetId: string
+  title: string
+  category: string
+  thumbnail: string | null
+  downloadedAt: string
 }
 
 export default function DashboardPage() {
@@ -48,7 +61,9 @@ export default function DashboardPage() {
   })
   const [xpData, setXpData] = useState<any>(null)
   const [badges, setBadges] = useState<any[]>([])
+  const [downloadHistory, setDownloadHistory] = useState<DownloadHistory[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingHistory, setLoadingHistory] = useState(true)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -62,7 +77,7 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         const supabase = createClient()
-        
+
         const { data: userAssets } = await supabase
           .from('assets')
           .select('*')
@@ -72,7 +87,7 @@ export default function DashboardPage() {
 
         const totalDownloads = (userAssets || []).reduce((sum: number, a: Asset) => sum + (a.downloads || 0), 0)
         const totalEarnings = (userAssets || []).reduce((sum: number, a: Asset) => sum + (a.coin_price || 0), 0)
-        const avgRating = userAssets?.length ? 
+        const avgRating = userAssets?.length ?
           (userAssets || []).reduce((sum: number, a: Asset) => sum + (a.rating || 0), 0) / userAssets.length : 0
 
         setStats({
@@ -111,6 +126,30 @@ export default function DashboardPage() {
       } finally {
         setLoading(false)
       }
+
+      // Fetch Download History
+      try {
+        setLoadingHistory(true)
+        const res = await fetch(`/api/profile/${session.user.id}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.downloads && Array.isArray(data.downloads)) {
+            const mappedDownloads = data.downloads.slice(0, 5).map((d: any) => ({
+              id: d.id || Math.random().toString(),
+              assetId: d.assetId || d.asset_id || d.id,
+              title: d.asset?.title || "Unknown Asset",
+              category: d.asset?.category || "scripts",
+              thumbnail: d.asset?.thumbnail || null,
+              downloadedAt: d.createdAt || d.created_at || new Date().toISOString(),
+            }))
+            setDownloadHistory(mappedDownloads)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching download history:', error)
+      } finally {
+        setLoadingHistory(false)
+      }
     }
 
     fetchData()
@@ -136,7 +175,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-background relative">
         <div className="blur-orb" style={{ top: '10%', left: '10%', opacity: 0.15 }} />
         <div className="blur-orb" style={{ top: '60%', right: '15%', opacity: 0.1 }} />
-        
+
         <div className="container mx-auto p-6 relative z-10">
           <div className="flex flex-col items-center justify-center py-20">
             <div className="h-16 w-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-4">
@@ -158,8 +197,11 @@ export default function DashboardPage() {
       <div className="blur-orb" style={{ top: '50%', right: '10%', opacity: 0.1 }} />
 
       <div className="container mx-auto p-6 relative z-10">
+        {/* Dynamic Admin Banner (Top) */}
+        <AdminBanner position="top" className="mb-8" />
+
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -178,7 +220,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Stats Cards */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
@@ -238,7 +280,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* XP & Badges Section */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
@@ -272,7 +314,7 @@ export default function DashboardPage() {
                       </span>
                     </div>
                     <div className="relative h-3 bg-secondary rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-pink-500 rounded-full transition-all duration-500"
                         style={{ width: `${xpData.progress}%` }}
                       />
@@ -349,7 +391,7 @@ export default function DashboardPage() {
           </Card>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.3 }}
@@ -374,8 +416,8 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-3">
                 {assets.slice(0, 5).map((asset, index) => (
-                  <motion.div 
-                    key={asset.id} 
+                  <motion.div
+                    key={asset.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
@@ -411,10 +453,10 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <Badge 
+                      <Badge
                         variant={
                           asset.status === "active" || asset.status === "approved" ? "default" :
-                          asset.status === "pending" ? "secondary" : "destructive"
+                            asset.status === "pending" ? "secondary" : "destructive"
                         }
                         className="text-xs"
                       >
@@ -451,22 +493,92 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Recent Activity */}
+          {/* Recent Downloads */}
           <Card className="glass border-blue-500/20">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-blue-400" />
-                Recent Activity
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="h-5 w-5 text-blue-400" />
+                  Recent Downloads
+                </CardTitle>
+                <Link href="/scripts">
+                  <Button variant="ghost" size="sm" className="text-primary gap-1">
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12">
-                <div className="h-16 w-16 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
-                  <TrendingUp className="h-8 w-8 text-blue-400" />
+              {loadingHistory ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center gap-3 rounded-xl bg-secondary/20 p-3 animate-pulse">
+                      <div className="h-11 w-11 rounded-xl bg-secondary/50" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-secondary/50 rounded w-3/4" />
+                        <div className="h-3 bg-secondary/50 rounded w-1/2" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <p className="text-muted-foreground">No recent activity</p>
-                <p className="text-xs text-muted-foreground/70 mt-1">Your activity will appear here</p>
-              </div>
+              ) : downloadHistory.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="h-16 w-16 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+                    <Download className="h-8 w-8 text-blue-400" />
+                  </div>
+                  <p className="text-muted-foreground">No downloads yet</p>
+                  <Link href="/scripts">
+                    <Button variant="link" className="text-primary mt-2">
+                      Browse Resources
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {downloadHistory.map((download, index) => (
+                    <motion.div
+                      key={download.id}
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <Link
+                        href={`/asset/${download.assetId}`}
+                        className="flex items-center justify-between rounded-xl bg-secondary/30 p-3 hover:bg-secondary/50 transition-colors group border border-white/5"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-11 w-11 rounded-xl bg-primary/20 flex items-center justify-center overflow-hidden shrink-0">
+                            {download.thumbnail ? (
+                              <Image
+                                src={download.thumbnail}
+                                alt=""
+                                fill
+                                className="object-cover"
+                                unoptimized
+                              />
+                            ) : (
+                              <Download className="h-5 w-5 text-primary" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-foreground text-sm group-hover:text-primary transition-colors truncate">
+                              {download.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground capitalize">{download.category}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-[10px] text-muted-foreground hidden sm:inline flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(download.downloadedAt).toLocaleDateString()}
+                          </span>
+                          <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>

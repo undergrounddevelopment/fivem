@@ -70,7 +70,7 @@ export function StatsGrid({ stats, columns = 4, className }: StatsGridProps) {
         
         return (
           <motion.div
-            key={index}
+            key={stat.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -139,7 +139,7 @@ export function StatsList({
   return (
     <div className={cn("space-y-3", className)}>
       {stats.map((stat, index) => (
-        <div key={index} className="flex justify-between items-center">
+        <div key={stat.label} className="flex justify-between items-center">
           <span className="text-sm text-muted-foreground">{stat.label}</span>
           <span className="font-semibold">
             {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}

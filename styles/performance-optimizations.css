@@ -1,0 +1,371 @@
+/* ============================================
+   PERFORMANCE OPTIMIZATIONS CSS
+   Lightweight & Fast Loading
+   ============================================ */
+
+/* ============================================
+   1. GPU ACCELERATION & COMPOSITING
+   ============================================ */
+/* Use GPU for smooth animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Will-change hints for animations */
+.will-animate {
+  will-change: transform, opacity;
+}
+
+.will-scroll {
+  will-change: scroll-position;
+}
+
+/* Remove will-change after animation */
+.animation-complete {
+  will-change: auto;
+}
+
+/* ============================================
+   2. OPTIMIZED ANIMATIONS
+   ============================================ */
+/* Lightweight fade animation */
+@keyframes fade-in-light {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-light {
+  animation: fade-in-light 0.2s ease-out;
+}
+
+/* Lightweight slide animation */
+@keyframes slide-up-light {
+  from { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-light {
+  animation: slide-up-light 0.25s ease-out;
+}
+
+/* Lightweight scale animation */
+@keyframes scale-in-light {
+  from { 
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-light {
+  animation: scale-in-light 0.2s ease-out;
+}
+
+/* ============================================
+   3. LAZY LOADING PLACEHOLDERS
+   ============================================ */
+.lazy-placeholder {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: lazy-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes lazy-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Lightweight skeleton */
+.skeleton-light {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+/* ============================================
+   4. CONTENT VISIBILITY OPTIMIZATION
+   ============================================ */
+/* Auto-hide off-screen content */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
+/* Strict containment for performance */
+.contain-strict {
+  contain: strict;
+}
+
+.contain-layout {
+  contain: layout;
+}
+
+.contain-paint {
+  contain: paint;
+}
+
+.contain-content {
+  contain: content;
+}
+
+/* ============================================
+   5. IMAGE OPTIMIZATION
+   ============================================ */
+/* Optimized image rendering */
+.img-optimized {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Lazy image with fade-in */
+.img-lazy {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.img-lazy.loaded {
+  opacity: 1;
+}
+
+/* Aspect ratio box for images */
+.img-aspect-box {
+  position: relative;
+  overflow: hidden;
+}
+
+.img-aspect-box img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ============================================
+   6. FONT OPTIMIZATION
+   ============================================ */
+/* Font display optimization */
+.font-display-swap {
+  font-display: swap;
+}
+
+/* Prevent layout shift from fonts */
+.font-stable {
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   7. SCROLL OPTIMIZATION
+   ============================================ */
+/* Smooth scroll with performance */
+.scroll-smooth-perf {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Momentum scrolling for iOS */
+.scroll-momentum {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent scroll chaining */
+.scroll-contain {
+  overscroll-behavior: contain;
+}
+
+/* ============================================
+   8. INTERACTION OPTIMIZATION
+   ============================================ */
+/* Fast tap response */
+.tap-highlight-none {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch action optimization */
+.touch-pan-x {
+  touch-action: pan-x;
+}
+
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Pointer events optimization */
+.pointer-coarse {
+  pointer-events: auto;
+}
+
+/* ============================================
+   9. REDUCED MOTION ALTERNATIVES
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-light,
+  .animate-slide-light,
+  .animate-scale-light,
+  .lazy-placeholder {
+    animation: none !important;
+  }
+  
+  .will-animate {
+    will-change: auto;
+  }
+  
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   10. LOW POWER MODE OPTIMIZATION
+   ============================================ */
+@media (prefers-reduced-motion: reduce), (update: slow) {
+  /* Disable complex effects */
+  .glass,
+  .glass-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  
+  /* Simplify shadows */
+  .glow-sm,
+  .glow-md {
+    box-shadow: none !important;
+  }
+  
+  /* Disable animations */
+  .animate-shimmer,
+  .animate-float,
+  .animate-pulse-glow {
+    animation: none !important;
+  }
+}
+
+/* ============================================
+   11. PRINT OPTIMIZATION
+   ============================================ */
+@media print {
+  /* Remove unnecessary elements */
+  .no-print,
+  .glass,
+  .glass-card,
+  .glow-sm,
+  .glow-md {
+    background: white !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* Optimize colors for print */
+  * {
+    color: black !important;
+    background: white !important;
+  }
+}
+
+/* ============================================
+   12. CRITICAL CSS MARKERS
+   ============================================ */
+/* Above-the-fold critical styles */
+.critical {
+  /* Mark as critical for extraction */
+}
+
+/* Non-critical styles */
+.non-critical {
+  /* Can be lazy-loaded */
+}
+
+/* ============================================
+   13. LAYER OPTIMIZATION
+   ============================================ */
+/* Create new stacking context */
+.new-layer {
+  isolation: isolate;
+}
+
+/* Force new compositing layer */
+.composite-layer {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* ============================================
+   14. MEMORY OPTIMIZATION
+   ============================================ */
+/* Limit memory usage for large lists */
+.virtual-list {
+  contain: strict;
+  content-visibility: auto;
+}
+
+/* Cleanup after scroll */
+.cleanup-offscreen {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 200px;
+}
+
+/* ============================================
+   15. NETWORK OPTIMIZATION HINTS
+   ============================================ */
+/* Preload hints via CSS */
+.preload-hint {
+  /* Use with link rel="preload" */
+}
+
+/* Prefetch hints */
+.prefetch-hint {
+  /* Use with link rel="prefetch" */
+}
+
+/* ============================================
+   16. BATTERY SAVER MODE
+   ============================================ */
+/* Detect and optimize for battery saver */
+@media (prefers-reduced-motion: reduce) {
+  /* Simplified styles for battery saving */
+  .battery-optimize {
+    animation: none !important;
+    transition: none !important;
+    backdrop-filter: none !important;
+    filter: none !important;
+  }
+}
+
+/* ============================================
+   17. DARK MODE PERFORMANCE
+   ============================================ */
+/* Optimized dark mode colors */
+.dark-optimized {
+  color-scheme: dark;
+}
+
+/* Reduce contrast for OLED screens */
+@media (prefers-color-scheme: dark) {
+  .oled-optimized {
+    background: #000 !important;
+  }
+}

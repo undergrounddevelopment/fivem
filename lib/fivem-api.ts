@@ -1,4 +1,4 @@
-const API_BASE = "https://www.fivemtools.net/api"
+const API_BASE = "/api"
 
 export interface FiveMAsset {
   id: string

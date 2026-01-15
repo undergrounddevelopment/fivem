@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdminClient } from "@/lib/supabase/server"
 import { security } from "@/lib/security"
 
+export const revalidate = 600 // Cache for 10 minutes
+
 export async function GET(request: NextRequest) {
   const clientIP = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown"
 
@@ -14,37 +16,22 @@ export async function GET(request: NextRequest) {
 
     const { data: assets, error } = await supabase
       .from("assets")
-      .select("*")
-      .eq("status", "active")
+      .select("*, author:users!assets_author_id_fkey(username, avatar, membership, xp, level, is_banned)")
+      .in("status", ["active", "approved"])
       .order("downloads", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(4)
 
     if (error) throw error
 
-    const formatted = await Promise.all(
-      (assets || []).map(async (asset) => {
-        let author: {
-          username: string
-          avatar: string | null
-          membership: string
-          xp: number | null
-          level: number | null
-          is_banned: boolean
-        } | null = null
-        if (asset.author_id) {
-          // assets.author_id is UUID matching users.id
-          const { data: authorData } = await supabase
-            .from("users")
-            .select("username, avatar, membership, xp, level, is_banned")
-            .eq("id", asset.author_id)
-            .single()
-          author = authorData
-        }
+    const formatted = assets.map((asset: any) => {
+        const author = asset.author
 
-        // Skip if author is banned
+        // Skip if author is banned - strictly enforce
         if (author?.is_banned) return null
 
         const rating = Math.min(5.0, 3.5 + (asset.downloads / 100) * 0.5)
+        
         return {
           id: asset.id,
           title: asset.title,
@@ -73,10 +60,7 @@ export async function GET(request: NextRequest) {
           trending: true,
           createdAt: asset.created_at,
         }
-      }),
-    )
-
-    // Filter out null values (banned authors)
+    })
     return NextResponse.json(formatted.filter(Boolean))
   } catch (error) {
     console.error("Trending API error:", error)

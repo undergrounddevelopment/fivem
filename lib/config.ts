@@ -1,4 +1,9 @@
 // Centralized Configuration - FIXED & OPTIMIZED
+// CONFIGURATION FALLBACKS
+// NOTE: Many values here (Auth, Features, Linkvertise) are now dynamically loaded
+// from the 'site_settings' database table via lib/settings.ts.
+// The values below serve as initial defaults or fallbacks if the DB is unreachable.
+
 export const CONFIG = {
   // Database - PRODUCTION READY
   database: {

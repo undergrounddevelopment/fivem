@@ -21,12 +21,23 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const supabase = getSupabase()
     const discordId = session.user.id
 
+    // Get user UUID from discord_id
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .eq('discord_id', discordId)
+      .single()
+
+    if (!user) {
+      return NextResponse.json({ purchased: false, error: 'User not found' })
+    }
+
     // Check if user has downloaded/purchased this asset
     const { data: download, error } = await supabase
       .from('downloads')
       .select('id')
       .eq('asset_id', assetId)
-      .eq('user_id', discordId)
+      .eq('user_id', user.id)
       .single()
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
@@ -40,7 +51,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         .from('purchases')
         .select('id')
         .eq('asset_id', assetId)
-        .eq('user_id', discordId)
+        .eq('user_id', user.id)
         .single()
       purchase = data
     } catch {

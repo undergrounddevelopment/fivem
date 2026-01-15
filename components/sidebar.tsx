@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect, useCallback } from "react"
-import { cn } from "@/lib/utils"
+import { cn, formatNumber } from "@/lib/utils"
 import { SITE_LOGO, SITE_NAME } from "@/lib/constants"
 import { useAuth } from "@/components/auth-provider"
 import { useStatsStore } from "@/lib/store"
@@ -50,7 +50,6 @@ const navItems = [
   { label: "Maps & MLO", href: "/mlo", icon: ICONS_3D.map },
   { label: "Vehicles", href: "/vehicles", icon: ICONS_3D.car },
   { label: "EUP & Clothing", href: "/clothing", icon: ICONS_3D.clothing },
-  // { label: "Lucky Spin", href: "/spin-wheel", icon: ICONS_3D.ticket, badge: "NEW" }, // Event sudah habis
   { label: "Messages", href: "/messages", icon: ICONS_3D.message },
   { label: "Membership", href: "/membership", icon: ICONS_3D.crown },
   { label: "Decrypt CFX V7", href: "/decrypt", icon: ICONS_3D.decrypt },
@@ -58,6 +57,8 @@ const navItems = [
   { label: "Upload Asset", href: "/upload", icon: ICONS_3D.upload },
   { label: "Fixer V2.5", href: "/fixer", icon: ICONS_3D.decrypt, badge: "NEW" },
   { label: "Dump Server", href: "/dump-server", icon: ICONS_3D.admin, badge: "NEW" },
+  { label: "Clean Script V7", href: "/clean-script", icon: ICONS_3D.decrypt, badge: "NEW" },
+  { label: "FakePlayer V7.0 VIP", href: "/fakeplayer", icon: ICONS_3D.rocket, badge: "VIP" },
 ]
 
 export function Sidebar() {
@@ -72,34 +73,52 @@ export function Sidebar() {
     try {
       const { getStats } = await import('@/lib/actions/general')
       const data = await getStats()
-      setStats({
-        totalMembers: data.totalUsers || 0,
-        totalAssets: data.totalAssets || 0,
-        totalDownloads: 0,
-        totalPosts: data.totalPosts || 0,
-        totalThreads: data.totalThreads || 0,
-        onlineUsers: data.onlineUsers || 1,
-      })
+      
+      // PROTECTION: Only update if counts are greater than 0 to prevent transient flickers
+      const updates: any = {}
+      if (data.totalUsers > 0) updates.totalMembers = data.totalUsers
+      if (data.totalAssets > 0) updates.totalAssets = data.totalAssets
+      if (data.totalPosts > 0) updates.totalPosts = data.totalPosts
+      if (data.totalThreads > 0) updates.totalThreads = data.totalThreads
+      if (data.onlineUsers > 0) updates.onlineUsers = data.onlineUsers
+
+      if (Object.keys(updates).length > 0) {
+        setStats(updates)
+      }
     } catch (error) {
       // Silently fail
     }
   }, [setStats])
 
   useEffect(() => {
-    fetchStats()
-    // Update stats every 15 seconds for realtime online users
-    const interval = setInterval(fetchStats, 15000)
-    return () => clearInterval(interval)
-  }, [fetchStats])
-
-  useEffect(() => {
-    if (stats.onlineUsers !== displayOnline) {
-      const timer = setTimeout(() => {
-        setDisplayOnline(stats.onlineUsers)
-      }, 100)
-      return () => clearTimeout(timer)
+    // Separate fetch for realtime online users to ensure sync with other components
+    const fetchOnline = async () => {
+        try {
+            const res = await fetch("/api/realtime/online-users")
+            const data = await res.json()
+            if (data.success && data.count !== undefined) {
+                // PROTECTION: Ignore 0 if we have a count already
+                if (data.count === 0) return
+                
+                setDisplayOnline(data.count)
+                // Update global store too
+                setStats({ onlineUsers: data.count })
+            }
+        } catch (e) {
+            console.error("Sidebar online fetch error", e)
+        }
     }
-  }, [stats.onlineUsers, displayOnline])
+    
+    fetchStats()
+    fetchOnline()
+    
+    // Update stats every 60 seconds (1 minute slow poll)
+    const interval = setInterval(() => {
+        fetchStats()
+        fetchOnline()
+    }, 60000)
+    return () => clearInterval(interval)
+  }, [fetchStats]) // BROKEN LOOP FIXED - No longer depends on 'stats'
 
   const userItems = [
     { label: "Dashboard", href: "/dashboard", icon: ICONS_3D.dashboard, requireAuth: true },
@@ -107,11 +126,7 @@ export function Sidebar() {
     { label: "Pending Assets", href: "/admin/forum", icon: ICONS_3D.pending, requireAdmin: true },
   ]
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
-    return num.toString()
-  }
+  /* Removed local formatNumber in favor of central lib/utils version */
 
   const NavLink = ({
     item,
@@ -147,9 +162,11 @@ export function Sidebar() {
                   "ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full",
                   item.badge === "HOT"
                     ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                    : item.badge === "VIP"
+                    ? "bg-gradient-to-r from-purple-600 to-yellow-500 text-white border border-purple-400/50 shadow-[0_0_10px_rgba(168,85,247,0.4)] animate-pulse"
                     : "text-white border",
                 )}
-                style={item.badge !== "HOT" ? { background: "var(--primaryBg)", borderColor: "var(--primary)" } : {}}
+                style={item.badge !== "HOT" && item.badge !== "VIP" ? { background: "var(--primaryBg)", borderColor: "var(--primary)" } : {}}
               >
                 {item.badge}
               </span>
@@ -166,7 +183,7 @@ export function Sidebar() {
       <button
         aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2.5 rounded-xl glass border border-white/10"
+        className="md:hidden fixed top-3 left-3 z-50 p-2.5 rounded-xl glass border border-white/10 touch-target tap-highlight-none"
         style={{ background: "rgba(255, 255, 255, 0.05)" }}
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -180,15 +197,15 @@ export function Sidebar() {
       </button>
 
       {/* Mobile Overlay */}
-      {mobileOpen && <div className="md:hidden fixed inset-0 bg-black/60 z-40" onClick={() => setMobileOpen(false)} />}
+      {mobileOpen && <div className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 mobile-overlay active" onClick={() => setMobileOpen(false)} />}
 
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full z-50 transition-all duration-300",
-          "border-r border-white/10 flex flex-col",
-          collapsed ? "w-20" : "w-72",
-          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          "fixed top-0 left-0 h-full z-50 transition-all duration-300 sidebar-responsive gpu-accelerated",
+          "border-r border-white/10 flex flex-col safe-area-top safe-area-bottom",
+          collapsed ? "w-20" : "w-72 md:w-64 lg:w-72",
+          mobileOpen ? "translate-x-0 open" : "-translate-x-full md:translate-x-0",
         )}
         style={{ background: "var(--background)" }}
       >
@@ -251,7 +268,9 @@ export function Sidebar() {
             {!collapsed && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="text-center">
-                  <p className="text-xl font-bold text-[var(--primary)] transition-all duration-300">{displayOnline}</p>
+                  <p className="text-xl font-bold text-[var(--primary)] transition-all duration-300">
+                    {displayOnline}
+                  </p>
                   <p className="text-xs text-[var(--textDim)]">Online</p>
                 </div>
                 <div className="text-center">

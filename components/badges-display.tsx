@@ -107,7 +107,7 @@ export function BadgesDisplay({ userStats, showAll = false, compact = false }: B
           <Badge variant="secondary">{earnedBadges.length} / {BADGES.length}</Badge>
         </div>
         
-        <div className="grid grid-cols-4 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
           {displayBadges.map((badge) => {
             const isEarned = earnedBadges.some(b => b.id === badge.id)
             
@@ -116,16 +116,17 @@ export function BadgesDisplay({ userStats, showAll = false, compact = false }: B
                 key={badge.id}
                 onClick={() => setSelectedBadge(badge)}
                 className={cn(
-                  "relative group cursor-pointer p-3 rounded-xl border-2 transition-all duration-300",
+                  "relative group cursor-pointer p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg",
                   isEarned 
-                    ? `${getRarityBorder(badge.rarity)} bg-gradient-to-br ${getRarityColor(badge.rarity)}/10 hover:scale-105` 
-                    : "border-border/30 bg-secondary/20 opacity-40 grayscale"
+                    ? `${getRarityBorder(badge.rarity)} bg-gradient-to-br ${getRarityColor(badge.rarity)}/10 hover:scale-105 hover:shadow-xl` 
+                    : "border-border/30 bg-secondary/20 opacity-40 grayscale hover:opacity-60"
                 )}
               >
                 <div className="flex flex-col items-center gap-2">
                   <div className={cn(
-                    "relative h-12 w-12 rounded-full overflow-hidden",
-                    badge.rarity === "legendary" && isEarned && "animate-pulse"
+                    "relative h-16 w-16 rounded-full overflow-hidden ring-2 ring-offset-2 ring-offset-background",
+                    badge.rarity === "legendary" && isEarned && "animate-pulse ring-yellow-500",
+                    isEarned ? "ring-primary/50" : "ring-transparent"
                   )}>
                     <img
                       src={badge.icon}
@@ -136,14 +137,26 @@ export function BadgesDisplay({ userStats, showAll = false, compact = false }: B
                       <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/30 to-transparent" />
                     )}
                   </div>
-                  <p className="text-xs font-medium text-center line-clamp-1">{badge.name}</p>
+                  <p className="text-xs font-medium text-center line-clamp-2 min-h-[2rem]">{badge.name}</p>
+                  {isEarned && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 capitalize">
+                      {badge.rarity}
+                    </Badge>
+                  )}
                 </div>
                 
                 {/* Rarity indicator */}
                 <div 
-                  className="absolute -top-1 -right-1 h-3 w-3 rounded-full"
+                  className="absolute top-2 right-2 h-3 w-3 rounded-full shadow-lg"
                   style={{ backgroundColor: badge.color }}
                 />
+                
+                {/* Lock icon for unearned */}
+                {!isEarned && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl">
+                    <Shield className="h-6 w-6 text-white/60" />
+                  </div>
+                )}
               </div>
             )
           })}
@@ -203,22 +216,26 @@ export function BadgesDisplay({ userStats, showAll = false, compact = false }: B
       <div className="glass rounded-2xl p-6">
         <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
           <Zap className="h-5 w-5 text-yellow-500" />
-          Earn XP
+          How to Earn XP
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
-            { action: "Create Thread", xp: 50, icon: "📝" },
-            { action: "Post Reply", xp: 20, icon: "💬" },
-            { action: "Upload Asset", xp: 100, icon: "📦" },
-            { action: "Receive Like", xp: 10, icon: "❤️" },
-            { action: "Daily Login", xp: 10, icon: "🌟" },
-            { action: "Asset Downloaded", xp: 15, icon: "⬇️" },
+            { action: "Create Thread", xp: 50, icon: "📝", color: "from-blue-500 to-blue-600" },
+            { action: "Post Reply", xp: 20, icon: "💬", color: "from-green-500 to-green-600" },
+            { action: "Upload Asset", xp: 100, icon: "📦", color: "from-purple-500 to-purple-600" },
+            { action: "Receive Like", xp: 10, icon: "❤️", color: "from-pink-500 to-pink-600" },
+            { action: "Daily Login", xp: 10, icon: "🌟", color: "from-yellow-500 to-yellow-600" },
+            { action: "Asset Downloaded", xp: 15, icon: "⬇️", color: "from-cyan-500 to-cyan-600" },
           ].map((item) => (
-            <div key={item.action} className="flex items-center gap-2 p-3 rounded-xl bg-secondary/30">
-              <span className="text-xl">{item.icon}</span>
-              <div>
-                <p className="text-sm font-medium">{item.action}</p>
-                <p className="text-xs text-primary font-bold">+{item.xp} XP</p>
+            <div key={item.action} className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-secondary/50 to-secondary/30 p-4 border border-border/50 hover:border-primary/50 transition-all duration-300 hover:scale-105">
+              <div className="flex items-center gap-3">
+                <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-2xl shadow-lg`}>
+                  {item.icon}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">{item.action}</p>
+                  <p className="text-lg font-bold text-primary">+{item.xp} XP</p>
+                </div>
               </div>
             </div>
           ))}

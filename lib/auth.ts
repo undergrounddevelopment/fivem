@@ -44,16 +44,16 @@ const isDiscordConfigured = true // Force enable since we have production creden
 
 function getProviders() {
   console.log("[NextAuth] ✅ Discord OAuth ENABLED - Production Ready")
-  
+
   return [
     DiscordProvider({
       clientId: CONFIG.discord.clientId!,
       clientSecret: CONFIG.discord.clientSecret!,
-      authorization: { 
-        params: { 
+      authorization: {
+        params: {
           scope: "identify email",
           prompt: "none"
-        } 
+        }
       },
     })
   ]
@@ -71,8 +71,24 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, account, profile, trigger }) {
       if (account?.provider === "discord" && profile) {
+        // Fetch dynamic settings
+        let settings;
+        try {
+          const { getSiteSettings } = await import("@/lib/settings")
+          settings = await getSiteSettings()
+        } catch (e) {
+          console.error("Failed to load settings in Auth", e)
+          settings = null // Fallback to CONFIG/defaults inside the logic if needed, but getSiteSettings already handles fallbacks
+        }
+
         const discordId = sanitizeInput((profile as any).id)
-        const isAdminUser = discordId === CONFIG.auth.adminDiscordId
+
+        // Dynamic Admin Check
+        const adminDiscordId = settings?.discord?.adminRoleId || CONFIG.auth.adminDiscordId // adminRoleId in settings might be the user ID in this context based on previous hardcoding, or we should add a specific 'adminUserIds' list.  For now, using the 'adminRoleId' field which was populated with '1047719075322810378' (a user ID format) in my migration.
+        const isAdminUser = discordId === adminDiscordId
+
+        const newUserCoins = settings?.features?.newUserCoins ?? CONFIG.features.newUserCoins
+        const adminCoins = settings?.features?.adminCoins ?? CONFIG.features.adminCoins
 
         console.log(`[NextAuth] ✅ Discord login: ${(profile as any).username} (${discordId})`)
 
@@ -81,7 +97,7 @@ export const authOptions: NextAuthOptions = {
           if (!supabase) {
             console.warn("[NextAuth] No Supabase client, using fallback")
             token.discordId = discordId
-            token.coins = isAdminUser ? CONFIG.features.adminCoins : CONFIG.features.newUserCoins
+            token.coins = isAdminUser ? adminCoins : newUserCoins
             token.membership = isAdminUser ? "admin" : "free"
             token.isAdmin = isAdminUser
             token.xp = 0
@@ -105,7 +121,12 @@ export const authOptions: NextAuthOptions = {
 
           if (existingUser) {
             console.log(`[NextAuth] ✅ Updating existing user: ${existingUser.username}`)
-            
+
+            if (existingUser.is_banned) {
+               console.warn(`[NextAuth] ⛔ Banned user attempted login: ${existingUser.username}`)
+               throw new Error(`Access Denied: Your account has been permanently banned. Reason: ${existingUser.ban_reason || 'Violation of Terms of Service'}`)
+            }
+
             const { data: updatedUser, error: updateError } = await supabase
               .from("users")
               .update({
@@ -128,7 +149,7 @@ export const authOptions: NextAuthOptions = {
             dbUser = updatedUser
           } else {
             console.log(`[NextAuth] ✅ Creating new user: ${(profile as any).username}`)
-            
+
             const { data: newUser, error: insertError } = await supabase
               .from("users")
               .insert({
@@ -136,7 +157,7 @@ export const authOptions: NextAuthOptions = {
                 username: sanitizeInput((profile as any).username),
                 email: token.email,
                 avatar: avatarUrl,
-                coins: isAdminUser ? CONFIG.features.adminCoins : CONFIG.features.newUserCoins,
+                coins: isAdminUser ? adminCoins : newUserCoins,
                 xp: 0,
                 level: 1,
                 is_admin: isAdminUser,
@@ -169,14 +190,14 @@ export const authOptions: NextAuthOptions = {
           token.level = dbUser.level
           token.sub = dbUser.discord_id
           token.lastSync = Date.now()
-          
+
           console.log(`[NextAuth] ✅ User data synced successfully`)
-          
+
         } catch (dbError: any) {
           console.error("[NextAuth] Database error:", dbError.message)
           // Fallback values
           token.discordId = discordId
-          token.coins = isAdminUser ? CONFIG.features.adminCoins : CONFIG.features.newUserCoins
+          token.coins = isAdminUser ? adminCoins : newUserCoins
           token.membership = isAdminUser ? "admin" : "free"
           token.isAdmin = isAdminUser
           token.xp = 0
@@ -213,28 +234,28 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       // Guard against unexpected session shapes so /api/auth/session never crashes.
       if (!(session as any).user) {
-        ;(session as any).user = {}
+        ; (session as any).user = {}
       }
 
       const discordId = (token.discordId as string | undefined) || (token.sub as string | undefined)
       if (discordId) {
-        ;(session as any).user.id = discordId
+        ; (session as any).user.id = discordId
       }
 
       if (token.coins !== undefined) {
-        ;(session as any).user.coins = token.coins as number
+        ; (session as any).user.coins = token.coins as number
       }
       if (token.membership !== undefined) {
-        ;(session as any).user.membership = token.membership as string
+        ; (session as any).user.membership = token.membership as string
       }
       if (token.isAdmin !== undefined) {
-        ;(session as any).user.isAdmin = token.isAdmin as boolean
+        ; (session as any).user.isAdmin = token.isAdmin as boolean
       }
       if (token.xp !== undefined) {
-        ;(session as any).user.xp = token.xp as number
+        ; (session as any).user.xp = token.xp as number
       }
       if (token.level !== undefined) {
-        ;(session as any).user.level = token.level as number
+        ; (session as any).user.level = token.level as number
       }
       return session
     },

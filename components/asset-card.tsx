@@ -2,13 +2,14 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Download, Heart, Star, Eye, Package, Sparkles, Crown, TrendingUp, Zap } from "lucide-react"
+import { Download, Heart, Star, Eye, Package, Sparkles, Crown, TrendingUp, Zap, Video, Image as ImageIcon, Link2 } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { useState, memo, useCallback, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { SnowPile } from "@/components/snow-pile"
 import { ForumBadge } from "@/components/forum-badge"
+import { OptimizedImage } from "@/components/optimized-image"
 
 interface AssetCardProps {
   asset: {
@@ -55,18 +56,24 @@ interface AssetCardProps {
 export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = false }: AssetCardProps) {
   const [imageError, setImageError] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
-  
-  const imageUrl = asset.thumbnail_url || asset.thumbnail || asset.image
+
+  const imageUrl = asset.thumbnail_url || asset.thumbnail || asset.image || "/placeholder.svg"
   const hasImage = imageUrl && !imageError
   const isPremium = asset.isPremium || (asset.price && asset.price !== 'free') || (asset.coinPrice && asset.coinPrice > 0)
-  
+
+  // Detect media content in description
+  const hasYouTube = asset.description?.includes('youtube.com') || asset.description?.includes('youtu.be')
+  const hasLinks = asset.description?.includes('http://') || asset.description?.includes('https://')
+  const hasMarkdownImages = asset.description?.includes('![')
+
   const formatNumber = useCallback((num: number | string | undefined) => {
-    if (!num) return "0"
+    if (!num || num === 0) return "—"
     const n = typeof num === "string" ? parseInt(num) : num
+    if (isNaN(n) || n === 0) return "—"
     if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
     return n.toString()
   }, [])
-  
+
   const handleImageError = useCallback(() => setImageError(true), [])
   const toggleLike = useCallback(() => setIsLiked(prev => !prev), [])
 
@@ -103,7 +110,7 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
       <Card className="h-full flex flex-col relative overflow-hidden rounded-2xl border-white/10 hover:border-primary/40 transition-all duration-500 group bg-gradient-to-b from-white/[0.08] to-white/[0.02] backdrop-blur-sm">
         {/* Snow pile on top */}
         <SnowPile size="sm" />
-        
+
         {/* Glow effect on hover */}
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
           <div className="absolute inset-0 bg-gradient-to-t from-primary/20 via-transparent to-transparent" />
@@ -113,7 +120,7 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
         {/* Premium badge */}
         {isPremium && (
           <div className="absolute top-3 left-3 z-20">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold shadow-lg shadow-amber-500/30"
@@ -128,11 +135,12 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
           <div className="relative aspect-video overflow-hidden rounded-t-2xl">
             {hasImage ? (
               <>
-                <img
+                <OptimizedImage
                   src={imageUrl}
                   alt={asset.title || asset.name || "Asset"}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  onError={handleImageError}
+                  fill
+                  className="transition-transform duration-700 group-hover:scale-110"
+                  priority={false}
                 />
                 {/* Overlay gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -149,7 +157,7 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
                 </div>
               </div>
             )}
-            
+
             {/* Quick action overlay */}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
               {asset.id ? (
@@ -193,18 +201,42 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
             </h3>
             <span className={cn(
               "shrink-0 px-2 py-1 rounded-lg text-xs font-bold",
-              isPremium 
-                ? "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/30" 
+              isPremium
+                ? "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/30"
                 : "bg-green-500/20 text-green-400 border border-green-500/30"
             )}>
-              {isPremium ? `${asset.coinPrice || 0} coins` : "FREE"}
+              {isPremium && (asset.coinPrice || asset.coin_price) ? `${asset.coinPrice || asset.coin_price} coins` : "FREE"}
             </span>
           </div>
 
           {/* Description - Compact */}
           <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-            {asset.description || "High-quality FiveM resource for your server."}
+            {asset.description || ""}
           </p>
+
+          {/* Media Indicators */}
+          {(hasYouTube || hasLinks || hasMarkdownImages) && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {hasYouTube && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/10 text-red-400 text-[10px] border border-red-500/20">
+                  <Video className="w-3 h-3" />
+                  Video
+                </span>
+              )}
+              {hasMarkdownImages && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 text-[10px] border border-blue-500/20">
+                  <ImageIcon className="w-3 h-3" />
+                  Images
+                </span>
+              )}
+              {hasLinks && !hasYouTube && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] border border-primary/20">
+                  <Link2 className="w-3 h-3" />
+                  Links
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Modern XP Bar */}
           {showAuthorXPBar && authorObj && (
@@ -231,7 +263,7 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
                   </span>
                 </div>
               </div>
-              
+
               {/* XP Progress Bar */}
               <div className="relative">
                 <div className="flex items-center justify-between mb-1">
@@ -262,7 +294,7 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
             <div className="text-center">
               <div className="flex items-center justify-center gap-1 text-xs">
                 <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                <span className="font-semibold text-foreground">{asset.rating || "4.8"}</span>
+                <span className="font-semibold text-foreground">{asset.rating || "0.0"}</span>
               </div>
               <span className="text-[9px] text-muted-foreground">Rating</span>
             </div>
@@ -294,8 +326,8 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
           {/* Tags - Compact */}
           {asset.tags && asset.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {asset.tags.slice(0, 2).map((tag, index) => (
-                <span key={index} className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[9px] text-muted-foreground">
+              {asset.tags.slice(0, 2).map((tag) => (
+                <span key={tag} className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[9px] text-muted-foreground">
                   {tag}
                 </span>
               ))}
@@ -310,7 +342,7 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
 
         <CardFooter className="p-4 pt-0 flex gap-2 relative z-10">
           <Link href={asset.id ? `/asset/${asset.id}` : "#"} className="flex-1">
-            <Button 
+            <Button
               className={cn(
                 "w-full rounded-xl font-semibold transition-all duration-300 gap-2",
                 isPremium
@@ -337,8 +369,8 @@ export const AssetCard = memo(function AssetCard({ asset, showAuthorXPBar = fals
             onClick={toggleLike}
             className={cn(
               "p-3 rounded-xl border transition-all duration-300",
-              isLiked 
-                ? "bg-pink-500/20 border-pink-500/50 text-pink-400" 
+              isLiked
+                ? "bg-pink-500/20 border-pink-500/50 text-pink-400"
                 : "bg-white/5 border-white/10 text-muted-foreground hover:border-pink-500/30 hover:text-pink-400"
             )}
           >

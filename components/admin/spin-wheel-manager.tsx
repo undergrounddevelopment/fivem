@@ -382,7 +382,7 @@ export function SpinWheelManager() {
           if (!open) resetForm()
         }}
       >
-        <DialogContent className="bg-card border-border max-w-lg">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Prize" : "Create Prize"}</DialogTitle>
           </DialogHeader>

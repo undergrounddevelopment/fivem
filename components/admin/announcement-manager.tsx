@@ -320,7 +320,7 @@ export function AnnouncementManager({ onUpdate }: AnnouncementManagerProps) {
           if (!open) resetForm()
         }}
       >
-        <DialogContent className="bg-card border-border max-w-2xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Announcement" : "Create Announcement"}</DialogTitle>
           </DialogHeader>

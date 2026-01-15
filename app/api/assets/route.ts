@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { sendDiscordNotification } from '@/lib/discord-webhook'
-import { createClient } from '@supabase/supabase-js'
-import { broadcastEvent } from '@/lib/realtime/broadcast'
-import { xpQueries } from '@/lib/xp/queries'
+import { notifyAssetUpload } from '@/lib/discord-webhook'
+import { autoConvertToLinkvertise } from '@/lib/linkvertise'
+import { createAdminClient } from "@/lib/supabase/server"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-)
+// Client instantiated inside handlers, not globally
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,6 +18,8 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit
 
     console.log('[API Assets] Query:', { category, framework, search, page, limit })
+
+    const supabase = createAdminClient()
 
     // Build query - Fix status filter to match database enum
     let query = supabase
@@ -53,19 +50,15 @@ export async function GET(request: NextRequest) {
     console.log(`[API Assets] Found ${assets?.length || 0} assets (total: ${count})`)
 
     const formattedAssets = (assets || []).map((asset: any) => {
-      // Handle author data - fallback if author not found via foreign key
-      let authorData = asset.author
-      if (!authorData && asset.author_id) {
-        // Try to find author by UUID if foreign key failed
-        authorData = { username: 'Unknown', avatar: null, membership: 'free' }
-      }
+      // 100% real author data only - no fallbacks
+      const authorData = asset.author || null
 
       return {
         ...asset,
         price: asset.coin_price === 0 ? 'free' : 'premium',
         coinPrice: asset.coin_price || 0,
-        author: authorData?.username || 'Unknown',
-        authorData: authorData || { username: 'Unknown', avatar: null, membership: 'free', xp: 0, level: 1 },
+        author: authorData?.username || null,
+        authorData: authorData,
         authorId: asset.author_id || asset.creator_id,
         isVerified: asset.is_verified !== false,
         isFeatured: asset.is_featured || asset.status === 'featured' || (asset.downloads || 0) > 10000,
@@ -102,6 +95,11 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json()
 
+    // Store raw download link - Linkvertise wrapping happens dynamically on download
+    const downloadUrl = data.downloadLink || null
+
+    const supabase = createAdminClient()
+
     // Get user UUID
     const { data: dbUser } = await supabase
       .from('users')
@@ -123,7 +121,7 @@ export async function POST(request: NextRequest) {
         version: data.version || '1.0.0',
         coin_price: data.coinPrice || 0,
         thumbnail_url: data.thumbnail || data.image,
-        download_url: data.downloadLink,
+        download_url: downloadUrl,
         file_size: data.fileSize,
         tags: data.tags || [],
         author_id: dbUser.id,
@@ -137,25 +135,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Send notification
+    // Send Discord notification (single notification only)
     if (asset) {
-      await sendDiscordNotification({
-        title: asset.title,
-        description: asset.description,
-        category: asset.category,
-        thumbnail: asset.thumbnail,
-        author: { username: session.user.name || 'Unknown' },
-        id: asset.id,
-      }).catch(() => {})
-
-      broadcastEvent("scripts-page-assets", "assets_changed", {
-        id: asset.id,
-        category: asset.category,
-        status: asset.status,
-      }).catch(() => {})
-
-      // Award XP for uploading asset
-      await xpQueries.awardXP(session.user.id, 'upload_asset', asset.id).catch(() => {})
+      await notifyAssetUpload(asset, {
+        username: session.user.name || 'Unknown'
+      }).catch((err) => {
+        console.error('[API Assets] Webhook error:', err)
+      })
     }
 
     return NextResponse.json(asset, { status: 201 })

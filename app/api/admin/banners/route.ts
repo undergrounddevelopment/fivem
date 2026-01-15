@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth"
 export async function GET() {
   try {
     const supabase = createAdminClient()
-    
+
     const { data: banners, error } = await supabase
       .from("banners")
       .select("*")
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = createAdminClient()
-    
+
     // Check if user is admin
     const { data: user } = await supabase
       .from("users")
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { title, image_url, link, position, sort_order, start_date, end_date } = body
+    const { title, image_url, link, position, sort_order, is_active } = body
 
     if (!image_url) {
       return NextResponse.json({ error: "Image URL is required" }, { status: 400 })
@@ -57,9 +57,7 @@ export async function POST(request: Request) {
         link: link || null,
         position: position || "top",
         sort_order: sort_order || 0,
-        start_date: start_date || null,
-        end_date: end_date || null,
-        is_active: true
+        is_active: is_active !== undefined ? is_active : true
       })
       .select()
       .single()
@@ -81,7 +79,7 @@ export async function PUT(request: Request) {
     }
 
     const supabase = createAdminClient()
-    
+
     // Check if user is admin
     const { data: user } = await supabase
       .from("users")
@@ -94,7 +92,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json()
-    const { id, ...updates } = body
+    const { id, start_date, end_date, ...updates } = body
 
     if (!id) {
       return NextResponse.json({ error: "Banner ID is required" }, { status: 400 })
@@ -124,7 +122,7 @@ export async function DELETE(request: Request) {
     }
 
     const supabase = createAdminClient()
-    
+
     // Check if user is admin
     const { data: user } = await supabase
       .from("users")

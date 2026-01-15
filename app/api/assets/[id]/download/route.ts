@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { createClient } from '@supabase/supabase-js'
+import { verifyLinkvertiseHash, logDownloadAttempt, LINKVERTISE_CONFIG } from '@/lib/linkvertise'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,8 +10,8 @@ const supabase = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 )
 
-export async function POST(
-  _request: NextRequest,
+export async function GET(
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -19,132 +20,165 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
+    const { id: assetId } = await params
+    const { searchParams } = new URL(request.url)
+    const hash = searchParams.get('hash')
 
-    // Get asset details
-    const { data: asset, error: assetError } = await supabase
-      .from('assets')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (assetError || !asset) {
-      return NextResponse.json({ error: 'Asset not found' }, { status: 404 })
-    }
-
-    // Get user details
-    const { data: user, error: userError } = await supabase
+    // Get user UUID
+    const { data: dbUser } = await supabase
       .from('users')
-      .select('coins, discord_id')
+      .select('id')
       .eq('discord_id', session.user.id)
       .single()
 
-    if (userError || !user) {
+    if (!dbUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // For FREE assets: Check if user has commented before allowing download
-    const isFreeAsset = !asset.coin_price || asset.coin_price === 0
-    if (isFreeAsset) {
-      // Check if user has commented on this asset
-      const { data: userComment, error: commentError } = await supabase
-        .from('asset_comments')
-        .select('id')
-        .eq('asset_id', id)
-        .eq('user_id', session.user.id)
-        .limit(1)
-        .single()
+    // Get asset
+    const { data: asset, error } = await supabase
+      .from('assets')
+      .select('*')
+      .eq('id', assetId)
+      .single()
 
-      if (commentError || !userComment) {
-        return NextResponse.json({ 
-          error: 'Comment required',
-          message: 'You must leave a comment before downloading this free asset',
-          requireComment: true
+    if (error || !asset) {
+      await logDownloadAttempt(assetId, dbUser.id, false, hash, 'Asset not found')
+      return NextResponse.json({ error: 'Asset not found' }, { status: 404 })
+    }
+
+    // Verify Linkvertise hash jika enabled
+    if (LINKVERTISE_CONFIG.enabled) {
+      const isValid = await verifyLinkvertiseHash(hash)
+      if (!isValid) {
+        await logDownloadAttempt(assetId, dbUser.id, false, hash, 'Invalid hash')
+        return NextResponse.json({
+          error: 'Invalid download link. Please use the Linkvertise link.',
+          linkvertiseUrl: asset.download_url
         }, { status: 403 })
       }
     }
 
-    // Check if asset is premium and user has enough coins
-    if (asset.coin_price > 0) {
-      if (user.coins < asset.coin_price) {
-        return NextResponse.json({ 
-          error: 'Insufficient coins',
-          required: asset.coin_price,
-          current: user.coins
-        }, { status: 400 })
-      }
-
-      // Check if already purchased
-      const { data: existingDownload } = await supabase
-        .from('downloads')
-        .select('id')
-        .eq('user_id', session.user.id)
-        .eq('asset_id', id)
-        .single()
-
-      if (!existingDownload) {
-        // Deduct coins
-        const newBalance = user.coins - asset.coin_price
-        await supabase
-          .from('users')
-          .update({ coins: newBalance })
-          .eq('discord_id', session.user.id)
-
-        // Record transaction
-        await supabase
-          .from('coin_transactions')
-          .insert({
-            user_id: session.user.id,
-            amount: -asset.coin_price,
-            type: 'purchase',
-            description: `Downloaded asset: ${asset.title}`,
-            reference_id: asset.id
-          })
-
-        // Record download
-        await supabase
-          .from('downloads')
-          .insert({
-            user_id: session.user.id,
-            asset_id: id,
-            coin_spent: asset.coin_price
-          })
-      }
-    } else {
-      // Free asset - just record download
-      const { data: existingDownload } = await supabase
-        .from('downloads')
-        .select('id')
-        .eq('user_id', session.user.id)
-        .eq('asset_id', id)
-        .single()
-
-      if (!existingDownload) {
-        await supabase
-          .from('downloads')
-          .insert({
-            user_id: session.user.id,
-            asset_id: id,
-            coin_spent: 0
-          })
-      }
-    }
-
-    // Increment download count
+    // Update download count
     await supabase
       .from('assets')
       .update({ downloads: (asset.downloads || 0) + 1 })
-      .eq('id', id)
+      .eq('id', assetId)
 
-    // Return download link
-    return NextResponse.json({
-      success: true,
-      downloadUrl: asset.download_url || asset.download_link,
-      message: 'Download started'
+    // Log download
+    await supabase.from('downloads').insert({
+      asset_id: assetId,
+      user_id: dbUser.id
     })
 
+    // Award XP
+    await supabase.rpc('award_xp', {
+      p_user_id: dbUser.id,
+      p_amount: 15,
+      p_reason: 'Downloaded asset'
+    })
+
+    await logDownloadAttempt(assetId, dbUser.id, true, hash, 'Success')
+
+    return NextResponse.json({
+      success: true,
+      downloadUrl: asset.download_url,
+      message: 'Download started'
+    })
   } catch (error) {
-    console.error('[API Asset Download] Error:', error)
+    console.error('[API Download] Error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id: assetId } = await params
+
+    // Get user UUID
+    const { data: dbUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('discord_id', session.user.id)
+      .single()
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Get asset
+    const { data: asset, error } = await supabase
+      .from('assets')
+      .select('*')
+      .eq('id', assetId)
+      .single()
+
+    if (error || !asset) {
+      return NextResponse.json({ error: 'Asset not found' }, { status: 404 })
+    }
+
+    // Update download count
+    await supabase
+      .from('assets')
+      .update({ downloads: (asset.downloads || 0) + 1 })
+      .eq('id', assetId)
+
+    // Log download
+    await supabase.from('downloads').insert({
+      asset_id: assetId,
+      user_id: dbUser.id
+    })
+
+    // Award XP
+    await supabase.rpc('award_xp', {
+      p_user_id: dbUser.id,
+      p_amount: 15,
+      p_reason: 'Downloaded asset'
+    })
+
+    // Fetch dynamic settings for Linkvertise
+    const { data: settings } = await supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'linkvertise')
+      .single()
+
+    let finalDownloadUrl = asset.download_url
+
+    // Apply Linkvertise if enabled dynamically
+    if (settings?.value?.enabled && settings?.value?.userId) {
+      // Check if already is linkvertise (to avoid double wrap if old data exists)
+      const isAlreadyLinkvertise = asset.download_url?.includes('linkvertise.com') || asset.download_url?.includes('direct-link.net');
+
+      if (!isAlreadyLinkvertise && asset.download_url) {
+        const { generateLinkvertiseUrl } = await import('@/lib/linkvertise')
+        // We direct to the verification route, OR we can wrap the direct link.
+        // The verification route is better for analytics: /api/linkvertise/download/[id]
+        // But wait, the verification route redirects to /api/download/[id].
+        // If we verify HERE (in POST /download), we might skip verification?
+        // No, this is "Initiate Download".
+        // If we want to force Linkvertise, we should give the Linkvertise URL that points to the verification route.
+
+        const targetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/linkvertise/download/${assetId}`
+        finalDownloadUrl = generateLinkvertiseUrl(settings.value.userId, targetUrl)
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Download tracked',
+      downloadUrl: finalDownloadUrl
+    })
+  } catch (error) {
+    console.error('[API Download POST] Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

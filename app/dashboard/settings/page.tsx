@@ -141,7 +141,14 @@ export default function SettingsPage() {
   if (!user) return null
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl">
+    <div className="min-h-screen bg-transparent relative p-4 md:p-6 pb-12 overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/5 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
+      <div className="max-w-4xl mx-auto relative z-10">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
             <Link href="/dashboard" className="hover:text-foreground transition-colors flex items-center gap-1">
@@ -169,7 +176,7 @@ export default function SettingsPage() {
           )}
 
           {/* Profile Settings */}
-          <div className="glass rounded-2xl p-6 mb-6">
+          <div className="glass-morphism rounded-2xl p-6 mb-6 border-white/5 shadow-2xl">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center">
                 <User className="h-5 w-5 text-primary" />
@@ -267,7 +274,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Notification Settings */}
-          <div className="glass rounded-2xl p-6 mb-6">
+          <div className="glass-morphism rounded-2xl p-6 mb-6 border-white/5 shadow-2xl">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-xl bg-warning/20 flex items-center justify-center">
                 <Bell className="h-5 w-5 text-warning" />
@@ -337,7 +344,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Security */}
-          <div className="glass rounded-2xl p-6 mb-6">
+          <div className="glass-morphism rounded-2xl p-6 mb-6 border-white/5 shadow-2xl">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-xl bg-success/20 flex items-center justify-center">
                 <Shield className="h-5 w-5 text-success" />
@@ -389,7 +396,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Billing */}
-          <div className="glass rounded-2xl p-6 mb-6">
+          <div className="glass-morphism rounded-2xl p-6 mb-6 border-white/5 shadow-2xl">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-xl bg-accent/20 flex items-center justify-center">
                 <CreditCard className="h-5 w-5 text-accent" />
@@ -444,7 +451,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Danger Zone */}
-          <div className="glass rounded-2xl p-6 border-destructive/30">
+          <div className="glass-morphism rounded-2xl p-6 border-destructive/20 shadow-2xl bg-destructive/5">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-xl bg-destructive/20 flex items-center justify-center">
                 <Trash2 className="h-5 w-5 text-destructive" />
@@ -462,6 +469,7 @@ export default function SettingsPage() {
               </Button>
             </div>
           </div>
+        </div>
     </div>
   )
 }

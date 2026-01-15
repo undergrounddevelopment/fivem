@@ -143,19 +143,19 @@ export function DynamicBanner({ position, className, showClose = true }: Dynamic
 
       <div
         className={cn(
-          "relative group",
-          position === "sidebar" && "aspect-[3/2]",
-          position === "top" && "aspect-[6/1]",
-          position === "hero" && "aspect-[16/5]",
-          position === "footer" && "aspect-[4/1]",
+          "relative group w-full",
+          position === "sidebar" && "min-h-[100px]",
+          position === "top" && "min-h-[60px]",
+          position === "hero" && "min-h-[120px]",
+          position === "footer" && "min-h-[80px]",
         )}
       >
         <img
           src={currentBanner.image_url || "/placeholder.svg?height=200&width=800&query=promotional banner"}
           alt={currentBanner.title || "Banner"}
-          className="w-full h-full object-cover"
+          className="w-full h-auto object-contain bg-black/20"
           onError={(e) => {
-            ;(e.target as HTMLImageElement).src = "/placeholder.svg?height=200&width=800"
+            ; (e.target as HTMLImageElement).src = "/placeholder.svg?height=200&width=800"
           }}
         />
 

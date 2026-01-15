@@ -12,7 +12,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { userId, username, bio, avatar } = body
+    const { userId, username, bio, banner, social_links, avatar } = body
 
     // Verify user is updating their own profile
     if (userId !== session.user.id) {
@@ -27,6 +27,9 @@ export async function PUT(request: NextRequest) {
       .update({
         username: username || undefined,
         avatar: avatar || undefined,
+        bio: bio || undefined,
+        banner: banner || undefined,
+        social_links: social_links || undefined,
         updated_at: new Date().toISOString(),
       })
       .eq("discord_id", userId)

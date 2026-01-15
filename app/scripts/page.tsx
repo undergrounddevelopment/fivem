@@ -61,9 +61,11 @@ export default function ScriptsPage() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold">Scripts</h1>
-                <span className="rounded-full bg-primary/20 px-3 py-1 text-sm font-medium text-primary">
-                  {assets.length} resources
-                </span>
+                {!isLoading && assets.length > 0 && (
+                  <span className="rounded-full bg-primary/20 px-3 py-1 text-sm font-medium text-primary">
+                    {assets.length} resources
+                  </span>
+                )}
               </div>
               <p className="text-muted-foreground">Premium and free scripts for FiveM</p>
             </div>

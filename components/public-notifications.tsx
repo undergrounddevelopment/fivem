@@ -223,11 +223,21 @@ export function PublicNotifications() {
     setMounted(true)
     setDismissed(JSON.parse(localStorage.getItem("dismissed_notifs") || "[]"))
     
-    const fetchNotifs = () => {
-      fetch("/api/notifications/public")
-        .then(r => r.ok ? r.json() : { notifications: [] })
-        .then(d => setNotifs(d.notifications || []))
-        .finally(() => setLoading(false))
+    const fetchNotifs = async () => {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5s timeout
+      
+      try {
+        const r = await fetch("/api/notifications/public", { signal: controller.signal })
+        clearTimeout(timeoutId)
+        const d = r.ok ? await r.json() : { notifications: [] }
+        setNotifs(d.notifications || [])
+      } catch {
+        // Silently fail on network errors - notifications are not critical
+        clearTimeout(timeoutId)
+      } finally {
+        setLoading(false)
+      }
     }
     
     fetchNotifs()
@@ -255,7 +265,8 @@ export function PublicNotifications() {
     localStorage.setItem("dismissed_notifs", JSON.stringify(next))
   }
 
-  const visible = notifs.filter(n => !dismissed.includes(n.id))
+  // Filter out new_asset notifications (disabled for performance)
+  const visible = notifs.filter(n => !dismissed.includes(n.id) && n.type !== "new_asset")
   
   if (!mounted || loading || visible.length === 0) return null
 

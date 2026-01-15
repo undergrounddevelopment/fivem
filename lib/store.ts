@@ -81,7 +81,7 @@ export const useNotificationStore = create<NotificationState>((set) => ({
 
 export const useStatsStore = create<StatsState>((set) => ({
   stats: {
-    onlineUsers: 1,
+    onlineUsers: 0,
     totalMembers: 0,
     totalAssets: 0,
     totalDownloads: 0,
@@ -92,8 +92,7 @@ export const useStatsStore = create<StatsState>((set) => ({
     stats: { 
       ...state.stats, 
       ...newStats,
-      // Ensure onlineUsers is at least 1
-      onlineUsers: Math.max(1, newStats.onlineUsers ?? state.stats.onlineUsers)
+      onlineUsers: newStats.onlineUsers ?? state.stats.onlineUsers
     } 
   })),
 }))

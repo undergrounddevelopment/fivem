@@ -88,12 +88,24 @@ export async function POST(request: NextRequest) {
     if (error) throw error
 
     // Create notification for receiver
+    const { data: senderUser } = await supabase
+      .from('users')
+      .select('username, avatar')
+      .eq('discord_id', senderId)
+      .single()
+
     await supabase.from("notifications").insert({
       user_id: receiverId,
       type: "message",
       title: "New Message",
-      message: `${session.user.name} sent you a message`,
-      read: false, // Fix is_read column name to match database schema
+      message: `${senderUser?.username || session.user.name || 'Someone'} sent you a message: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
+      data: {
+        sender_id: senderId,
+        sender_name: senderUser?.username || session.user.name,
+        sender_avatar: senderUser?.avatar || session.user.image,
+        message_preview: content.substring(0, 100)
+      },
+      read: false,
     })
 
     return NextResponse.json({

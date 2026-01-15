@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from("users")
-      .select("*", { count: "exact" })
+      .select("id, discord_id, username, email, avatar, membership, coins, xp, level, is_admin, is_banned, ban_reason, created_at, last_seen", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1)
 
@@ -49,22 +49,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ users: [], error: error.message }, { status: 500 })
     }
 
-    // Format users for admin coins page
+    // Format users for admin panel
     const formatted = (users || []).map((u) => ({
       id: u.discord_id || u.id, // Use discord_id as primary identifier
+      uuid: u.id, // Keep UUID for reference
       discordId: u.discord_id,
-      uuid: u.id,
       username: u.username || "Unknown",
       email: u.email,
       avatar: u.avatar || null,
-      membership: u.membership || "member",
+      membership: u.membership || "free",
       coins: u.coins || 0,
       xp: u.xp || 0,
       level: u.level || 1,
       status: u.is_banned ? "banned" : "active",
+      is_banned: u.is_banned || false,
+      ban_reason: u.ban_reason || null,
       lastActive: u.last_seen,
       createdAt: u.created_at,
+      created_at: u.created_at,
       isAdmin: u.is_admin || false,
+      is_admin: u.is_admin || false,
     }))
 
     return NextResponse.json({

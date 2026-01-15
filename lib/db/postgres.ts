@@ -12,13 +12,24 @@ const sslEnabled =
   connectionString.includes("neon") ||
   connectionString.includes("akamaidb.net")
 
+// Enhanced SSL configuration for Supabase
+const sslConfig = sslEnabled ? {
+  rejectUnauthorized: false,
+  // Additional SSL options for better compatibility
+  checkServerIdentity: () => undefined,
+  secureProtocol: 'TLSv1_2_method'
+} : undefined
+
 const pool = connectionString
   ? new Pool({
       connectionString,
-      ssl: sslEnabled ? { rejectUnauthorized: false } : undefined,
+      ssl: sslConfig,
       max: 10,
       idleTimeoutMillis: 20_000,
       connectionTimeoutMillis: 10_000,
+      // Additional options for better reliability
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10_000,
     })
   : null
 

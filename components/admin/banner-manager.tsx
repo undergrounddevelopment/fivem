@@ -63,12 +63,32 @@ export function BannerManager({ onUpdate }: BannerManagerProps) {
 
   const fetchBanners = useCallback(async () => {
     try {
+      setIsLoading(true)
       const res = await fetch("/api/admin/banners")
+      
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || `HTTP ${res.status}`)
+      }
+      
       const data = await res.json()
       setBanners(data.banners || [])
+      console.log('Banners loaded:', data.banners?.length || 0)
     } catch (error) {
       console.error("Failed to fetch banners:", error)
-      toast.error("Failed to load banners")
+      
+      // Provide specific error messages
+      if (error.message.includes('42P01')) {
+        toast.error("Banners table does not exist. Please contact administrator.")
+      } else if (error.message.includes('401')) {
+        toast.error("Authentication required. Please login as admin.")
+      } else if (error.message.includes('403')) {
+        toast.error("Admin access required.")
+      } else {
+        toast.error(`Failed to load banners: ${error.message}`)
+      }
+      
+      setBanners([])
     } finally {
       setIsLoading(false)
     }
@@ -133,11 +153,19 @@ export function BannerManager({ onUpdate }: BannerManagerProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!formData.image_url.trim()) {
+      toast.error("Image URL is required")
+      return
+    }
+    
     setSaving(true)
 
     try {
       const method = editingBanner ? "PUT" : "POST"
       const body = editingBanner ? { id: editingBanner.id, ...formData } : formData
+
+      console.log('Submitting banner:', method, body)
 
       const res = await fetch("/api/admin/banners", {
         method,
@@ -145,18 +173,32 @@ export function BannerManager({ onUpdate }: BannerManagerProps) {
         body: JSON.stringify(body),
       })
 
+      const responseData = await res.json()
+
       if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || "Failed to save banner")
+        throw new Error(responseData.error || `HTTP ${res.status}`)
       }
 
-      toast.success(editingBanner ? "Banner updated!" : "Banner created!")
+      toast.success(editingBanner ? "Banner updated successfully!" : "Banner created successfully!")
       fetchBanners()
       setIsDialogOpen(false)
       resetForm()
       onUpdate?.()
     } catch (error: any) {
-      toast.error(error.message || "An error occurred")
+      console.error('Banner save error:', error)
+      
+      // Provide specific error messages
+      if (error.message.includes('42P01')) {
+        toast.error("Banners table does not exist. Please contact administrator.")
+      } else if (error.message.includes('401')) {
+        toast.error("Authentication required. Please login as admin.")
+      } else if (error.message.includes('403')) {
+        toast.error("Admin access required.")
+      } else if (error.message.includes('23505')) {
+        toast.error("A banner with this configuration already exists.")
+      } else {
+        toast.error(`Failed to save banner: ${error.message}`)
+      }
     } finally {
       setSaving(false)
     }
@@ -347,7 +389,7 @@ export function BannerManager({ onUpdate }: BannerManagerProps) {
           if (!open) resetForm()
         }}
       >
-        <DialogContent className="bg-card border-border max-w-2xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingBanner ? "Edit Banner" : "Add New Banner"}</DialogTitle>
           </DialogHeader>

@@ -1,0 +1,818 @@
+/* ============================================
+   RESPONSIVE COMPONENTS CSS
+   Optimized for All Platforms
+   ============================================ */
+
+/* ============================================
+   1. RESPONSIVE SIDEBAR
+   ============================================ */
+.sidebar-responsive {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  z-index: 50;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--background);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile: Hidden by default, slide in */
+@media screen and (max-width: 767px) {
+  .sidebar-responsive {
+    width: 280px;
+    transform: translateX(-100%);
+  }
+  
+  .sidebar-responsive.open {
+    transform: translateX(0);
+  }
+  
+  .sidebar-responsive .nav-item {
+    padding: 14px 16px;
+    min-height: 48px;
+  }
+  
+  .sidebar-responsive .nav-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .sidebar-responsive .nav-label {
+    font-size: 15px;
+  }
+}
+
+/* Tablet: Narrower sidebar */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .sidebar-responsive {
+    width: 240px;
+  }
+  
+  .sidebar-responsive .nav-item {
+    padding: 12px 14px;
+  }
+  
+  .sidebar-responsive .nav-icon {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .sidebar-responsive .nav-label {
+    font-size: 14px;
+  }
+}
+
+/* Desktop: Full width */
+@media screen and (min-width: 1024px) {
+  .sidebar-responsive {
+    width: 288px;
+  }
+  
+  .sidebar-responsive .nav-item {
+    padding: 12px 16px;
+  }
+  
+  .sidebar-responsive .nav-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .sidebar-responsive .nav-label {
+    font-size: 14px;
+  }
+}
+
+/* ============================================
+   2. RESPONSIVE MAIN CONTENT
+   ============================================ */
+.main-content-responsive {
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile: Full width */
+@media screen and (max-width: 767px) {
+  .main-content-responsive {
+    margin-left: 0;
+    padding: 12px;
+  }
+}
+
+/* Tablet */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .main-content-responsive {
+    margin-left: 240px;
+    padding: 16px;
+  }
+}
+
+/* Desktop */
+@media screen and (min-width: 1024px) {
+  .main-content-responsive {
+    margin-left: 288px;
+    padding: 24px;
+  }
+}
+
+/* ============================================
+   3. RESPONSIVE HEADER
+   ============================================ */
+.header-responsive {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile */
+@media screen and (max-width: 767px) {
+  .header-responsive {
+    padding: 8px 12px;
+    padding-left: 56px; /* Space for menu button */
+    min-height: 56px;
+    gap: 8px;
+  }
+  
+  .header-responsive .search-container {
+    flex: 1;
+    max-width: none;
+  }
+  
+  .header-responsive .user-actions {
+    gap: 4px;
+  }
+  
+  .header-responsive .user-actions .btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 6px;
+  }
+}
+
+/* Tablet */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .header-responsive {
+    padding: 10px 20px;
+    height: 60px;
+    gap: 12px;
+  }
+  
+  .header-responsive .search-container {
+    max-width: 300px;
+  }
+  
+  .header-responsive .user-actions {
+    gap: 8px;
+  }
+}
+
+/* Desktop */
+@media screen and (min-width: 1024px) {
+  .header-responsive {
+    padding: 12px 24px;
+    height: 64px;
+    gap: 16px;
+  }
+  
+  .header-responsive .search-container {
+    max-width: 400px;
+  }
+  
+  .header-responsive .user-actions {
+    gap: 12px;
+  }
+}
+
+/* ============================================
+   4. RESPONSIVE CARDS
+   ============================================ */
+.card-responsive {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+/* Mobile */
+@media screen and (max-width: 767px) {
+  .card-responsive {
+    padding: 14px;
+    border-radius: 12px;
+  }
+  
+  .card-responsive .card-title {
+    font-size: 16px;
+  }
+  
+  .card-responsive .card-description {
+    font-size: 13px;
+  }
+  
+  .card-responsive .card-icon {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Tablet */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .card-responsive {
+    padding: 18px;
+    border-radius: 14px;
+  }
+  
+  .card-responsive .card-title {
+    font-size: 17px;
+  }
+  
+  .card-responsive .card-description {
+    font-size: 14px;
+  }
+  
+  .card-responsive .card-icon {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Desktop */
+@media screen and (min-width: 1024px) {
+  .card-responsive {
+    padding: 24px;
+    border-radius: 16px;
+  }
+  
+  .card-responsive .card-title {
+    font-size: 18px;
+  }
+  
+  .card-responsive .card-description {
+    font-size: 14px;
+  }
+  
+  .card-responsive .card-icon {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* ============================================
+   5. RESPONSIVE GRID LAYOUTS
+   ============================================ */
+.grid-auto-responsive {
+  display: grid;
+  gap: 16px;
+}
+
+/* Auto-fit grid that adapts to screen size */
+@media screen and (max-width: 479px) {
+  .grid-auto-responsive {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+@media screen and (min-width: 480px) and (max-width: 767px) {
+  .grid-auto-responsive {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+}
+
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .grid-auto-responsive {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .grid-auto-responsive.grid-tablet-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media screen and (min-width: 1024px) and (max-width: 1279px) {
+  .grid-auto-responsive {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  
+  .grid-auto-responsive.grid-desktop-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media screen and (min-width: 1280px) {
+  .grid-auto-responsive {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+  
+  .grid-auto-responsive.grid-xl-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* ============================================
+   6. RESPONSIVE BUTTONS
+   ============================================ */
+.btn-responsive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  min-height: 44px; /* Touch target */
+}
+
+/* Mobile */
+@media screen and (max-width: 767px) {
+  .btn-responsive {
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+  
+  .btn-responsive.btn-full-mobile {
+    width: 100%;
+  }
+  
+  .btn-responsive .btn-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Tablet */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .btn-responsive {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  
+  .btn-responsive .btn-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Desktop */
+@media screen and (min-width: 1024px) {
+  .btn-responsive {
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+  
+  .btn-responsive .btn-icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* ============================================
+   7. RESPONSIVE FORMS
+   ============================================ */
+.form-responsive {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.input-responsive {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  transition: all 0.2s ease;
+  min-height: 44px; /* Touch target */
+}
+
+.input-responsive:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+}
+
+/* Mobile */
+@media screen and (max-width: 767px) {
+  .input-responsive {
+    padding: 12px 14px;
+    font-size: 16px; /* Prevent zoom on iOS */
+    border-radius: 10px;
+  }
+  
+  .form-responsive .form-row {
+    flex-direction: column;
+  }
+}
+
+/* Tablet & Desktop */
+@media screen and (min-width: 768px) {
+  .input-responsive {
+    padding: 12px 16px;
+    font-size: 15px;
+    border-radius: 12px;
+  }
+  
+  .form-responsive .form-row {
+    flex-direction: row;
+    gap: 16px;
+  }
+  
+  .form-responsive .form-row > * {
+    flex: 1;
+  }
+}
+
+/* ============================================
+   8. RESPONSIVE MODALS/DIALOGS
+   ============================================ */
+.modal-responsive {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-content-responsive {
+  background: var(--background);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile: Full screen modal */
+@media screen and (max-width: 767px) {
+  .modal-responsive {
+    padding: 0;
+  }
+  
+  .modal-content-responsive {
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+    padding: 16px;
+  }
+  
+  .modal-content-responsive.modal-sheet {
+    height: auto;
+    max-height: 90vh;
+    border-radius: 20px 20px 0 0;
+    margin-top: auto;
+  }
+}
+
+/* Tablet */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .modal-content-responsive {
+    width: 90%;
+    max-width: 600px;
+    border-radius: 16px;
+    padding: 24px;
+  }
+}
+
+/* Desktop */
+@media screen and (min-width: 1024px) {
+  .modal-content-responsive {
+    width: 100%;
+    max-width: 640px;
+    border-radius: 20px;
+    padding: 28px;
+  }
+}
+
+/* ============================================
+   9. RESPONSIVE TABLES
+   ============================================ */
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-responsive th,
+.table-responsive td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Mobile: Card-style table */
+@media screen and (max-width: 767px) {
+  .table-responsive-cards thead {
+    display: none;
+  }
+  
+  .table-responsive-cards tbody tr {
+    display: block;
+    margin-bottom: 12px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .table-responsive-cards tbody td {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .table-responsive-cards tbody td:last-child {
+    border-bottom: none;
+  }
+  
+  .table-responsive-cards tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--textDim);
+  }
+}
+
+/* ============================================
+   10. RESPONSIVE NAVIGATION TABS
+   ============================================ */
+.tabs-responsive {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  gap: 4px;
+}
+
+.tabs-responsive::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-responsive {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  font-weight: 500;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile */
+@media screen and (max-width: 767px) {
+  .tabs-responsive {
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+  }
+  
+  .tab-responsive {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}
+
+/* Tablet & Desktop */
+@media screen and (min-width: 768px) {
+  .tabs-responsive {
+    gap: 8px;
+  }
+  
+  .tab-responsive {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+}
+
+/* ============================================
+   11. RESPONSIVE DROPDOWN MENUS
+   ============================================ */
+.dropdown-responsive {
+  position: relative;
+}
+
+.dropdown-content-responsive {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 50;
+  min-width: 200px;
+  background: var(--background);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile: Full width dropdown */
+@media screen and (max-width: 767px) {
+  .dropdown-content-responsive {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 70vh;
+    border-radius: 20px 20px 0 0;
+    padding: 16px;
+    padding-bottom: calc(16px + var(--safe-area-bottom, 0px));
+  }
+  
+  .dropdown-content-responsive .dropdown-item {
+    padding: 14px 16px;
+    min-height: 48px;
+  }
+}
+
+/* ============================================
+   12. RESPONSIVE IMAGES
+   ============================================ */
+.img-responsive {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.img-responsive-contain {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Aspect ratio containers */
+.aspect-responsive-16-9 {
+  aspect-ratio: 16 / 9;
+}
+
+.aspect-responsive-4-3 {
+  aspect-ratio: 4 / 3;
+}
+
+.aspect-responsive-1-1 {
+  aspect-ratio: 1 / 1;
+}
+
+/* ============================================
+   13. RESPONSIVE SPACING UTILITIES
+   ============================================ */
+/* Mobile-first spacing */
+.space-responsive {
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+}
+
+@media screen and (min-width: 768px) {
+  .space-responsive {
+    --space-xs: 6px;
+    --space-sm: 10px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .space-responsive {
+    --space-xs: 8px;
+    --space-sm: 12px;
+    --space-md: 20px;
+    --space-lg: 28px;
+    --space-xl: 40px;
+  }
+}
+
+/* ============================================
+   14. RESPONSIVE TYPOGRAPHY
+   ============================================ */
+.text-responsive-xs {
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+}
+
+.text-responsive-sm {
+  font-size: clamp(0.875rem, 2.5vw, 1rem);
+}
+
+.text-responsive-base {
+  font-size: clamp(1rem, 3vw, 1.125rem);
+}
+
+.text-responsive-lg {
+  font-size: clamp(1.125rem, 3.5vw, 1.25rem);
+}
+
+.text-responsive-xl {
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
+}
+
+.text-responsive-2xl {
+  font-size: clamp(1.5rem, 5vw, 2rem);
+}
+
+.text-responsive-3xl {
+  font-size: clamp(1.875rem, 6vw, 2.5rem);
+}
+
+.text-responsive-4xl {
+  font-size: clamp(2.25rem, 7vw, 3rem);
+}
+
+/* ============================================
+   15. MOBILE MENU OVERLAY
+   ============================================ */
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 45;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.mobile-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ============================================
+   16. BOTTOM NAVIGATION (Mobile)
+   ============================================ */
+.bottom-nav-responsive {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: var(--background);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: var(--safe-area-bottom, 0px);
+  display: none;
+}
+
+@media screen and (max-width: 767px) {
+  .bottom-nav-responsive {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 16px;
+    padding-bottom: calc(8px + var(--safe-area-bottom, 0px));
+  }
+  
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    min-width: 64px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+  }
+  
+  .bottom-nav-item.active {
+    background: rgba(236, 72, 153, 0.15);
+    color: var(--primary);
+  }
+  
+  .bottom-nav-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .bottom-nav-label {
+    font-size: 11px;
+    font-weight: 500;
+  }
+  
+  /* Add padding to main content for bottom nav */
+  .has-bottom-nav {
+    padding-bottom: calc(70px + var(--safe-area-bottom, 0px));
+  }
+}

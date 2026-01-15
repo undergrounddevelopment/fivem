@@ -73,7 +73,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl glass border-2 border-primary/30 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <VisuallyHidden>
           <DialogTitle>Add New Asset</DialogTitle>
         </VisuallyHidden>

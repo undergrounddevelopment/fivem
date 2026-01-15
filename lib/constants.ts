@@ -155,10 +155,13 @@ export const FRAMEWORK_LOGOS = {
 
 // Sponsor Banners
 export const SPONSOR_BANNERS = [
-  "https://r2.fivemanage.com/pjW8diq5cgbXePkRb7YQg/ts(1).mp4",
-  "https://r2.fivemanage.com/pjW8diq5cgbXePkRb7YQg/letraserverlistgif.gif",
-  "https://r2.fivemanage.com/pjW8diq5cgbXePkRb7YQg/serverlist_iteration_1.gif",
-  "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExb20ydGl6a21pY3FxdG5ndWtqbmlrNGRrcWV6YWg5bGN2MDE4OGx6ZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NACV6SPFQ8Fqndeek9/giphy.gif",
+  "https://upload.narco.gg/uploads/2025/12/01/XvxjfGV_20251201051034_b3of1563.png",
+  "https://i.gyazo.com/e6c86b86e7f82ae61e2b4f781a12c0b2.gif",
+  "https://iili.io/K2HTAbe.gif",
+  "https://santaimagens.roleplayrp.com/img/imagens_variadas/connect/bannersanta.png",
+  "https://r2.fivemanage.com/pjW8diq5cgbXePkRb7YQg/serverlistbannerwise.gif",
+  "https://r2.fivemanage.com/pjW8diq5cgbXePkRb7YQg/serverlistbanner.gif",
+  "https://r2.fivemanage.com/pjW8diq5cgbXePkRb7YQg/serverlist_banner.gif",
 ]
 
 export const FRAMEWORKS: FrameworkInfo[] = [
@@ -219,6 +222,27 @@ export const SPONSORS: Sponsor[] = [
     id: "sponsor-4",
     name: "Gaming Sponsor",
     image: SPONSOR_BANNERS[3],
+    type: "gif",
+    isActive: true,
+  },
+  {
+    id: "sponsor-5",
+    name: "Server List Banner Wise",
+    image: SPONSOR_BANNERS[4],
+    type: "gif",
+    isActive: true,
+  },
+  {
+    id: "sponsor-6",
+    name: "Server List Banner",
+    image: SPONSOR_BANNERS[5],
+    type: "gif",
+    isActive: true,
+  },
+  {
+    id: "sponsor-7",
+    name: "Server List Detail",
+    image: SPONSOR_BANNERS[6],
     type: "gif",
     isActive: true,
   },

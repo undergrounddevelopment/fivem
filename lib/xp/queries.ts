@@ -26,7 +26,7 @@ export const xpQueries = {
     try {
       const supabase = createAdminClient()
       const xpAmount = XP_ACTIVITIES[activity as keyof typeof XP_ACTIVITIES] || 0
-      
+
       if (xpAmount === 0) {
         console.warn(`[XP] Unknown activity: ${activity}`)
         return { success: false, error: "Unknown activity" }
@@ -51,9 +51,9 @@ export const xpQueries = {
       // Update user XP and badge tier
       const { error: updateError } = await supabase
         .from("users")
-        .update({ 
-          xp: newXp, 
-          badge_tier: newBadgeTier 
+        .update({
+          xp: newXp,
+          badge_tier: newBadgeTier
         })
         .eq("id", user.id)
 
@@ -71,10 +71,10 @@ export const xpQueries = {
           details: referenceId ? `Reference: ${referenceId}` : null,
           xp_earned: xpAmount,
         })
-        .catch(console.error)
+
 
       console.log(`[XP] Awarded ${xpAmount} XP to ${discordId} for ${activity}`)
-      
+
       return {
         success: true,
         xpAwarded: xpAmount,
@@ -91,8 +91,8 @@ export const xpQueries = {
   // Get user XP stats
   getUserXPStats: async (discordId: string) => {
     try {
-      const supabase = createClient()
-      
+      const supabase = await createClient()
+
       const { data: user, error } = await supabase
         .from("users")
         .select("xp, badge_tier")
@@ -103,8 +103,8 @@ export const xpQueries = {
 
       const currentTier = BADGE_TIERS.find(t => t.tier === (user.badge_tier || 1)) || BADGE_TIERS[0]
       const nextTier = BADGE_TIERS.find(t => t.tier === (user.badge_tier || 1) + 1)
-      
-      const progress = nextTier 
+
+      const progress = nextTier
         ? ((user.xp - currentTier.minXp) / (nextTier.minXp - currentTier.minXp)) * 100
         : 100
 
@@ -125,8 +125,8 @@ export const xpQueries = {
   // Get XP leaderboard
   getLeaderboard: async (limit = 50) => {
     try {
-      const supabase = createClient()
-      
+      const supabase = await createClient()
+
       const { data, error } = await supabase
         .from("users")
         .select("discord_id, username, avatar, xp, badge_tier")
@@ -134,7 +134,7 @@ export const xpQueries = {
         .limit(limit)
 
       if (error) throw error
-      
+
       return (data || []).map((user, index) => ({
         rank: index + 1,
         discordId: user.discord_id,
@@ -153,8 +153,8 @@ export const xpQueries = {
   // Get user activities
   getUserActivities: async (discordId: string, limit = 20) => {
     try {
-      const supabase = createClient()
-      
+      const supabase = await createClient()
+
       // Get user ID first
       const { data: user } = await supabase
         .from("users")

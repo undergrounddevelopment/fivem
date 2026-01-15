@@ -9,6 +9,7 @@ import {
   ImageIcon,
   Megaphone,
   MessageSquare,
+  MessageCircle,
   Settings,
   Sparkles,
   Users,
@@ -54,11 +55,18 @@ const adminNavItems = [
     badge: null,
   },
   {
+    title: "Comments",
+    href: "/admin/comments",
+    icon: MessageCircle,
+    color: "from-teal-500 to-emerald-500",
+    badge: "New",
+  },
+  {
     title: "Forum",
     href: "/admin/forum",
     icon: MessageSquare,
     color: "from-purple-500 to-pink-500",
-    badge: "New",
+    badge: null,
   },
   {
     title: "Assets",
@@ -67,13 +75,13 @@ const adminNavItems = [
     color: "from-orange-500 to-red-500",
     badge: null,
   },
-  // {
-  //   title: "Spin Wheel",
-  //   href: "/admin/spin-wheel",
-  //   icon: Sparkles,
-  //   color: "from-yellow-500 to-orange-500",
-  //   badge: null,
-  // }, // Event sudah habis
+  {
+    title: "Spin Wheel",
+    href: "/admin/spin-wheel",
+    icon: Sparkles,
+    color: "from-yellow-500 to-orange-500",
+    badge: "Live",
+  },
   {
     title: "Coins",
     href: "/admin/coins",
@@ -161,8 +169,8 @@ export function AdminSidebarNav() {
             >
               <div className={cn(
                 "h-8 w-8 rounded-lg flex items-center justify-center transition-all",
-                isActive 
-                  ? `bg-gradient-to-br ${item.color}` 
+                isActive
+                  ? `bg-gradient-to-br ${item.color}`
                   : "bg-white/5 group-hover:bg-white/10"
               )}>
                 <item.icon className={cn("h-4 w-4", isActive ? "text-white" : "")} />
