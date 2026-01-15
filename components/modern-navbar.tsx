@@ -22,6 +22,7 @@ export function ModernNavbar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  const menuItems = [
     { label: "Community", href: "/forum" },
     { label: "Staff", href: "/staff" },
     { label: "Features", href: "/#features" },
