@@ -3,7 +3,7 @@
   "version": "7.0.0",
   "private": true,
   "scripts": {
-    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 next build",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 next build --webpack",
     "build:webpack": "cross-env NODE_OPTIONS=--max-old-space-size=8192 next build --webpack",
     "deploy:prod": "vercel --prod",
     "deploy:now": "powershell -ExecutionPolicy Bypass -File ./deploy-vercel-now.ps1",
