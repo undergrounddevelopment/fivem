@@ -225,8 +225,7 @@ export default function ProfilePage() {
     }
   }
 
-  if (loading) {
-// ...
+
   const achievements = [
     { id: "1", name: "First Download", icon: "🏆", unlocked: downloadCount > 0 },
     { id: "2", name: "First Post", icon: "💬", unlocked: postCount > 0 },
