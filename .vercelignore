@@ -6,5 +6,5 @@ node_modules
 .DS_Store
 backup_*.sql
 temp_restore.sql
-scripts/
+/scripts
 tests/
