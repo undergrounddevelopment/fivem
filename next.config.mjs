@@ -27,7 +27,6 @@ const nextConfig = {
     return config
   },
   ...(process.env.NODE_ENV === 'development' && {
-    swcMinify: false,
     compiler: {
       removeConsole: false,
     },

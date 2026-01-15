@@ -13,6 +13,7 @@ export default function ScriptsPage() {
   const [search, setSearch] = useState("")
   const [price, setPrice] = useState<"all" | "free" | "premium">("all")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchAssets()
@@ -20,6 +21,7 @@ export default function ScriptsPage() {
 
   async function fetchAssets() {
     setIsLoading(true)
+    setError(null)
     try {
       const params = new URLSearchParams({ category: 'scripts' })
       if (search) params.set('search', search)
@@ -27,13 +29,15 @@ export default function ScriptsPage() {
       
       const response = await fetch(`/api/assets?${params.toString()}`)
       if (!response.ok) {
-        throw new Error('Failed to fetch scripts')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to fetch scripts')
       }
       
       const result = await response.json()
       setAssets(result.assets || result.items || [])
-    } catch (error) {
-      console.error('Fetch error:', error)
+    } catch (err: any) {
+      console.error('Fetch error:', err)
+      setError(err.message)
       setAssets([])
     } finally {
       setIsLoading(false)
@@ -147,6 +151,22 @@ export default function ScriptsPage() {
               </motion.div>
             ))}
           </div>
+        ) : error ? (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass rounded-2xl flex flex-col items-center justify-center py-20 border-destructive/20"
+          >
+            <div className="h-16 w-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4 text-destructive">
+              <Code className="h-8 w-8" />
+            </div>
+            <h3 className="text-xl font-semibold text-destructive">Error loading scripts</h3>
+            <p className="text-muted-foreground mt-1 text-center max-w-md px-4">{error}</p>
+            <Button variant="outline" className="mt-6 gap-2" onClick={() => fetchAssets()}>
+              <Zap className="h-4 w-4" />
+              Try Again
+            </Button>
+          </motion.div>
         ) : assets.length > 0 ? (
           <motion.div 
             initial={{ opacity: 0 }}
