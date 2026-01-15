@@ -26,7 +26,11 @@ function calculateGuestCount(): number {
 export async function GET() {
   try {
     // Get authenticated online users with soft error handling
+    // Get authenticated online users with soft error handling
     let authenticatedUsers: any[] = []
+    
+    // Define time threshold
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
     
     try {
       const supabase = createAdminClient()
