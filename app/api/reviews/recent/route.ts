@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-)
+import { createAdminClient } from '@/lib/supabase/server'
 
 // GET - Fetch recent reviews with manual joining of user and asset data
 export async function GET(request: NextRequest) {
   try {
+    const supabase = createAdminClient()
     // 1. Fetch reviews that have an asset_id
     const { data: reviews, error: reviewsError } = await supabase
       .from('testimonials')

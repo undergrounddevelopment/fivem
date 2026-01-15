@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
-
-const SUPABASE_URL = "https://elukwjlwmfgdfywjpzkd.supabase.co"
-const SUPABASE_SERVICE_KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  "sb_secret_WziEjlBmkNr0Xz2ezSWALQ_eDTEtOXp"
+import { createAdminClient } from "@/lib/supabase/server"
 
 export async function POST() {
   try {
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    const supabase = createAdminClient()
 
     // Check if tables exist
     const { error: checkError } = await supabase.from("banners").select("id").limit(1)

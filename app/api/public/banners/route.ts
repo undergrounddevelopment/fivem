@@ -1,14 +1,9 @@
-
-import { createClient } from "@supabase/supabase-js"
+import { createAdminClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export async function GET() {
     try {
+        const supabase = createAdminClient()
         const { data: banners, error } = await supabase
             .from("banners")
             .select("*")

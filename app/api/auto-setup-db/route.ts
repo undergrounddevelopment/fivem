@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
-
-const SUPABASE_URL = "https://elukwjlwmfgdfywjpzkd.supabase.co"
-const SUPABASE_SERVICE_KEY =
-  "sb_secret_WziEjlBmkNr0Xz2ezSWALQ_eDTEtOXp"
+import { createAdminClient } from "@/lib/supabase/server"
 
 let setupExecuted = false
 
@@ -19,12 +15,7 @@ export async function GET() {
   try {
     console.log("[v0] Starting automatic database setup...")
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    })
+    const supabase = createAdminClient()
 
     const setupSQL = `
       -- 1. Banners table

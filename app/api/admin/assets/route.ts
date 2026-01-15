@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/server'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseKey)
-
-async function checkAdminAccess(userId: string) {
+async function checkAdminAccess(supabase: any, userId: string) {
   // Try discord_id first
   let { data } = await supabase
     .from('users')
@@ -35,12 +31,13 @@ async function checkAdminAccess(userId: string) {
 
 export async function GET() {
   try {
+    const supabase = createAdminClient()
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const isAdmin = await checkAdminAccess(session.user.id)
+    const isAdmin = await checkAdminAccess(supabase, session.user.id)
     if (!isAdmin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
