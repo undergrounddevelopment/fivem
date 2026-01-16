@@ -15,22 +15,24 @@ async function getUser() {
 export async function getUserBalance() {
   const user = await getUser()
   if (!user) return null
-
+  
   const supabase = createAdminClient()
-  const { data, error } = await supabase
+
+  // Get user internal ID, coins, and tickets
+  const { data: userData, error: userError } = await supabase
     .from('users')
-    .select('coins, spin_tickets')
+    .select('id, coins, spin_tickets')
     .eq('discord_id', user.id)
     .single()
 
-  if (error) {
-    console.error('[getUserBalance] Error:', error)
+  if (userError || !userData) {
+    console.error('[getUserBalance] Error:', userError)
     return null
   }
 
   return {
-    coins: data?.coins || 0,
-    spin_tickets: data?.spin_tickets || 0,
+    coins: userData.coins || 0,
+    spin_tickets: userData.spin_tickets || 0,
   }
 }
 

@@ -7,9 +7,9 @@
 export const CONFIG = {
   // Database - PRODUCTION READY
   database: {
-    url: process.env.DATABASE_URL || process.env.POSTGRES_URL || "",
-    pooling: process.env.POSTGRES_PRISMA_URL || "",
-    direct: process.env.POSTGRES_URL_NON_POOLING || "",
+    url: process.env.DATABASE_URL || process.env.POSTGRES_URL || "postgresql://postgres.elukwjlwmfgdfywjpzkd:0Zc0vBjw6wy1zrvy@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true",
+    pooling: process.env.POSTGRES_PRISMA_URL || "postgresql://postgres.elukwjlwmfgdfywjpzkd:0Zc0vBjw6wy1zrvy@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true",
+    direct: process.env.POSTGRES_URL_NON_POOLING || "postgresql://postgres.elukwjlwmfgdfywjpzkd:0Zc0vBjw6wy1zrvy@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require",
   },
 
   // Supabase - PRODUCTION CREDENTIALS
@@ -17,15 +17,15 @@ export const CONFIG = {
     url:
       process.env.NEXT_PUBLIC_SUPABASE_URL ||
       process.env.SUPABASE_URL ||
-      "",
+      "https://elukwjlwmfgdfywjpzkd.supabase.co",
     anonKey:
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
       process.env.SUPABASE_ANON_KEY ||
-      "",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsdWt3amx3bWZnZGZ5d2pwemtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzNzQ2NzIsImV4cCI6MjA4Mzk1MDY3Mn0.7qgAuqnx9yKxJ5dK89b018MlxC1qaa2cEnZP-zLSwJA",
     serviceKey:
       process.env.SUPABASE_SERVICE_ROLE_KEY ||
       process.env.SUPABASE_SERVICE_KEY ||
-      "",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsdWt3amx3bWZnZGZ5d2pwemtkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODM3NDY3MiwiZXhwIjoyMDgzOTUwNjcyfQ.2tffYDTMH1RLxOWAQm8UFImPqVrFAOHtbDxRb3FJpVo",
   },
 
   // Auth - SECURE CONFIGURATION
@@ -42,7 +42,10 @@ export const CONFIG = {
   // Discord OAuth - PRODUCTION CREDENTIALS
   discord: {
     clientId: process.env.DISCORD_CLIENT_ID || "1445650115447754933",
-    clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
+    clientSecret: process.env.DISCORD_CLIENT_SECRET || "JXY7URZrY3zsN5Ca4kQ88tB0hUC2pXuW",
+    webhookUploads: process.env.DISCORD_WEBHOOK_UPLOADS || "https://discordapp.com/api/webhooks/1453826334982930624/5ogVxfU-cXKBQCsx08cf2synDxgAdSBS4hkQlGwA9qY8sbRwRnWIMOSnJ7B1kUnBG7yQ",
+    webhookAdmin: process.env.DISCORD_WEBHOOK_ADMIN || "https://discordapp.com/api/webhooks/1453826334982930624/5ogVxfU-cXKBQCsx08cf2synDxgAdSBS4hkQlGwA9qY8sbRwRnWIMOSnJ7B1kUnBG7yQ",
+    webhookLogs: process.env.DISCORD_WEBHOOK_LOGS || "https://discordapp.com/api/webhooks/1453826334982930624/5ogVxfU-cXKBQCsx08cf2synDxgAdSBS4hkQlGwA9qY8sbRwRnWIMOSnJ7B1kUnBG7yQ",
   },
 
   // Linkvertise - MONETIZATION READY

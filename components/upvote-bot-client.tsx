@@ -477,6 +477,7 @@ export function UpvoteBotClient() {
     const [showSecurityModal, setShowSecurityModal] = useState(false)
     const [boostKey, setBoostKey] = useState("")
     const [players, setPlayers] = useState<Player[]>([])
+    const [upvoteSettings, setUpvoteSettings] = useState({ min_upvotes: 1, max_upvotes: 50000, default_upvotes: 100 })
     const [allBanners, setAllBanners] = useState([
         { id: "h1", name: "Elite Development", image: "https://r2.fivemanage.com/pjW8diq5cgbXePkRb7YQg/images/hero-1.png", type: "image", isActive: true },
         { id: "h2", name: "Server Protection", image: "https://r2.fivemanage.com/pjW8diq5cgbXePkRb7YQg/images/hero-2.png", type: "image", isActive: true },
@@ -507,6 +508,25 @@ export function UpvoteBotClient() {
         const timestamp = new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" })
         setLogs(prev => [...prev.slice(-99), { id: logIdCounter.current++, message: message.toUpperCase(), type, timestamp }])
         setTimeout(() => logEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100)
+    }, [])
+
+    // Fetch upvote settings
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch("/api/upvotes/settings")
+                const data = await res.json()
+                setUpvoteSettings({
+                    min_upvotes: data.min_upvotes || 1,
+                    max_upvotes: data.max_upvotes || 50000,
+                    default_upvotes: data.default_upvotes || 100
+                })
+                setTargetUpvotes(String(data.default_upvotes || 100))
+            } catch (e) {
+                console.error("Failed to fetch upvote settings", e)
+            }
+        }
+        fetchSettings()
     }, [])
 
     // Banner Rotation & Fetching
@@ -686,8 +706,8 @@ export function UpvoteBotClient() {
     const handleLaunch = () => {
         if (!serverData) return
         const amount = parseInt(targetUpvotes)
-        if (isNaN(amount) || amount < 1 || amount > 50000) {
-            addLog("Invalid Amount: Please enter a number between 1 and 50,000", "error")
+        if (isNaN(amount) || amount < upvoteSettings.min_upvotes || amount > upvoteSettings.max_upvotes) {
+            addLog(`Invalid Amount: Please enter a number between ${upvoteSettings.min_upvotes.toLocaleString()} and ${upvoteSettings.max_upvotes.toLocaleString()}`, "error")
             return
         }
 
@@ -952,14 +972,37 @@ export function UpvoteBotClient() {
                     {/* Upvotes Process */}
                     <BentoCard title="UPVOTES PROCESS" icon={Zap}>
                         <div className="space-y-6">
-                            <Input
-                                type="number"
-                                placeholder="TARGET UPVOTES"
-                                value={targetUpvotes}
-                                onChange={(e) => setTargetUpvotes(e.target.value)}
-                                className="h-20 rounded-2xl bg-white/[0.02] border-white/5 px-6 font-mono text-2xl tracking-widest text-center focus:ring-primary/20 transition-all placeholder:text-xs placeholder:tracking-widest placeholder:opacity-20"
-                                disabled={processState.isRunning}
-                            />
+                            <div className="space-y-3">
+                                <Input
+                                    type="number"
+                                    placeholder="TARGET UPVOTES"
+                                    min={upvoteSettings.min_upvotes}
+                                    max={upvoteSettings.max_upvotes}
+                                    value={targetUpvotes}
+                                    onChange={(e) => {
+                                        const val = parseInt(e.target.value) || 0
+                                        if (val <= upvoteSettings.max_upvotes) {
+                                            setTargetUpvotes(e.target.value)
+                                        }
+                                    }}
+                                    className="h-20 rounded-2xl bg-white/[0.02] border-white/5 px-6 font-mono text-2xl tracking-widest text-center focus:ring-primary/20 transition-all placeholder:text-xs placeholder:tracking-widest placeholder:opacity-20"
+                                    disabled={processState.isRunning}
+                                />
+                                <input
+                                    type="range"
+                                    min={upvoteSettings.min_upvotes}
+                                    max={upvoteSettings.max_upvotes}
+                                    value={targetUpvotes || upvoteSettings.default_upvotes}
+                                    onChange={(e) => setTargetUpvotes(e.target.value)}
+                                    disabled={processState.isRunning}
+                                    className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-primary/50 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-lg [&::-moz-range-thumb]:shadow-primary/50"
+                                />
+                                <div className="flex justify-between text-xs text-muted-foreground font-mono">
+                                    <span>{upvoteSettings.min_upvotes.toLocaleString()}</span>
+                                    <span className="text-primary font-bold">{(parseInt(targetUpvotes) || upvoteSettings.default_upvotes).toLocaleString()} Upvotes</span>
+                                    <span>{upvoteSettings.max_upvotes.toLocaleString()}</span>
+                                </div>
+                            </div>
 
                             <Button
                                 onClick={processState.isRunning ? handleStop : handleLaunch}

@@ -1,7 +1,5 @@
-// FiveM Tools - Professional Discord Webhook System
-// Banner: https://r2.fivemanage.com/w7oyrZqqBoxEiG7UVDfhV/snapedit_1767706318773.png
-
-const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_UPLOADS
+import { CONFIG } from "@/lib/config"
+const WEBHOOK_URL = CONFIG.discord.webhookUploads
 
 // Banner & Avatar
 const BANNER_URL = "https://r2.fivemanage.com/w7oyrZqqBoxEiG7UVDfhV/snapedit_1767706318773.png"
@@ -111,7 +109,7 @@ export async function notifyAssetUploadAdvanced(
  * Admin notification
  */
 export async function notifyAdmin(title: string, message: string, type?: string, data?: any): Promise<void> {
-  const webhookUrl = process.env.DISCORD_WEBHOOK_ADMIN || WEBHOOK_URL
+  const webhookUrl = process.env.DISCORD_WEBHOOK_ADMIN || CONFIG.discord.webhookAdmin || WEBHOOK_URL
   if (!webhookUrl) return
 
   const embed: WebhookEmbed = {
@@ -141,7 +139,7 @@ export async function notifyAdmin(title: string, message: string, type?: string,
  * Log activity
  */
 export async function logActivity(action: string, details: string, userId?: string, data?: any): Promise<void> {
-  const webhookUrl = process.env.DISCORD_WEBHOOK_LOGS || WEBHOOK_URL
+  const webhookUrl = process.env.DISCORD_WEBHOOK_LOGS || CONFIG.discord.webhookLogs || WEBHOOK_URL
   if (!webhookUrl) return
 
   const embed: WebhookEmbed = {

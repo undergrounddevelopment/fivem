@@ -47,14 +47,14 @@ export function RealtimePresence() {
     channelRef.current = channel
 
     // Periodic heartbeat to update 'last_seen' in database
+    // Periodic heartbeat to update 'last_seen' in database
     const heartbeat = setInterval(async () => {
       if (user?.id) {
-         // We can use an API call or Supabase directly
-         // Using Supabase directly is faster for heartbeat
-         await supabase
-           .from('users')
-           .update({ last_seen: new Date().toISOString() })
-           .eq('id', user.id)
+         try {
+             await fetch('/api/user/heartbeat', { method: 'POST' })
+         } catch (e) {
+             console.error("Heartbeat failed", e)
+         }
       }
     }, 60000) // Every minute
 

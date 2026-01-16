@@ -3,9 +3,10 @@ import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { CONFIG } from "@/lib/config"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabaseUrl = CONFIG.supabase.url
+const supabaseServiceKey = CONFIG.supabase.serviceKey
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
@@ -26,25 +27,23 @@ export async function GET(req: Request) {
       .select("*")
       .eq("is_active", true)
       .order("created_at", { ascending: true })
+      .limit(10)
 
   let userTickets = 0
   
   // 3. Fetch User Data if logged in
   if (session?.user?.id) {
-    const { data: userData } = await supabase
-      .from("users")
-      .select("id")
-      .eq("discord_id", session.user.id)
-      .single()
-    
-    if (userData) {
-        const { data: ticketData } = await supabase
+    const { data: user } = await supabase.from("users").select("id").eq("discord_id", session.user.id).single()
+    if (user) {
+        const { data: tktData } = await supabase
           .from("spin_wheel_tickets")
           .select("tickets")
-          .eq("user_id", userData.id)
+          .eq("user_id", user.id)
           .single()
         
-        userTickets = ticketData?.tickets || 0
+        if (tktData) {
+            userTickets = tktData.tickets || 0
+        }
     }
   }
 
@@ -88,22 +87,53 @@ export async function POST(req: Request) {
          return NextResponse.json({ error: "Event is currently disabled" }, { status: 403 })
     }
 
-    // 2. Atomic Ticket Deduction (Anti-Bypass)
-    const { data: deduction, error: rpcError } = await supabase.rpc('deduct_ticket_for_spin', {
-        p_discord_id: discordId,
-        p_cost: ticketCost
-    })
+    // 1.7 Fetch User Inner ID
+    const { data: user } = await supabase.from("users").select("id, coins, spin_tickets").eq("discord_id", discordId).single()
+    if (!user) return NextResponse.json({ error: "User profile not found" }, { status: 404 })
 
-    if (rpcError || !deduction.success) {
-         if (deduction?.error) {
-             return NextResponse.json({ error: deduction.error }, { status: 403 })
-         }
-         console.error("RPC Error:", rpcError)
-         return NextResponse.json({ error: "Insufficient tickets or system error" }, { status: 403 })
+    // OPTIONAL: Check for "Eligible Free Spins" (Elite Privilege)
+    const { data: eligible } = await supabase
+        .from("spin_wheel_eligible_users")
+        .select("*")
+        .eq("user_id", user.id)
+        .gt("spins_remaining", 0)
+        .single()
+
+    let finalRemainingTickets = 0
+    let usedEligible = false
+
+    if (eligible) {
+        // Decrement eligible spins
+        await supabase
+            .from("spin_wheel_eligible_users")
+            .update({ spins_remaining: eligible.spins_remaining - 1 })
+            .eq("id", eligible.id)
+        
+        usedEligible = true
+        // Fetch current tickets to return in response
+        const { data: tktData } = await supabase.from("spin_wheel_tickets").select("tickets").eq("user_id", user.id).single()
+        finalRemainingTickets = tktData?.tickets || 0
+    } else {
+        // 2. Atomic Ticket Deduction (Regular flow)
+        const { data: deduction, error: rpcError } = await supabase.rpc('deduct_ticket_for_spin', {
+            p_discord_id: discordId,
+            p_cost: ticketCost
+        })
+
+        if (rpcError || !deduction.success) {
+            if (deduction?.error) {
+                return NextResponse.json({ error: deduction.error }, { status: 403 })
+            }
+            console.error("RPC Error:", rpcError)
+            return NextResponse.json({ error: "Insufficient tickets or system error" }, { status: 403 })
+        }
+        finalRemainingTickets = deduction.remaining_tickets
     }
 
-    // FETCH USER ID for History logging later (Optimization: deduction already proved user exists)
-    const { data: user } = await supabase.from("users").select("id, tickets, coins").eq("discord_id", discordId).single()
+    // FETCH USER ID for History logging (Handled early now)
+    // const { data: user } = await supabase.from("users").select("id, spin_tickets, coins").eq("discord_id", discordId).single()
+    // Already have 'user' from above snippet (Wait, I need to ensure v_user is available)
+
 
 
     // 2. Fetch active prizes
@@ -111,23 +141,47 @@ export async function POST(req: Request) {
       .from("spin_wheel_prizes")
       .select("*")
       .eq("is_active", true)
+      .order("created_at", { ascending: true })
+      .limit(10)
 
     if (prizesError || !prizes || prizes.length === 0) {
       return NextResponse.json({ error: "No active prizes configured" }, { status: 500 })
     }
 
-    // 3. Calculate result based on probabilities
-    const totalWeight = prizes.reduce((sum, prize) => sum + (parseFloat(prize.probability as any) || 0), 0)
-    let random = Math.random() * totalWeight
+    // 3. Calculate result or apply FORCE WIN
     let selectedPrize: any = null
 
-    for (const prize of prizes) {
-      const prob = parseFloat(prize.probability as any) || 0
-      if (random < prob) {
-        selectedPrize = prize
-        break
-      }
-      random -= prob
+    // Check for Force Wins (Premium/Admin control)
+    const { data: forceWin } = await supabase
+        .from("spin_wheel_force_wins")
+        .select("*, prize:spin_wheel_prizes(*)")
+        .eq("user_id", discordId)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single()
+
+    if (forceWin && forceWin.prize) {
+        selectedPrize = forceWin.prize
+        // Update use count
+        const newUseCount = (forceWin.use_count || 0) + 1
+        const updates: any = { use_count: newUseCount }
+        if (forceWin.max_uses && newUseCount >= forceWin.max_uses) {
+            updates.is_active = false
+        }
+        await supabase.from("spin_wheel_force_wins").update(updates).eq("id", forceWin.id)
+    } else {
+        const totalWeight = prizes.reduce((sum, prize) => sum + (parseFloat(prize.probability as any) || 0), 0)
+        let random = Math.random() * totalWeight
+
+        for (const prize of prizes) {
+            const prob = parseFloat(prize.probability as any) || 0
+            if (random < prob) {
+                selectedPrize = prize
+                break
+            }
+            random -= prob
+        }
     }
 
     if (!selectedPrize) {
@@ -145,23 +199,36 @@ export async function POST(req: Request) {
     if (selectedPrize.type === 'coin' || selectedPrize.type === 'coins') {
       await supabase.from("users").update({ coins: (user.coins || 0) + selectedPrize.value }).eq("id", user.id)
     } else if (selectedPrize.type === 'ticket') {
-       const { data: tData } = await supabase.from("spin_wheel_tickets").select("tickets").eq("user_id", user.id).single()
-       await supabase.from("spin_wheel_tickets").update({ tickets: (tData?.tickets || 0) + selectedPrize.value }).eq("user_id", user.id)
+       const { data: updatedTkt } = await supabase.from("spin_wheel_tickets")
+         .update({ tickets: finalRemainingTickets + selectedPrize.value })
+         .eq("user_id", user.id)
+         .select("tickets")
+         .single()
+       
+       if (updatedTkt) {
+           finalRemainingTickets = updatedTkt.tickets
+       }
     }
  
     // For items, you might want to insert into `user_items` table if it exists.
     
     // Log history
+    const claimStatus = (selectedPrize.type === 'coin' || selectedPrize.type === 'coins' || selectedPrize.type === 'ticket') 
+      ? 'auto_awarded' 
+      : 'unclaimed';
+
     await supabase.from("spin_wheel_history").insert({
       user_id: user.id,
       prize_id: selectedPrize.id,
       prize_name: selectedPrize.name || (selectedPrize as any).title,
-      prize_value: selectedPrize.value
+      prize_value: selectedPrize.value,
+      claim_status: claimStatus
     })
 
     return NextResponse.json({ 
       prize: selectedPrize,
-      tickets: deduction.remaining_tickets,
+      tickets: finalRemainingTickets,
+      usedEligible,
       message: `You won ${selectedPrize.name || (selectedPrize as any).title}!`
     })
 

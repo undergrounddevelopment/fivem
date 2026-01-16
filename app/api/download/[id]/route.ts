@@ -139,34 +139,49 @@ export async function GET(
        }
     }
 
-    // Redirect to the actual download URL
-    // console.log(`[API Download] Success: ${asset.title} - Redirecting to ${asset.download_url}`)
-    // return NextResponse.redirect(asset.download_url)
-
-    // PROXY DOWNLOAD - Stream the file to the user without exposing the URL
-    try {
-      const fileResponse = await fetch(asset.download_url)
+    // Generate download URL - handle Supabase Storage paths
+    let downloadUrl = asset.download_url
+    
+    // Check if URL is a Supabase Storage path (needs signed URL)
+    const supabaseStorageHost = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+    const isSupabaseStorage = downloadUrl?.includes('/storage/v1/object/') || 
+                               downloadUrl?.includes(supabaseStorageHost + '/storage/')
+    
+    if (isSupabaseStorage) {
+      // Extract bucket and path from URL
+      // Format: https://xxx.supabase.co/storage/v1/object/public/bucket/path
+      // Or: https://xxx.supabase.co/storage/v1/object/sign/bucket/path (already signed)
+      const match = downloadUrl.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+)/)
       
-      if (!fileResponse.ok) {
-        console.error(`[API Download] Failed to fetch file from source: ${fileResponse.status}`)
-        throw new Error('Failed to fetch file from source')
+      if (match) {
+        const [, bucket, path] = match
+        console.log(`[API Download] Generating signed URL for bucket: ${bucket}, path: ${path}`)
+        
+        const { data: signedUrlData, error: signError } = await supabase
+          .storage
+          .from(bucket)
+          .createSignedUrl(path, 3600) // 1 hour expiry
+        
+        if (signError || !signedUrlData?.signedUrl) {
+          console.error('[API Download] Failed to create signed URL:', signError)
+          // Try using original URL as fallback
+        } else {
+          downloadUrl = signedUrlData.signedUrl
+          console.log('[API Download] Using signed URL')
+        }
       }
-
-      const contentType = fileResponse.headers.get('content-type') || 'application/octet-stream'
-      const contentDisposition = `attachment; filename="${asset.title.replace(/[^a-zA-Z0-9.-]/g, '_')}.zip"`
-
-      return new NextResponse(fileResponse.body, {
-        headers: {
-          'Content-Type': contentType,
-          'Content-Disposition': contentDisposition,
-        },
-      })
-    } catch (proxyError) {
-      console.error('[API Download] Proxy error:', proxyError)
-      // Fallback to redirect if proxy fails (optional, but maybe safer to fail secure)
-      // return NextResponse.redirect(asset.download_url) 
-      return NextResponse.json({ error: 'Failed to download file' }, { status: 500 })
     }
+    
+    // If no valid download URL, return error
+    if (!downloadUrl) {
+      console.error('[API Download] No download URL available for asset:', id)
+      return NextResponse.json({ error: 'Download URL not configured' }, { status: 404 })
+    }
+
+    // METHOD 1: Direct Redirect (Fastest, Most Reliable)
+    // This is actually the best approach for large files
+    console.log(`[API Download] Redirecting to: ${downloadUrl.substring(0, 50)}...`)
+    return NextResponse.redirect(downloadUrl)
 
   } catch (error) {
     console.error('[API Download] Error:', error)

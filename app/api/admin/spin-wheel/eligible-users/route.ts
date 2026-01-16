@@ -68,11 +68,24 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { user_id, spins_remaining, reason, expires_at } = body
+    const { user_id: raw_user_id, spins_remaining, reason, expires_at } = body
 
-    if (!user_id) {
+    if (!raw_user_id) {
       return NextResponse.json({ error: "User ID is required" }, { status: 400 })
     }
+
+    // Robust User Lookup (Discord ID or UUID)
+    const { data: targetUser } = await auth.supabase
+      .from("users")
+      .select("id")
+      .or(`discord_id.eq.${raw_user_id},id.eq.${raw_user_id}`)
+      .single()
+
+    if (!targetUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    const user_id = targetUser.id
 
     // Check if entry already exists
     const { data: existing } = await auth.supabase
@@ -101,7 +114,7 @@ export async function POST(request: Request) {
         .from("spin_wheel_eligible_users")
         .insert({
           user_id,
-          spins_remaining: spins_remaining || 1,
+          spins_remaining: (spins_remaining || 1),
           reason: reason || "Admin grant",
           expires_at: expires_at || null,
           granted_by: auth.userData.id,
