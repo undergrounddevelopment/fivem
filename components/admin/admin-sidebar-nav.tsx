@@ -111,6 +111,13 @@ const adminNavItems = [
     badge: "New",
   },
   {
+    title: "Upvote Settings",
+    href: "/admin/upvotes",
+    icon: Sparkles,
+    color: "from-pink-500 to-purple-500",
+    badge: "New",
+  },
+  {
     title: "Database",
     href: "/admin/database",
     icon: Database,

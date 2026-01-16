@@ -38,7 +38,24 @@ function CustomBellIcon({ className = "" }: { className?: string }) {
 // Fallback image in case of broken links
 const FALLBACK_IMAGE = "https://assets.codepen.io/3685267/wheel-of-fortune-lmvdrrhl.png"
 const TICKET_IMG = "https://assets.codepen.io/3685267/wheel-of-fortune-aetkeerk.png"
-const COIN_IMG = "https://assets.codepen.io/3685267/wheel-of-fortune-smwdyono.png" // Crow Skull as generic fallback
+const COIN_IMG = "https://assets.codepen.io/3685267/wheel-of-fortune-smwdyono.png" 
+
+// --- Audio Elite Experience ---
+const TICK_SOUND = "https://r2.fivemanage.com/w7oyrZqqBoxEiG7UVDfhV/tick-sound.mp3"
+const WIN_SOUND = "https://r2.fivemanage.com/w7oyrZqqBoxEiG7UVDfhV/win-fanfare.mp3"
+const CLAIM_SOUND = "https://r2.fivemanage.com/u7fM9zH1c4vB6L8X0D2K5/coin-collect.mp3"
+const SPIN_LOOP = "https://orangefreesounds.com/wp-content/uploads/2025/01/Spinning-prize-wheel-sound-effect.mp3"
+
+const playAudio = (url: string, volume = 0.5) => {
+    try {
+        const audio = new Audio(url)
+        audio.volume = volume
+        audio.play().catch(() => {})
+        return audio
+    } catch (e) {
+        return null
+    }
+}
 
 interface Prize {
     id: string
@@ -92,7 +109,10 @@ const WinModal = ({ isOpen, onClose, prize }: { isOpen: boolean; onClose: () => 
                             <motion.button 
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
-                                onClick={onClose}
+                                onClick={() => {
+                                    playAudio(CLAIM_SOUND, 0.4);
+                                    onClose();
+                                }}
                                 className="w-full py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold rounded-xl shadow-lg shadow-yellow-500/20 transition-all font-mono tracking-wide"
                             >
                                 CLAIM PRIZE
@@ -194,6 +214,16 @@ export default function SpinWheelPage() {
     fetchData()
   }, [])
 
+  // Pre-load audio assets for zero-lag elite performance
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+        [TICK_SOUND, WIN_SOUND, CLAIM_SOUND, SPIN_LOOP].forEach(url => {
+            const audio = new Audio(url)
+            audio.load()
+        })
+    }
+  }, [])
+
   const fetchHistory = async () => {
       try {
           const res = await fetch('/api/spin/history')
@@ -222,6 +252,7 @@ export default function SpinWheelPage() {
   }
 
   const handleClaim = async (historyId: string) => {
+      playAudio(CLAIM_SOUND, 0.4)
       toast.info("Processing claim...")
       try {
           const res = await fetch('/api/spin/claim', {
@@ -444,33 +475,40 @@ export default function SpinWheelPage() {
 
       setRotation(newRotation)
       
-      // Pre-load audio objects to avoid lag during loop
-      const tickAudio = new Audio("https://r2.fivemanage.com/w7oyrZqqBoxEiG7UVDfhV/tick-sound.mp3")
-      tickAudio.volume = 0.2
-      const winAudio = new Audio("https://r2.fivemanage.com/w7oyrZqqBoxEiG7UVDfhV/win-fanfare.mp3")
-      winAudio.volume = 0.5
-
-      // Play Spin Sound (Tick) - Simulating Ticks
-      const totalTicks = 80 // 8 seconds roughly
-      let tickCount = 0
+      // --- AUDIO EXPERIENCE (Dynamic & Immersive) ---
+      const spinLoop = playAudio(SPIN_LOOP, 0.3)
       
-      const tickInterval = setInterval(() => {
-          if (tickCount >= totalTicks) {
-              clearInterval(tickInterval)
-          } else {
-             // Play light tick sound - Reuse the same object for performance
-             tickAudio.pause()
-             tickAudio.currentTime = 0
-             tickAudio.play().catch(e => {}) 
-             tickCount++
-          }
-      }, 100)
+      let currentTickDelay = 60 // Base fast speed
+      const maxTickDelay = 600  // Final slow speed
+      const totalDuration = 8000
+      let elapsed = 0
+      
+      const triggerTick = () => {
+          if (elapsed >= totalDuration) return
+          
+          // Re-use logic for lightweight ticking
+          playAudio(TICK_SOUND, 0.2)
+          
+          // Quadratic easing for natural deceleration feel
+          const progress = elapsed / totalDuration
+          currentTickDelay = 60 + (maxTickDelay - 60) * Math.pow(progress, 3)
+          
+          elapsed += currentTickDelay
+          setTimeout(triggerTick, currentTickDelay)
+      }
+      
+      triggerTick()
 
-      await new Promise(r => setTimeout(r, 8000)) // Match duration
-      clearInterval(tickInterval)
+      await new Promise(r => setTimeout(r, totalDuration))
+      
+      // Stop background loop
+      if (spinLoop) {
+          spinLoop.pause()
+          spinLoop.currentTime = 0
+      }
       
       // Play Win Sound
-      winAudio.play().catch(e => {})
+      playAudio(WIN_SOUND, 0.5)
       
       // Trigger Confetti safely
       try {

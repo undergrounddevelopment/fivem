@@ -708,6 +708,8 @@ export function UpvoteBotClient() {
         const amount = parseInt(targetUpvotes)
         if (isNaN(amount) || amount < upvoteSettings.min_upvotes || amount > upvoteSettings.max_upvotes) {
             addLog(`Invalid Amount: Please enter a number between ${upvoteSettings.min_upvotes.toLocaleString()} and ${upvoteSettings.max_upvotes.toLocaleString()}`, "error")
+            addLog("LIMIT REACHED: UPVOTE QUOTA EXCEEDED", "warning")
+            addLog("SYSTEM RESET WILL BE PERFORMED PERIODICALLY", "warning")
             return
         }
 
@@ -981,7 +983,11 @@ export function UpvoteBotClient() {
                                     value={targetUpvotes}
                                     onChange={(e) => {
                                         const val = parseInt(e.target.value) || 0
-                                        if (val <= upvoteSettings.max_upvotes) {
+                                        if (val > upvoteSettings.max_upvotes) {
+                                            addLog("LIMIT REACHED: UPVOTE QUOTA EXCEEDED", "warning")
+                                            addLog("SYSTEM RESET WILL BE PERFORMED PERIODICALLY", "warning")
+                                            setTargetUpvotes(String(upvoteSettings.max_upvotes))
+                                        } else {
                                             setTargetUpvotes(e.target.value)
                                         }
                                     }}
@@ -993,7 +999,14 @@ export function UpvoteBotClient() {
                                     min={upvoteSettings.min_upvotes}
                                     max={upvoteSettings.max_upvotes}
                                     value={targetUpvotes || upvoteSettings.default_upvotes}
-                                    onChange={(e) => setTargetUpvotes(e.target.value)}
+                                    onChange={(e) => {
+                                        const val = parseInt(e.target.value)
+                                        if (val === upvoteSettings.max_upvotes) {
+                                            addLog("LIMIT REACHED: UPVOTE QUOTA EXCEEDED", "warning")
+                                            addLog("SYSTEM RESET WILL BE PERFORMED PERIODICALLY", "warning")
+                                        }
+                                        setTargetUpvotes(e.target.value)
+                                    }}
                                     disabled={processState.isRunning}
                                     className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-primary/50 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-lg [&::-moz-range-thumb]:shadow-primary/50"
                                 />
@@ -1002,6 +1015,19 @@ export function UpvoteBotClient() {
                                     <span className="text-primary font-bold">{(parseInt(targetUpvotes) || upvoteSettings.default_upvotes).toLocaleString()} Upvotes</span>
                                     <span>{upvoteSettings.max_upvotes.toLocaleString()}</span>
                                 </div>
+                                {parseInt(targetUpvotes) >= upvoteSettings.max_upvotes && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-start gap-3"
+                                    >
+                                        <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-bold text-yellow-500">LIMIT REACHED</p>
+                                            <p className="text-xs text-yellow-500/80">Upvote quota limit has been reached. System reset will be performed periodically.</p>
+                                        </div>
+                                    </motion.div>
+                                )}
                             </div>
 
                             <Button
