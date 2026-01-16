@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { getSupabaseAdminClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
@@ -10,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const supabase = getSupabaseAdminClient()
+    const supabase = await createClient()
     const currentUserId = (session.user as any).discord_id || session.user.id
 
     // Get all messages involving the current user

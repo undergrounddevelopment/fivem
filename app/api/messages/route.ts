@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { getSupabaseAdminClient } from "@/lib/supabase/server"
+import { getSupabaseAdminClient, createClient } from "@/lib/supabase/server"
 
 // GET - Fetch messages between two users
 export async function GET(request: NextRequest) {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Missing userId parameter" }, { status: 400 })
     }
 
-    const supabase = getSupabaseAdminClient()
+    const supabase = await createClient()
     const currentUserId = (session.user as any).discord_id || session.user.id
 
     // Fetch messages between the two users
