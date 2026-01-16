@@ -1016,7 +1016,20 @@ export function UpvoteBotClient() {
                                         <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                                         <div className="space-y-1">
                                             <p className="text-sm font-bold text-red-500">LIMIT EXCEEDED</p>
-                                            <p className="text-xs text-red-500/80">Maximum limit is {upvoteSettings.max_upvotes.toLocaleString()} upvotes. Please adjust your input.</p>
+                                            <p className="text-xs text-red-500/80">Maximum limit is {upvoteSettings.max_upvotes.toLocaleString()} upvotes. Admin has set this restriction.</p>
+                                        </div>
+                                    </motion.div>
+                                )}
+                                {parseInt(targetUpvotes) === upvoteSettings.max_upvotes && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-start gap-3"
+                                    >
+                                        <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-bold text-yellow-500">LIMIT REACHED</p>
+                                            <p className="text-xs text-yellow-500/80">You have reached the maximum limit set by admin ({upvoteSettings.max_upvotes.toLocaleString()} upvotes).</p>
                                         </div>
                                     </motion.div>
                                 )}
