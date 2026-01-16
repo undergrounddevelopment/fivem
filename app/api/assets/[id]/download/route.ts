@@ -67,11 +67,9 @@ export async function GET(
     })
 
     // Award XP
-    await supabase.rpc('award_xp', {
-      p_user_id: dbUser.id,
-      p_amount: 15,
-      p_reason: 'Downloaded asset'
-    })
+    // Award XP
+    const { xpQueries } = await import('@/lib/xp/queries')
+    await xpQueries.awardXP(session.user.id, 'asset_download', assetId)
 
     await logDownloadAttempt(assetId, dbUser.id, true, hash, 'Success')
 
@@ -134,11 +132,9 @@ export async function POST(
     })
 
     // Award XP
-    await supabase.rpc('award_xp', {
-      p_user_id: dbUser.id,
-      p_amount: 15,
-      p_reason: 'Downloaded asset'
-    })
+    // Award XP
+    const { xpQueries } = await import('@/lib/xp/queries')
+    await xpQueries.awardXP(session.user.id, 'asset_download', assetId)
 
     // Fetch dynamic settings for Linkvertise
     const { data: settings } = await supabase

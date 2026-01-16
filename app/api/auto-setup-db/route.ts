@@ -197,19 +197,19 @@ export async function GET() {
     }
 
     const { data: existingPrizes } = await supabase.from("spin_wheel_prizes").select("id").limit(1)
-
+    
     if (!existingPrizes || existingPrizes.length === 0) {
       const defaultPrizes = [
-        { name: "10 Coins", type: "coins", amount: 10, probability: 30, color: "#fbbf24", icon: "🪙", is_active: true },
-        { name: "25 Coins", type: "coins", amount: 25, probability: 25, color: "#f59e0b", icon: "🪙", is_active: true },
-        { name: "50 Coins", type: "coins", amount: 50, probability: 15, color: "#d97706", icon: "💰", is_active: true },
+        { name: "10 Coins", type: "coins", amount: 10, probability: 30, color: "#fbbf24", icon: "coin", is_active: true },
+        { name: "25 Coins", type: "coins", amount: 25, probability: 25, color: "#f59e0b", icon: "coin", is_active: true },
+        { name: "50 Coins", type: "coins", amount: 50, probability: 15, color: "#d97706", icon: "coin", is_active: true },
         {
           name: "100 Coins",
           type: "coins",
           amount: 100,
           probability: 10,
           color: "#b45309",
-          icon: "💰",
+          icon: "coin",
           is_active: true,
         },
         {
@@ -218,7 +218,7 @@ export async function GET() {
           amount: 1,
           probability: 10,
           color: "#3b82f6",
-          icon: "🎫",
+          icon: "ticket",
           is_active: true,
         },
         {
@@ -227,7 +227,7 @@ export async function GET() {
           amount: 2,
           probability: 5,
           color: "#2563eb",
-          icon: "🎫",
+          icon: "ticket",
           is_active: true,
         },
         {
@@ -236,7 +236,7 @@ export async function GET() {
           amount: 500,
           probability: 3,
           color: "#ef4444",
-          icon: "💎",
+          icon: "gem",
           is_active: true,
         },
         {
@@ -245,7 +245,7 @@ export async function GET() {
           amount: 0,
           probability: 2,
           color: "#6b7280",
-          icon: "🔄",
+          icon: "refresh",
           is_active: true,
         },
       ]
@@ -262,7 +262,7 @@ export async function GET() {
           name: "General Discussion",
           slug: "general",
           description: "General FiveM topics",
-          icon: "💬",
+          icon: "MessageCircle",
           color: "#3b82f6",
           display_order: 1,
         },
@@ -270,7 +270,7 @@ export async function GET() {
           name: "Script Releases",
           slug: "scripts",
           description: "Share your scripts",
-          icon: "📦",
+          icon: "Package",
           color: "#10b981",
           display_order: 2,
         },
@@ -278,7 +278,7 @@ export async function GET() {
           name: "MLO Releases",
           slug: "mlo",
           description: "Share MLO maps",
-          icon: "🏢",
+          icon: "Box",
           color: "#8b5cf6",
           display_order: 3,
         },
@@ -286,7 +286,7 @@ export async function GET() {
           name: "Vehicle Releases",
           slug: "vehicles",
           description: "Share vehicles",
-          icon: "🚗",
+          icon: "Car",
           color: "#f59e0b",
           display_order: 4,
         },
@@ -294,7 +294,7 @@ export async function GET() {
           name: "Support & Help",
           slug: "support",
           description: "Get help",
-          icon: "🆘",
+          icon: "HelpCircle",
           color: "#ef4444",
           display_order: 5,
         },

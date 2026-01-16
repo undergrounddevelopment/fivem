@@ -41,10 +41,9 @@ export async function GET() {
     const supabase = getSupabase()
 
     // Get top users by XP
-    const { data: users, error } = await supabase
       .from('users')
       .select('id, discord_id, username, avatar, xp, level, membership')
-      .eq('is_banned', false)
+      .eq('banned', false)
       .order('xp', { ascending: false })
       .limit(10)
 

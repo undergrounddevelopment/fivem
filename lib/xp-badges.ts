@@ -22,16 +22,11 @@ export const XP_CONFIG = {
   
   // Level thresholds
   levels: [
-    { level: 1, minXP: 0, title: "Newbie" },
-    { level: 2, minXP: 100, title: "Beginner" },
-    { level: 3, minXP: 300, title: "Regular" },
-    { level: 4, minXP: 600, title: "Active" },
-    { level: 5, minXP: 1000, title: "Contributor" },
-    { level: 6, minXP: 1500, title: "Expert" },
-    { level: 7, minXP: 2500, title: "Veteran" },
-    { level: 8, minXP: 4000, title: "Master" },
-    { level: 9, minXP: 6000, title: "Legend" },
-    { level: 10, minXP: 10000, title: "Champion" },
+    { level: 1, minXP: 0, title: "Beginner" },
+    { level: 2, minXP: 1000, title: "Intermediate" },
+    { level: 3, minXP: 5000, title: "Advanced" },
+    { level: 4, minXP: 15000, title: "Expert" },
+    { level: 5, minXP: 50000, title: "Legend" },
   ],
 }
 
@@ -52,49 +47,49 @@ export interface Badge {
 export const BADGES: Badge[] = [
   // Level Badges
   {
-    id: "newcomer",
-    name: "Newcomer",
-    description: "Welcome to the community!",
+    id: "beginner",
+    name: "Beginner",
+    description: "Start your journey. Required XP: 0",
     icon: "/badges/badge1.png",
     color: "#9CA3AF",
     rarity: "common",
     requirement: { type: "level", value: 1 },
   },
   {
-    id: "rising_star",
-    name: "Rising Star",
-    description: "Reached Level 3",
+    id: "intermediate",
+    name: "Intermediate",
+    description: "Rising star. Required XP: 1,000",
     icon: "/badges/badge2.png",
     color: "#10B981",
     rarity: "uncommon",
-    requirement: { type: "level", value: 3 },
+    requirement: { type: "level", value: 2 },
   },
   {
-    id: "veteran",
-    name: "Veteran",
-    description: "Reached Level 5",
+    id: "advanced",
+    name: "Advanced",
+    description: "Skilled member. Required XP: 5,000",
     icon: "/badges/badge3.png",
     color: "#3B82F6",
     rarity: "rare",
-    requirement: { type: "level", value: 5 },
+    requirement: { type: "level", value: 3 },
   },
   {
-    id: "elite",
-    name: "Elite Member",
-    description: "Reached Level 7",
+    id: "expert",
+    name: "Expert",
+    description: "Elite status. Required XP: 15,000",
     icon: "/badges/badge4.png",
     color: "#8B5CF6",
     rarity: "epic",
-    requirement: { type: "level", value: 7 },
+    requirement: { type: "level", value: 4 },
   },
   {
     id: "legend",
     name: "Legend",
-    description: "Reached Level 10",
+    description: "Legendary status. Required XP: 50,000",
     icon: "/badges/badge5.png",
     color: "#F59E0B",
     rarity: "legendary",
-    requirement: { type: "level", value: 10 },
+    requirement: { type: "level", value: 5 },
   },
   
   // Activity Badges
@@ -298,3 +293,11 @@ export function getRarityBorder(rarity: string): string {
     default: return "border-gray-400/50"
   }
 }
+
+export const BADGE_TIERS = [
+  { tier: 1, name: "Beginner", icon: "/badges/badge1.png", color: "#9CA3AF" },
+  { tier: 2, name: "Intermediate", icon: "/badges/badge2.png", color: "#10B981" },
+  { tier: 3, name: "Advanced", icon: "/badges/badge3.png", color: "#3B82F6" },
+  { tier: 4, name: "Expert", icon: "/badges/badge4.png", color: "#8B5CF6" },
+  { tier: 5, name: "Legend", icon: "/badges/badge5.png", color: "#F59E0B" },
+]

@@ -1,23 +1,25 @@
 import Image from 'next/image';
-
-const ranks = [
-  { level: 1, name: 'Newbie', badge_url: '/badges/rank_1.png' },
-  { level: 2, name: 'Member', badge_url: '/badges/rank_2.png' },
-  { level: 3, name: 'Active Member', badge_url: '/badges/rank_3.png' },
-  { level: 4, name: 'Veteran', badge_url: '/badges/rank_4.png' },
-  { level: 5, name: 'Legend', badge_url: '/badges/rank_5.png' },
-];
+import { BADGE_TIERS } from '@/lib/xp-badges';
 
 interface ForumRankBadgeProps {
   level: number;
 }
 
 export function ForumRankBadge({ level }: ForumRankBadgeProps) {
-  const rank = ranks.find(r => r.level === level) || ranks[0];
+  // Find highest tier applicable, or default to the first one
+  const rank = BADGE_TIERS.slice().reverse().find(b => level >= b.tier) || BADGE_TIERS[0];
 
   return (
-    <div className="flex items-center" title={`${rank.name} (Level ${rank.level})`}>
-      <Image src={rank.badge_url} alt={rank.name} width={20} height={20} className="h-5 w-5" />
+    <div className="flex items-center" title={`${rank.name} (Level ${level})`}>
+      <div className="relative w-5 h-5">
+        <Image 
+          src={rank.icon} 
+          alt={rank.name} 
+          fill
+          className="object-contain" // Use object-contain to preserve aspect ratio
+          unoptimized
+        />
+      </div>
     </div>
   );
 }

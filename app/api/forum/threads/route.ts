@@ -177,6 +177,11 @@ export async function POST(req: NextRequest) {
       .select().single()
 
     if (insertErr) throw insertErr
+
+    // Award XP for creating thread
+    const { xpQueries } = await import('@/lib/xp/queries')
+    await xpQueries.awardXP(discordId, 'create_thread', thread.id)
+
     return NextResponse.json({ success: true, data: thread })
   } catch (e: any) {
     console.error('[Threads POST]', e)

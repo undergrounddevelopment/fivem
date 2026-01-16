@@ -7,6 +7,7 @@ import { Loader2, Plus, Trophy, Crown, User } from "lucide-react"
 import { CoinIcon, COIN_ICON_URL } from "@/components/coin-icon"
 import Image from "next/image"
 import { toast } from "sonner"
+import { createClient } from "@/lib/supabase/client"
 
 interface Prize {
   id: string
@@ -126,7 +127,7 @@ export default function SpinWheelPage() {
   const displayItems = prizes.length >= 10 
     ? prizes.slice(0, 10).map((p, i) => ({
         name: p.name,
-        coins: p.coins,
+        coins: (p as any).value || (p as any).coins || 0,
         dropRate: p.probability || DEFAULT_ITEMS[i]?.dropRate || 10,
         image: p.image_url || DEFAULT_ITEMS[i]?.image || DEFAULT_ITEMS[0].image
       }))
@@ -168,7 +169,63 @@ export default function SpinWheelPage() {
     fetchData(true)
   }, [])
 
-  // Fetch user data when user changes (without showing loading)
+  // Supabase Realtime Subscription for Live Updates
+  useEffect(() => {
+    const supabase = createClient()
+    if (!supabase) return
+
+    // 1. Listen for ALL spin history changes (Global Winners Feed)
+    const historyChannel = supabase
+      .channel('live_winners')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'spin_wheel_history' // Matches lib/actions/spin.ts
+        },
+        async (payload) => {
+          console.log("[Spin] New winner detected:", payload.new)
+          // Fetch updated winners list or just append
+          fetchData(false) 
+          toast.info(`New Winner: ${(payload.new as any).prize_name}`, {
+            description: `Someone just won ${(payload.new as any).prize_value} coins!`
+          })
+        }
+      )
+      .subscribe()
+
+    // 2. Listen for current user balance changes
+    let userChannel: any = null
+    if (user?.id) {
+        userChannel = supabase
+          .channel(`user_balance_${user.id}`)
+          .on(
+              'postgres_changes',
+              {
+                  event: 'UPDATE',
+                  schema: 'public',
+                  table: 'users',
+                  filter: `id=eq.${user.id}`
+              },
+              (payload) => {
+                  console.log("[Spin] User balance updated:", payload.new)
+                  const newUser = payload.new as any
+                  setUserCoins(newUser.coins || 0)
+                  // Note: tickets might be in a separate table depending on version
+                  // If tickets are in 'users' table (as per migration 20260116_spin_wheel_setup.sql)
+                  if (newUser.tickets !== undefined) setUserTickets(newUser.tickets)
+              }
+          )
+          .subscribe()
+    }
+
+    return () => {
+      supabase.removeChannel(historyChannel)
+      if (userChannel) supabase.removeChannel(userChannel)
+    }
+  }, [user?.id, fetchData])
+
   useEffect(() => {
     if (user) fetchData(false)
   }, [user])
@@ -180,13 +237,13 @@ export default function SpinWheelPage() {
 
     try {
       const { claimDailySpinTicket } = await import('@/lib/actions/spin')
-      const data = await claimDailySpinTicket()
+      const data: any = await claimDailySpinTicket()
       
-      setUserTickets(data.newTickets)
+      setUserTickets(data.tickets)
       setCanClaimDaily(false)
       
       toast.success("Daily Ticket Claimed!", {
-        description: `You received ${data.bonusTickets} ticket${data.bonusTickets > 1 ? 's' : ''}!`
+        description: `You received ${data.bonusTickets || 1} ticket${(data.bonusTickets || 1) > 1 ? 's' : ''}!`
       })
     } catch (error: any) {
       console.error("Error claiming daily:", error)
@@ -213,7 +270,7 @@ export default function SpinWheelPage() {
 
     try {
       const { spinWheel } = await import('@/lib/actions/spin')
-      const data = await spinWheel()
+      const data: any = await spinWheel()
 
       // Update user balance and tickets
       setUserCoins(data.newBalance);
@@ -257,8 +314,8 @@ export default function SpinWheelPage() {
             setHistory(prev => [
               {
                 id: Math.random().toString(36).substr(2, 9),
-                prize_name: data.prize.name,
-                coins_won: data.prize.coins,
+                prize_name: data.prize.name || (data.prize as any).title,
+                coins_won: data.prize.value || (data.prize as any).coins || 0,
                 spin_type: "ticket",
                 created_at: new Date().toISOString(),
               },
@@ -488,14 +545,14 @@ export default function SpinWheelPage() {
           {winners.length === 0 ? (
             <p className="text-center text-[#94979c] text-sm py-4">No winners yet</p>
           ) : (
-            winners.map((winner) => (
+            winners.map((winner: any) => (
               <div key={winner.id} className="bg-[#1f232e] p-3 rounded-lg">
                 <div className="flex items-start gap-3">
                   <div className="relative">
-                    {winner.avatar_url ? (
+                    {winner.users?.avatar ? (
                       <img
-                        src={winner.avatar_url}
-                        alt={winner.username}
+                        src={winner.users?.avatar}
+                        alt={winner.users?.username}
                         className="w-10 h-10 rounded-full object-cover border-2 border-[#404859]"
                       />
                     ) : (
@@ -503,14 +560,14 @@ export default function SpinWheelPage() {
                         <User className="w-5 h-5 text-white" />
                       </div>
                     )}
-                    {winner.coins_won >= 100 && (
+                    {(winner.prize_value || 0) >= 100 && (
                       <Crown className="w-4 h-4 text-yellow-400 absolute -top-1 -right-1" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-white text-sm truncate">{winner.username}</p>
+                    <p className="font-semibold text-white text-sm truncate">{winner.users?.username || 'Member'}</p>
                     <div className="flex items-center gap-1 mt-1">
-                      <span className="text-yellow-400 font-bold text-sm">+{winner.coins_won}</span>
+                      <span className="text-yellow-400 font-bold text-sm">+{winner.prize_value}</span>
                       <Image src={COIN_ICON_URL} alt="coins" width={16} height={16} unoptimized />
                     </div>
                     <p className="text-[10px] text-[#667088] mt-1">
@@ -531,18 +588,18 @@ export default function SpinWheelPage() {
           <span className="text-sm font-semibold text-white">Recent Winners</span>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {winners.slice(0, 5).map((winner) => (
+          {winners.slice(0, 5).map((winner: any) => (
             <div key={winner.id} className="flex-shrink-0 bg-[#1f232e] px-3 py-2 rounded-lg flex items-center gap-2">
-              {winner.avatar_url ? (
-                <img src={winner.avatar_url} alt={winner.username} className="w-8 h-8 rounded-full object-cover" />
+              {winner.users?.avatar ? (
+                <img src={winner.users.avatar} alt={winner.users.username} className="w-8 h-8 rounded-full object-cover" />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6579FE] to-[#3C57FF] flex items-center justify-center">
                   <User className="w-4 h-4 text-white" />
                 </div>
               )}
               <div>
-                <p className="text-xs font-semibold text-white truncate max-w-[80px]">{winner.username}</p>
-                <p className="text-xs text-yellow-400 font-bold">+{winner.coins_won}</p>
+                <p className="text-xs font-semibold text-white truncate max-w-[80px]">{winner.users?.username || 'Member'}</p>
+                <p className="text-xs text-yellow-400 font-bold">+{winner.prize_value}</p>
               </div>
             </div>
           ))}

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth-provider"
+import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 
 interface Notification {
   id: string
@@ -54,6 +56,70 @@ export function NotificationDropdown() {
     fetchNotifications()
   }, [user])
 
+  // Supabase Realtime for Notifications
+  useEffect(() => {
+    if (!user) return
+
+    const supabase = createClient()
+    if (!supabase) return
+
+    const currentUserId = user.discordId || user.id
+
+    const channel = supabase
+      .channel(`user_notifications_${currentUserId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${currentUserId}`
+        },
+        (payload) => {
+          console.log("[Notifications] Realtime update:", payload)
+          
+          if (payload.eventType === 'INSERT') {
+            const newNotif = payload.new as any
+            setNotifications(prev => [{
+              id: newNotif.id,
+              userId: newNotif.user_id,
+              type: newNotif.type,
+              title: newNotif.title,
+              message: newNotif.message,
+              link: newNotif.link,
+              read: newNotif.read,
+              createdAt: newNotif.created_at
+            }, ...prev])
+
+            toast.info(newNotif.title, {
+              description: newNotif.message,
+              action: newNotif.link ? {
+                label: "View",
+                onClick: () => window.location.href = newNotif.link
+              } : undefined
+            })
+            
+            // Play sound? (Optional)
+            const audio = new Audio("/notification.mp3")
+            audio.volume = 0.2
+            audio.play().catch(() => {})
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedNotif = payload.new as any
+            setNotifications(prev => prev.map(n => 
+              n.id === updatedNotif.id ? { ...n, read: updatedNotif.read } : n
+            ))
+          } else if (payload.eventType === 'DELETE') {
+             setNotifications(prev => prev.filter(n => n.id !== payload.old.id))
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user])
+  
   const markAllRead = async () => {
     try {
       await fetch("/api/notifications/read", { method: "POST" })

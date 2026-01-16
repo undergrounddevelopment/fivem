@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Bell, User, Coins, Ticket, Menu, X, Sparkles, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth-provider"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { NotificationDropdown } from "@/components/notification-dropdown"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 
@@ -24,6 +26,7 @@ export function ModernNavbar() {
 
   const menuItems = [
     { label: "Community", href: "/forum" },
+    { label: "Badges", href: "/badges" },
     { label: "Staff", href: "/staff" },
     { label: "Features", href: "/#features" },
     { label: "About us", href: "/#about" },
@@ -91,14 +94,10 @@ export function ModernNavbar() {
                 </motion.div>
 
                 {/* Notifications */}
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button variant="ghost" size="icon" className="glass-hover relative">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full animate-pulse-glow" />
-                  </Button>
-                </motion.div>
+                <NotificationDropdown />
 
-                {/* User Profile */}
+                {/* Theme Toggle */}
+                <ThemeToggle />
                 <Link href="/dashboard">
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button variant="ghost" className="glass-hover gap-2">

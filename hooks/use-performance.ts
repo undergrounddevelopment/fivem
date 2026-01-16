@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 
 export function usePageLoadTime(pageName: string) {
   const startTime = useRef(Date.now())
@@ -23,7 +23,7 @@ export function usePageLoadTime(pageName: string) {
 
 
 export function useApiPerformance() {
-  const measureApiCall = (endpoint: string, promise: Promise<any>) => {
+  const measureApiCall = useCallback((endpoint: string, promise: Promise<any>) => {
     const startTime = Date.now()
     
     return promise.finally(() => {
@@ -34,13 +34,13 @@ export function useApiPerformance() {
         console.warn(`⚠️ Slow API: ${endpoint} (${duration}ms)`)
       }
     })
-  }
+  }, [])
   
   return { measureApiCall }
 }
 
 export function useImageOptimization() {
-  const loadImage = (src: string, placeholder?: string): Promise<string> => {
+  const loadImage = useCallback((src: string, placeholder?: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       if (typeof window === 'undefined') {
         resolve(src)
@@ -52,7 +52,7 @@ export function useImageOptimization() {
       img.onload = () => resolve(src)
       img.onerror = () => reject(new Error(`Failed to load image: ${src}`))
     })
-  }
+  }, [])
 
   return { loadImage }
 }

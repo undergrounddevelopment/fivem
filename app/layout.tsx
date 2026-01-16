@@ -17,27 +17,29 @@ import { SITE_NAME, SITE_DESCRIPTION, SITE_URL, SITE_LOGO, SEO_KEYWORDS } from "
 import { ClientSessionProvider } from "@/components/client-session-provider"
 import { LinkvertiseScript } from "@/components/linkvertise-script"
 import { OptimizedLayout } from "@/components/optimized-layout"
+import { ThemeProvider } from "@/components/theme-provider"
+import { AchievementContainer } from "@/components/achievement-toast"
 import "@/lib/performance-init" // Initialize performance optimizations
 import "./globals.css"
 
 const geist = Geist({
   subsets: ["latin"],
   display: "swap",
-  preload: true,
+  preload: false,
   variable: "--font-geist",
 })
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
-  preload: true,
+  preload: false,
   variable: "--font-geist-mono",
 })
 
 const manrope = Manrope({
   subsets: ["latin"],
   display: "swap",
-  preload: true,
+  preload: false,
   variable: "--font-manrope",
   weight: ["400", "700"],
 })
@@ -143,6 +145,7 @@ export async function generateMetadata(): Promise<Metadata> {
       "msapplication-TileColor": "#0d1117",
       "apple-mobile-web-app-capable": "yes",
       "apple-mobile-web-app-status-bar-style": "black-translucent",
+      "dmca-site-verification": "V08rdkpZaW9DUDBKNFNuNnV5N1BsdkpVclNBKzlheVhQQ09sbVVtcldhOD01",
     },
   }
 }
@@ -378,28 +381,36 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
         <LinkvertiseScript />
 
-        <ClientSessionProvider>
-          <AuthProvider>
-            <LanguageProvider>
-              <ErrorBoundary>
-                <SeasonalWrapper>
-                  <HolidayBanner />
-                  <ModernLayout>
-                    <AppWrapper>
-                      <OptimizedLayout pageName="root">
-                        {children}
-                      </OptimizedLayout>
-                      <FloatingReviewNotifications />
-                      <FloatingReviews />
-                      {/* SpinWinNotifications disabled - event ended */}
-                      <ToastContainer />
-                    </AppWrapper>
-                  </ModernLayout>
-                </SeasonalWrapper>
-              </ErrorBoundary>
-            </LanguageProvider>
-          </AuthProvider>
-        </ClientSessionProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ClientSessionProvider>
+            <AuthProvider>
+              <LanguageProvider>
+                <ErrorBoundary>
+                  <SeasonalWrapper>
+                    <HolidayBanner />
+                    <ModernLayout>
+                      <AppWrapper>
+                        <OptimizedLayout pageName="root">
+                          {children}
+                        </OptimizedLayout>
+                        <FloatingReviewNotifications />
+                        <FloatingReviews />
+                        {/* SpinWinNotifications disabled - event ended */}
+                        <ToastContainer />
+                        <AchievementContainer />
+                      </AppWrapper>
+                    </ModernLayout>
+                  </SeasonalWrapper>
+                </ErrorBoundary>
+              </LanguageProvider>
+            </AuthProvider>
+          </ClientSessionProvider>
+        </ThemeProvider>
         <AnalyticsWrapper />
       </body>
     </html>

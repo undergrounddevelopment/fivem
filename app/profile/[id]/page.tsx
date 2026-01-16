@@ -10,6 +10,7 @@ import { BadgesDisplay, LevelBadge } from "@/components/badges-display"
 import { getLevelFromXP } from "@/lib/xp-badges"
 import { LoadingState } from "@/components/loading-state"
 import { EmptyState } from "@/components/empty-state"
+import { useAuth } from "@/components/auth-provider"
 import {
   ArrowLeft,
   MessageSquare,
@@ -26,6 +27,11 @@ import {
   Trophy,
   Zap,
   User,
+  Settings,
+  Github,
+  Instagram,
+  Youtube,
+  Globe,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -48,6 +54,14 @@ interface ProfileData {
     xp: number
     level: number
     current_badge: string
+    banner?: string
+    bio?: string
+    social_links?: {
+      github?: string
+      instagram?: string
+      youtube?: string
+      website?: string
+    }
   }
   assets: Array<{
     id: string
@@ -95,11 +109,17 @@ interface ProfileData {
 export default function ProfilePage() {
   const params = useParams()
   const userId = (params?.id as string) || ""
+  const { user: currentUser } = useAuth()
 
   const [data, setData] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"posts" | "assets" | "badges">("posts")
+  
+  // Social State - must be at top level
+  const [socialStats, setSocialStats] = useState({ followers: 0, following: 0, isFollowing: false })
+  const [socialLoading, setSocialLoading] = useState(true)
+  const [followPending, setFollowPending] = useState(false)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -118,6 +138,25 @@ export default function ProfilePage() {
 
     if (userId) {
       fetchProfile()
+    }
+  }, [userId])
+  
+  // Fetch social stats
+  useEffect(() => {
+    if (userId) {
+      fetch(`/api/social/check?userId=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.error) {
+            setSocialStats({
+               followers: data.followersCount,
+               following: data.followingCount,
+               isFollowing: data.isFollowing
+            })
+          }
+        })
+        .catch(console.error)
+        .finally(() => setSocialLoading(false))
     }
   }, [userId])
 
@@ -173,30 +212,6 @@ export default function ProfilePage() {
 
   const levelInfo = getLevelFromXP(user.xp || 0)
 
-  // Social State
-  const [socialStats, setSocialStats] = useState({ followers: 0, following: 0, isFollowing: false })
-  const [socialLoading, setSocialLoading] = useState(true)
-  const [followPending, setFollowPending] = useState(false)
-
-  // Fetch social stats
-  useEffect(() => {
-    if (userId) {
-      fetch(`/api/social/check?userId=${userId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (!data.error) {
-            setSocialStats({
-               followers: data.followersCount,
-               following: data.followingCount,
-               isFollowing: data.isFollowing
-            })
-          }
-        })
-        .catch(console.error)
-        .finally(() => setSocialLoading(false))
-    }
-  }, [userId])
-
   const handleFollow = async () => {
     if (!currentUser) return // Or prompt login
     if (followPending) return
@@ -226,15 +241,7 @@ export default function ProfilePage() {
   }
 
 
-  const achievements = [
-    { id: "1", name: "First Download", icon: "🏆", unlocked: downloadCount > 0 },
-    { id: "2", name: "First Post", icon: "💬", unlocked: postCount > 0 },
-    { id: "3", name: "Asset Creator", icon: "📦", unlocked: stats.totalUploads > 0 },
-    { id: "4", name: "Helpful Member", icon: "❤️", unlocked: likeCount >= 10 },
-    { id: "5", name: "VIP Member", icon: "👑", unlocked: user.membership === "vip" },
-    { id: "6", name: "Admin", icon: "🛡️", unlocked: user.isAdmin },
-    { id: "7", name: "Influencer", icon: "🌟", unlocked: socialStats.followers >= 10 },
-  ].filter((a) => a.unlocked)
+  // Achievements array removed to enforce Badge system usage
 
   return (
     <div className="min-h-screen bg-background">
@@ -466,35 +473,14 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground flex items-center gap-2">
                       <Heart className="h-4 w-4" />
-                      Likes Given
+                      Likes Received
                     </span>
                     <span className="font-semibold text-foreground">{likeCount}</span>
                   </div>
                 </div>
               </div>
 
-              {achievements.length > 0 && (
-                <div className="glass rounded-2xl border-white/10 p-6">
-                  <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-amber-500/15 flex items-center justify-center">
-                      <Trophy className="h-4 w-4 text-amber-400" />
-                    </div>
-                    Achievements
-                  </h2>
-                  <div className="flex flex-wrap gap-2">
-                    {achievements.map((achievement) => (
-                      <div
-                        key={achievement.id}
-                        className="flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-2"
-                        title={achievement.name}
-                      >
-                        <span className="text-lg">{achievement.icon}</span>
-                        <span className="text-sm text-foreground">{achievement.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Achievements Removed (Redundant with Badges Tab) */}
             </motion.div>
 
             <motion.div
@@ -641,20 +627,20 @@ export default function ProfilePage() {
                           return (
                             <div
                               key={badge.id}
-                              className={`relative p-3 rounded-xl border-2 transition-all ${
+                              className={`relative p-3 rounded-xl border-2 transition-all duration-300 ${
                                 isEarned 
-                                  ? 'border-primary/50 bg-primary/10' 
-                                  : 'border-border/30 bg-secondary/20 opacity-40 grayscale'
+                                  ? 'border-primary/50 bg-primary/10 shadow-[0_0_15px_rgba(var(--primary-rgb),0.15)] scale-105 z-10' 
+                                  : 'border-white/5 bg-black/20 opacity-40 grayscale brightness-75 contrast-75 hover:opacity-60 hover:grayscale-0 hover:scale-100'
                               }`}
                             >
                               <div className="flex flex-col items-center gap-2">
                                 <img
-                                  src={badge.image_url || '/badges/badge1.png'}
+                                  src={badge.icon || badge.image_url || '/badges/badge1.png'}
                                   alt={badge.name}
                                   className="h-12 w-12 rounded-full object-cover"
                                 />
                                 <p className="text-xs font-medium text-center">{badge.name}</p>
-                                <p className="text-[10px] text-muted-foreground">{badge.min_xp} XP</p>
+                                <p className="text-[10px] text-muted-foreground">{badge.description}</p>
                               </div>
                             </div>
                           )
@@ -670,12 +656,12 @@ export default function ProfilePage() {
                       </h3>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {[
-                          { action: "Create Thread", xp: 50, icon: "📝" },
-                          { action: "Post Reply", xp: 20, icon: "💬" },
-                          { action: "Upload Asset", xp: 100, icon: "📦" },
-                          { action: "Receive Like", xp: 10, icon: "❤️" },
-                          { action: "Daily Login", xp: 10, icon: "🌟" },
-                          { action: "Asset Downloaded", xp: 15, icon: "⬇️" },
+                          { action: "Create Thread", xp: 50, icon: <FileCode className="h-5 w-5 text-blue-400" /> },
+                          { action: "Post Reply", xp: 20, icon: <MessageSquare className="h-5 w-5 text-green-400" /> },
+                          { action: "Upload Asset", xp: 100, icon: <Download className="h-5 w-5 text-purple-400" /> },
+                          { action: "Receive Like", xp: 10, icon: <Heart className="h-5 w-5 text-red-500" /> },
+                          { action: "Daily Login", xp: 10, icon: <Star className="h-5 w-5 text-yellow-500" /> },
+                          { action: "Asset Downloaded", xp: 15, icon: <Download className="h-5 w-5 text-orange-400" /> },
                         ].map((item) => (
                           <div key={item.action} className="flex items-center gap-2 p-3 rounded-xl bg-secondary/30">
                             <span className="text-xl">{item.icon}</span>

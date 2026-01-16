@@ -77,7 +77,7 @@ const adminNavItems = [
   },
   {
     title: "Spin Wheel",
-    href: "/admin/spin-wheel",
+    href: "/admin/spin",
     icon: Sparkles,
     color: "from-yellow-500 to-orange-500",
     badge: "Live",

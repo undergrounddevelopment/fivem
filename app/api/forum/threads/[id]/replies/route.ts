@@ -153,6 +153,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       })
       .eq("id", threadId)
 
+    // Award XP for replying
+    const { xpQueries } = await import('@/lib/xp/queries')
+    await xpQueries.awardXP(discordId, 'create_reply', reply.id)
+
     return NextResponse.json({
       id: reply.id,
       content: reply.content,

@@ -12,12 +12,23 @@ import {
   Lock, 
   Trash2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Bot,
+  Tag,
+  Key,
+  CreditCard,
+  Upload,
+  MessageCircle,
+  Target,
+  Search,
+  BarChart2,
+  ClipboardList,
+  Wifi,
+  Users
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -174,32 +185,32 @@ export default function FakePlayerPage() {
         backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.95)), url("https://www.transparenttextures.com/patterns/carbon-fibre.png")',
         backgroundAttachment: 'fixed'
       }}>
-      
+
       {/* Header */}
       <header className="h-16 border-b border-[#222] bg-black/90 flex items-center justify-between px-6 z-50 sticky top-0">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 border border-red-900 bg-red-900/10 rounded flex items-center justify-center animate-pulse">
-            <span className="text-red-600 text-xl">🐉</span>
+            <Bot className="h-6 w-6 text-red-600" />
           </div>
           <div>
             <h1 className="text-xl font-black italic tracking-tighter text-white uppercase">
               FIVEM TOOLS <span className="text-red-600">V7.0</span>
             </h1>
             <div className="flex gap-3 text-[10px] font-mono font-bold text-gray-500 uppercase">
-              <span>🔀 BUILD 7021</span>
-              <span>🛡️ ADMIN ACCESS</span>
+              <span><Wifi className="h-3 w-3 inline mr-1" /> BUILD 7021</span>
+              <span><Shield className="h-3 w-3 inline mr-1" /> ADMIN ACCESS</span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={() => setIsPurchaseOpen(true)}
             className="bg-gradient-to-r from-yellow-600/20 to-yellow-900/20 hover:from-yellow-600 hover:to-yellow-500 text-yellow-500 hover:text-black border border-yellow-600 px-4 py-2 rounded font-bold text-[10px] uppercase transition flex items-center gap-2 shadow-[0_0_10px_rgba(202,138,4,0.2)]"
           >
-            🏷️ BUY PREMIUM KEY <span className="bg-red-600 text-white px-1 rounded text-[8px] animate-pulse">-50%</span>
+            <Tag className="h-4 w-4 inline mr-2" /> BUY PREMIUM KEY <span className="bg-red-600 text-white px-1 rounded text-[8px] animate-pulse">-50%</span>
           </button>
-          
+
           <div className="hidden md:flex items-center gap-3 bg-[#0a0a0a] border border-[#222] px-4 py-2 rounded-full">
             <div className="flex flex-col items-end">
               <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">License Status</span>
@@ -210,17 +221,17 @@ export default function FakePlayerPage() {
                 </span>
               </div>
             </div>
-            <span className={`transition-opacity ${isAuthorized ? 'opacity-100' : 'opacity-40'}`}>🔑</span>
+            <span className={`transition-opacity ${isAuthorized ? 'opacity-100' : 'opacity-40'}`}><Key className="h-4 w-4" /></span>
           </div>
         </div>
       </header>
 
       {/* Main Grid */}
       <main className="flex-1 p-4 grid grid-cols-12 gap-4 overflow-hidden">
-        
+
         {/* Left Column (3) */}
         <div className="col-span-12 lg:col-span-3 flex flex-col gap-4">
-          
+
           {/* Server Connection */}
           <div className="tech-panel bg-[#111]/40 border border-[#222] rounded-lg overflow-hidden backdrop-blur-sm">
             <div className="bg-black/50 p-3 border-b border-[#333] flex justify-between items-center">
@@ -229,14 +240,14 @@ export default function FakePlayerPage() {
               </h2>
             </div>
             <div className="p-4 space-y-3">
-              <input 
-                placeholder="Server Code / IP" 
+              <input
+                placeholder="Server Code / IP"
                 className="w-full bg-black/60 border border-[#222] rounded p-2 text-center font-bold text-sm focus:border-red-600 transition"
-                type="text" 
+                type="text"
                 value={targetServer}
                 onChange={(e) => setTargetServer(e.target.value)}
               />
-              <button 
+              <button
                 onClick={handleConnectMonitor}
                 className="w-full bg-white text-black font-extrabold py-2 rounded text-xs uppercase hover:bg-gray-300 transition flex items-center justify-center gap-2"
               >
@@ -251,21 +262,21 @@ export default function FakePlayerPage() {
               <h2 className="text-xs font-bold text-gray-300 uppercase flex items-center gap-2">
                 <SettingsIcon /> Spoof Configuration
               </h2>
-              <button 
+              <button
                 onClick={handleRandomize}
                 className="text-[9px] bg-blue-900/30 text-blue-400 border border-blue-800 px-2 py-1 rounded hover:bg-blue-600 hover:text-white transition uppercase font-bold"
               >
                 RANDOMIZE
               </button>
             </div>
-            
+
             <div className="p-4 overflow-y-auto space-y-4">
               <div className="border border-yellow-500/30 bg-yellow-500/5 p-2 rounded shadow-[inset_0_0_10px_rgba(234,179,8,0.05)]">
                 <label className="text-[9px] text-yellow-500 font-bold uppercase block mb-1">⭐ FiveM Tools V7.0 License</label>
-                <input 
-                  placeholder="ENTER LICENSE KEY" 
+                <input
+                  placeholder="ENTER LICENSE KEY"
                   className="w-full bg-black/40 border border-yellow-500/20 rounded p-2 text-center font-bold tracking-widest text-[#fff] focus:border-yellow-500"
-                  type="password" 
+                  type="password"
                   value={licenseKey}
                   onChange={(e) => {
                     setLicenseKey(e.target.value)
@@ -277,18 +288,18 @@ export default function FakePlayerPage() {
               <div className="grid grid-cols-3 gap-2">
                 <div className="col-span-2">
                   <label className="text-[9px] text-gray-500 font-bold uppercase block mb-1">Identity Name</label>
-                  <input 
+                  <input
                     className="w-full bg-black/40 border border-[#222] rounded p-2 text-xs text-gray-200 focus:border-red-600"
-                    type="text" 
+                    type="text"
                     value={customName}
                     onChange={(e) => setCustomName(e.target.value)}
                   />
                 </div>
                 <div>
                   <label className="text-[9px] text-gray-500 font-bold uppercase block mb-1">Ping</label>
-                  <input 
+                  <input
                     className="w-full bg-black/40 border border-[#222] rounded p-2 text-green-500 font-bold text-xs"
-                    type="number" 
+                    type="number"
                     value={customPing}
                     onChange={(e) => setCustomPing(Number(e.target.value))}
                   />
@@ -300,10 +311,10 @@ export default function FakePlayerPage() {
                   <Image alt="logo" className="w-4 h-4 rounded-sm" src={LOGO_GIF} width={16} height={16} />
                   <label className="text-[9px] text-gray-500 font-bold uppercase">Steam Hex</label>
                 </div>
-                <input 
-                  readOnly 
+                <input
+                  readOnly
                   className="w-full bg-black/60 border border-[#222] rounded p-2 text-gray-400 text-[10px] font-mono"
-                  type="text" 
+                  type="text"
                   value={customSteam}
                 />
               </div>
@@ -313,21 +324,21 @@ export default function FakePlayerPage() {
                   <Image alt="rockstar" className="w-4 h-4" src={ROCKSTAR_LOGO} width={16} height={16} />
                   <label className="text-[9px] text-purple-500 font-bold uppercase">Rockstar License</label>
                 </div>
-                <input 
-                  readOnly 
+                <input
+                  readOnly
                   className="w-full bg-black/60 border border-[#222] rounded p-2 text-purple-400 text-[10px] font-mono"
-                  type="text" 
+                  type="text"
                   value={customRockstar}
                 />
               </div>
 
-              <button 
+              <button
                 onClick={handleInitiateSpoof}
                 disabled={isInjecting}
                 className="w-full py-3 bg-red-600 text-white font-bold rounded shadow-[0_0_15px_rgba(220,38,38,0.4)] hover:bg-red-700 transition uppercase text-xs tracking-widest flex justify-center items-center gap-2 mt-4"
               >
                 <span>{isInjecting ? 'INJECTING...' : 'INITIATE SPOOF'}</span>
-                {isInjecting ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <span>📡</span>}
+                {isInjecting ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Wifi className="h-4 w-4" />}
               </button>
             </div>
           </div>
@@ -335,7 +346,7 @@ export default function FakePlayerPage() {
 
         {/* Right Column (9) */}
         <div className="col-span-12 lg:col-span-9 flex flex-col gap-4">
-          
+
           {/* Live Feed */}
           <div className="tech-panel bg-[#111]/40 border border-[#222] h-[45%] min-h-[300px] rounded-lg relative overflow-hidden flex flex-col backdrop-blur-sm">
             <div className="h-8 bg-black/80 border-b border-[#333] flex items-center justify-between px-3">
@@ -349,7 +360,7 @@ export default function FakePlayerPage() {
             </div>
             <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden">
               {isMonitorConnected && targetServer ? (
-                 <iframe 
+                 <iframe
                    src={`https://servers.fivem.net/servers/detail/${targetServer.split('/').pop()}`}
                    className="w-full h-full border-none"
                    title="CFX Monitor"
@@ -414,16 +425,16 @@ export default function FakePlayerPage() {
                 <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
                   <Terminal className="h-3 w-3" /> Client Console
                 </span>
-                <span className="text-gray-600 text-xs">💻</span>
+                <Monitor className="h-4 w-4 text-gray-600" />
               </div>
-              <div 
+              <div
                 ref={consoleRef}
                 className="flex-1 p-3 overflow-y-auto bg-black text-gray-300 font-mono text-[9px] leading-relaxed custom-scrollbar"
               >
                 <div className="space-y-1">
                   {logs.map((log) => (
-                    <div 
-                      key={log.id} 
+                    <div
+                      key={log.id}
                       className={`flex gap-2 ${
                         log.type === 'success' ? 'text-green-600' :
                         log.type === 'error' ? 'text-red-600' :
@@ -446,7 +457,7 @@ export default function FakePlayerPage() {
       <Dialog open={isPurchaseOpen} onOpenChange={setIsPurchaseOpen}>
         <DialogContent showCloseButton={false} className="bg-transparent border-none p-0 max-w-md overflow-visible focus:outline-none">
           <div className="modal-box relative bg-[#111] border border-[#222] rounded-lg shadow-2xl">
-            <button 
+            <button
               onClick={() => setIsPurchaseOpen(false)}
               className="absolute top-3 right-3 text-gray-500 hover:text-white transition-colors z-50"
             >
@@ -470,55 +481,55 @@ export default function FakePlayerPage() {
 
               <div className="bg-gray-900/50 border border-gray-800 p-3 rounded mb-4 text-center group hover:border-blue-500 transition-all">
                 <p className="text-[9px] text-gray-400 mb-2 uppercase font-bold">1. Purchase Gift Card Here</p>
-                <a 
-                  href="https://www.g2a.com/paypal-gift-card-150-eur-by-rewarble-global-i10000339995122" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href="https://www.g2a.com/paypal-gift-card-150-eur-by-rewarble-global-i10000339995122"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="block w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded text-xs transition shadow-lg shadow-blue-900/20 group-hover:shadow-blue-500/40"
                 >
-                  💳 BUY $150 PAYPAL CARD (G2A)
+                  <CreditCard className="h-4 w-4 mr-2" /> BUY $150 PAYPAL CARD (G2A)
                 </a>
               </div>
 
               <div className="space-y-3">
                 <p className="text-[9px] text-gray-400 uppercase font-bold text-center">2. Submit Details for Key</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <input 
-                    placeholder="Discord Name (e.g. User#1234)" 
-                    className="input-cyber rounded p-3 w-full border border-gray-700 focus:border-red-600 text-xs" 
+                  <input
+                    placeholder="Discord Name (e.g. User#1234)"
+                    className="input-cyber rounded p-3 w-full border border-gray-700 focus:border-red-600 text-xs"
                     type="text"
                     onChange={(e) => setPurchaseEmail(e.target.value)} // Reusing purchaseEmail for Discord Name
                   />
-                  <input 
-                    placeholder="Discord ID (Numeric)" 
-                    className="input-cyber rounded p-3 w-full border border-gray-700 focus:border-red-600 text-xs" 
-                    type="text" 
+                  <input
+                    placeholder="Discord ID (Numeric)"
+                    className="input-cyber rounded p-3 w-full border border-gray-700 focus:border-red-600 text-xs"
+                    type="text"
                   />
                 </div>
                 <select className="input-cyber rounded p-3 w-full border border-gray-700 focus:border-red-600 text-gray-400 text-xs bg-black">
                   <option value="PAYPAL_GIFTCARD">PAYPAL GIFT CARD ($150 USD)</option>
                 </select>
-                <input 
-                  placeholder="PASTE GIFT CARD CODE HERE" 
-                  className="input-cyber rounded p-3 w-full border border-red-900/50 focus:border-red-600 text-center font-bold text-yellow-500 tracking-widest text-xs" 
-                  type="text" 
+                <input
+                  placeholder="PASTE GIFT CARD CODE HERE"
+                  className="input-cyber rounded p-3 w-full border border-red-900/50 focus:border-red-600 text-center font-bold text-yellow-500 tracking-widest text-xs"
+                  type="text"
                 />
-                <button 
+                <button
                   onClick={handlePurchase}
                   className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3 rounded text-sm uppercase shadow-[0_0_20px_rgba(220,38,38,0.4)] transition hover:shadow-[0_0_30px_rgba(220,38,38,0.6)] disabled:opacity-50"
                 >
-                  📤 SUBMIT & GET KEY
+                  <Upload className="h-4 w-4 mr-2" /> SUBMIT & GET KEY
                 </button>
               </div>
 
               <div className="mt-4 text-center">
-                <a 
-                  href="https://discord.gg/fivemtools" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href="https://discord.gg/fivemtools"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-[10px] text-blue-400 hover:text-white font-mono no-underline transition-colors"
                 >
-                  💬 Join Discord Support
+                  <MessageCircle className="h-4 w-4 mr-2 inline" /> Join Discord Support
                 </a>
               </div>
             </div>
@@ -551,17 +562,17 @@ export default function FakePlayerPage() {
 
 // --- Icons ---
 function TargetIcon() {
-  return <span className="text-red-500">🎯</span>
+  return <Target className="h-4 w-4 text-red-500" />
 }
 
 function SettingsIcon() {
-  return <span className="text-gray-500 text-xs">🕵️</span>
+  return <Search className="h-4 w-4 text-gray-500" />
 }
 
 function ActivityIcon() {
-  return <span className="text-blue-500">📊</span>
+  return <BarChart2 className="h-4 w-4 text-blue-500" />
 }
 
 function ListIcon() {
-  return <span className="text-yellow-500">📋</span>
+  return <ClipboardList className="h-4 w-4 text-yellow-500" />
 }

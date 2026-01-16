@@ -2,6 +2,8 @@ import { NextResponse, NextRequest } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { getSupabaseAdminClient } from "@/lib/supabase/server"
+import { BADGES } from "@/lib/xp-badges"
+
 
 // GET - Get all badges or user badges
 export async function GET(request: NextRequest) {
@@ -93,18 +95,8 @@ export async function POST(request: NextRequest) {
 }
 
 function getDefaultBadges() {
-  return [
-    { id: "newcomer", name: "Newcomer", description: "Welcome to FiveM Tools!", icon: "👋", category: "general", rarity: "common" },
-    { id: "first_post", name: "First Post", description: "Created your first forum post", icon: "📝", category: "forum", rarity: "common" },
-    { id: "active_poster", name: "Active Poster", description: "Created 10 forum posts", icon: "💬", category: "forum", rarity: "uncommon" },
-    { id: "forum_veteran", name: "Forum Veteran", description: "Created 50 forum posts", icon: "🏆", category: "forum", rarity: "rare" },
-    { id: "first_upload", name: "First Upload", description: "Uploaded your first asset", icon: "📤", category: "assets", rarity: "common" },
-    { id: "contributor", name: "Contributor", description: "Uploaded 5 assets", icon: "🎁", category: "assets", rarity: "uncommon" },
-    { id: "top_contributor", name: "Top Contributor", description: "Uploaded 20 assets", icon: "⭐", category: "assets", rarity: "rare" },
-    { id: "liked", name: "Liked", description: "Received 10 likes", icon: "❤️", category: "social", rarity: "common" },
-    { id: "popular", name: "Popular", description: "Received 50 likes", icon: "🔥", category: "social", rarity: "uncommon" },
-    { id: "level_5", name: "Rising Star", description: "Reached Level 5", icon: "⬆️", category: "xp", rarity: "common" },
-    { id: "level_10", name: "Experienced", description: "Reached Level 10", icon: "📈", category: "xp", rarity: "uncommon" },
-    { id: "vip_member", name: "VIP Member", description: "VIP membership holder", icon: "💎", category: "membership", rarity: "epic" },
-  ]
+  return BADGES.map(b => ({
+    ...b,
+    category: b.requirement.type === 'level' ? 'xp' : 'general'
+  }))
 }

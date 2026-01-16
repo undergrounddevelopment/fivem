@@ -414,6 +414,130 @@ export interface Database {
           streak?: number
         }
       }
+      messages: {
+        Row: {
+          id: string
+          sender_id: string
+          receiver_id: string
+          content: string
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          sender_id: string
+          receiver_id: string
+          content: string
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          sender_id?: string
+          receiver_id?: string
+          content?: string
+          is_read?: boolean
+          created_at?: string
+        }
+      }
+      spin_settings: {
+        Row: {
+          key: string
+          value: Json
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          value: Json
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          value?: Json
+          updated_at?: string
+        }
+      }
+      spin_wheel_prizes: {
+        Row: {
+          id: string
+          name: string
+          type: string
+          value: number
+          image_url: string | null
+          probability: number
+          color: string | null
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          type: string
+          value?: number
+          image_url?: string | null
+          probability?: number
+          color?: string | null
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          type?: string
+          value?: number
+          image_url?: string | null
+          probability?: number
+          color?: string | null
+          is_active?: boolean
+          created_at?: string
+        }
+      }
+      spin_wheel_history: {
+        Row: {
+          id: string
+          user_id: string
+          prize_id: string | null
+          prize_name: string | null
+          prize_value: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          prize_id?: string | null
+          prize_name?: string | null
+          prize_value?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          prize_id?: string | null
+          prize_name?: string | null
+          prize_value?: number | null
+          created_at?: string
+        }
+      }
+      spin_wheel_tickets: {
+        Row: {
+          id: string
+          user_id: string
+          tickets: number
+          last_earned: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          tickets?: number
+          last_earned?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          tickets?: number
+          last_earned?: string
+        }
+      }
     }
   }
 }

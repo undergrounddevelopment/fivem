@@ -111,7 +111,7 @@ export async function claimDailySpinTicket() {
   if (error) throw new Error(error.message)
 
   revalidatePath("/spin-wheel")
-  return { success: true, tickets: newTicketCount }
+  return { success: true, tickets: newTicketCount, bonusTickets: spinsPerDay }
 }
 
 export async function spinWheel() {
@@ -148,17 +148,21 @@ export async function spinWheel() {
   prizes.forEach(p => totalWeight += parseFloat(p.probability as unknown as string))
 
   let random = Math.random() * totalWeight
-  let selectedPrize = null
-
-  for (const prize of prizes) {
-    random -= parseFloat(prize.probability as unknown as string)
+  let selectedPrize: any = null
+  let prizeIndex = 0
+  for (let i = 0; i < prizes.length; i++) {
+    random -= parseFloat(prizes[i].probability as unknown as string)
     if (random <= 0) {
-      selectedPrize = prize
+      selectedPrize = prizes[i]
+      prizeIndex = i
       break
     }
   }
 
-  if (!selectedPrize) selectedPrize = prizes[prizes.length - 1]
+  if (!selectedPrize) {
+      selectedPrize = prizes[prizes.length - 1]
+      prizeIndex = prizes.length - 1
+  }
 
   await supabase
     .from("spin_wheel_tickets")
@@ -194,7 +198,10 @@ export async function spinWheel() {
   return {
     success: true,
     prize: selectedPrize,
-    remainingTickets: ticketData.tickets - 1
+    prizeIndex,
+    remainingTickets: ticketData.tickets - 1,
+    newBalance: selectedPrize.type === 'coins' ? user.coins + selectedPrize.value : user.coins,
+    newTickets: selectedPrize.type === 'ticket' ? (ticketData.tickets || 0) : (ticketData.tickets - 1)
   }
 }
 

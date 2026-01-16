@@ -132,8 +132,8 @@ export function RewarblePaymentModal({
                 <div className="p-8 relative z-10">
                     {!isSuccess ? (
                         <>
-                            <DialogHeader className="mb-8">
-                                <div className="flex items-center gap-5 mb-2">
+                            <DialogHeader className="px-8 pt-8">
+                                <div className="flex items-center gap-5">
                                     <div className="h-16 w-16 shrink-0 rounded-2xl bg-white flex items-center justify-center border-2 border-white/10 overflow-hidden p-2">
                                         <img 
                                             src="https://gamecardsdirect.com/content/picture/119926/rewarble-60.png" 

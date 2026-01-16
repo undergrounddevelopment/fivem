@@ -7,6 +7,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { BADGES, BADGE_TIERS, getLevelFromXP } from "@/lib/xp-badges"
+
 
 interface LeaderboardUser {
   id: string
@@ -38,7 +40,13 @@ export default function LeaderboardPage() {
     "from-orange-400 to-orange-600"  // Bronze
   ]
 
-  const UserRow = ({ user, rank, metric, icon }: { user: LeaderboardUser, rank: number, metric: string, icon: any }) => (
+
+
+  const UserRow = ({ user, rank, metric, icon }: { user: LeaderboardUser, rank: number, metric: string, icon: any }) => {
+    // Determine badge from level/xp if not explicit
+    const badgeInfo = BADGE_TIERS.find(b => b.tier === user.level) || BADGE_TIERS[0]
+    
+    return (
     <motion.div 
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
@@ -61,7 +69,7 @@ export default function LeaderboardPage() {
           alt={user.username}
           width={48}
           height={48}
-          className="rounded-full object-cover ring-2 ring-transparent group-hover:ring-primary transition-all"
+          className="rounded-full object-cover ring-2 ring-transparent group-hover:ring-primary transition-all bg-background"
         />
         {user.membership === 'vip' && (
           <div className="absolute -top-1 -right-1 bg-primary text-[8px] px-1 rounded-full text-white">VIP</div>
@@ -69,12 +77,24 @@ export default function LeaderboardPage() {
       </Link>
 
       <div className="flex-1 min-w-0">
-        <Link href={`/profile/${user.discord_id || user.id}`} className="font-semibold hover:text-primary transition-colors truncate block">
-          {user.username}
-        </Link>
+        <div className="flex items-center gap-2">
+           <Link href={`/profile/${user.discord_id || user.id}`} className="font-semibold hover:text-primary transition-colors truncate block">
+             {user.username}
+           </Link>
+           {/* Badge Display */}
+           <div className="relative w-5 h-5" title={badgeInfo.name}>
+             <Image 
+               src={badgeInfo.icon} 
+               alt={badgeInfo.name} 
+               fill 
+               className="object-contain" 
+               unoptimized
+             />
+           </div>
+        </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {user.current_badge && <span>{user.current_badge}</span>}
-          {user.level > 1 && <span>• Lvl {user.level}</span>}
+          <span style={{ color: badgeInfo.color }} className="font-medium">{badgeInfo.name}</span>
+          <span>• Lvl {user.level}</span>
         </div>
       </div>
 
@@ -85,7 +105,7 @@ export default function LeaderboardPage() {
         </div>
       </div>
     </motion.div>
-  )
+  )}
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">

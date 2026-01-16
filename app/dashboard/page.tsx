@@ -81,7 +81,7 @@ export default function DashboardPage() {
         const { data: userAssets } = await supabase
           .from('assets')
           .select('*')
-          .eq('creator_id', session.user.id)
+          .eq('author_id', session.user.id)
 
         setAssets((userAssets || []) as Asset[])
 
@@ -99,28 +99,40 @@ export default function DashboardPage() {
 
         const { data: userData } = await supabase
           .from('users')
-          .select('xp, level')
-          .eq('discord_id', session.user.id)
+          .select('xp, badge_tier, created_at')
+          .eq('id', session.user.id)
           .single()
 
-        if (userData) {
-          const xp = userData.xp || 0
-          const levelInfo = getLevelFromXP(xp)
-          setXpData({ ...levelInfo, currentXP: xp })
+        // Fetch robust key stats from central API 
+        // This ensures Dashboard matches Profile/Badges exactly (including likes/downloads logic)
+        try {
+          const statsRes = await fetch(`/api/xp/stats?userId=${session.user.id}`)
+          if (statsRes.ok) {
+            const statsData = await statsRes.json()
+            const realStats = statsData.userStats
+            
+            // Update XP visuals
+            if (statsData.xp !== undefined) {
+               const levelInfo = getLevelFromXP(statsData.xp)
+               setXpData({ ...levelInfo, currentXP: statsData.xp })
+            } else if (userData) {
+               const levelInfo = getLevelFromXP(userData.xp || 0)
+               setXpData({ ...levelInfo, currentXP: userData.xp || 0 })
+            }
 
-          const userStats = {
-            level: userData.level || 1,
-            posts: 0,
-            threads: 0,
-            likes_received: 0,
-            assets: userAssets?.length || 0,
-            asset_downloads: totalDownloads,
-            membership: session.user.membership || 'free',
-            created_at: new Date().toISOString()
+            // Calculate badges using the ROBUST stats (with correct likes/downloads)
+            const earnedBadges = getEarnedBadges(realStats)
+            setBadges(earnedBadges)
           }
-          const earnedBadges = getEarnedBadges(userStats)
-          setBadges(earnedBadges)
+        } catch (apiError) {
+           console.error("Dashboard XP Sync Error:", apiError)
+           // Fallback to basic if API fails
+           if (userData) {
+             const levelInfo = getLevelFromXP(userData.xp || 0)
+             setXpData({ ...levelInfo, currentXP: userData.xp || 0 })
+           }
         }
+
       } catch (error) {
         console.error('Error:', error)
       } finally {
@@ -355,27 +367,32 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               {badges.length > 0 ? (
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {badges.slice(0, 6).map((badge) => (
                     <motion.div
                       key={badge.id}
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className={`relative p-4 rounded-xl border-2 bg-gradient-to-br ${getRarityColor(badge.rarity)} hover:scale-105 transition-all cursor-pointer group`}
+                      className={`relative p-3 rounded-xl border border-white/10 bg-white/5 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group flex flex-col items-center justify-center`}
                       title={badge.description}
                     >
-                      <div className="text-center">
-                        <div className="text-3xl mb-2">
-                          {badge.icon ? (
-                            <Image src={badge.icon} alt={badge.name} width={40} height={40} className="mx-auto" unoptimized />
-                          ) : (
-                            <Trophy className="h-10 w-10 mx-auto text-white" />
-                          )}
-                        </div>
-                        <p className="text-[11px] font-medium text-white truncate">{badge.name}</p>
+                      <div className="relative w-12 h-12 mb-2 group-hover:scale-110 transition-transform">
+                        <Image 
+                          src={badge.icon} 
+                          alt={badge.name} 
+                          fill 
+                          className="object-contain" 
+                          unoptimized 
+                        />
                       </div>
-                      <div className="absolute inset-0 bg-black/90 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-3">
-                        <p className="text-[10px] text-white text-center leading-tight">{badge.description}</p>
+                      <p className="text-[10px] font-bold text-center uppercase tracking-tighter truncate w-full">
+                        {badge.name}
+                      </p>
+                      
+                      {/* Tooltip-like details on hover */}
+                      <div className="absolute inset-0 bg-black/95 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center z-20">
+                        <p className="text-[10px] text-white leading-tight font-medium uppercase mb-1">{badge.name}</p>
+                        <p className="text-[9px] text-muted-foreground leading-none">{badge.description}</p>
                       </div>
                     </motion.div>
                   ))}

@@ -1,4 +1,5 @@
 {
     "Lingma.aI Chat.mcpToolsInAgentMode": true,
-    "typescript.autoClosingTags": false
+    "typescript.autoClosingTags": false,
+    "liveServer.settings.port": 5501
 }

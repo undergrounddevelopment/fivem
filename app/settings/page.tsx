@@ -21,6 +21,7 @@ export default function SettingsPage() {
   const [formData, setFormData] = useState({
     username: "",
     bio: "",
+    avatar: "",
     banner: "",
     socials: {
       github: "",
@@ -47,6 +48,7 @@ export default function SettingsPage() {
             setFormData(prev => ({
               ...prev,
               bio: data.user.bio || "",
+              avatar: data.user.avatar || "",
               banner: data.user.banner || "",
               socials: data.user.social_links || { github: "", instagram: "", youtube: "", website: "" }
             }))
@@ -81,6 +83,7 @@ export default function SettingsPage() {
           userId: user?.id,
           username: formData.username,
           bio: formData.bio,
+          avatar: formData.avatar,
           banner: formData.banner,
           social_links: formData.socials
         })
@@ -163,6 +166,40 @@ export default function SettingsPage() {
 
             <TabsContent value="appearance">
               <Card className="p-6 glass border-white/10 space-y-6">
+                {/* Avatar Section */}
+                <div className="space-y-4">
+                  <Label>Avatar</Label>
+                  <div className="flex items-center gap-6">
+                    <div className="relative">
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-primary/20 bg-secondary">
+                        {(formData.avatar || user?.avatar) ? (
+                          <img 
+                            src={formData.avatar || user?.avatar} 
+                            alt="Avatar preview" 
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <User className="h-10 w-10 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <Input 
+                        name="avatar" 
+                        value={formData.avatar} 
+                        onChange={handleChange}
+                        placeholder="https://example.com/avatar.jpg"
+                        className="bg-secondary/30 border-white/10"
+                      />
+                      <p className="text-xs text-muted-foreground">Enter an image URL. Recommended size: 256x256px.</p>
+                      <p className="text-xs text-muted-foreground">Leave empty to use your Discord avatar.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Banner Section */}
                  <div className="space-y-2">
                   <Label>Banner URL</Label>
                   <div className="flex gap-2">

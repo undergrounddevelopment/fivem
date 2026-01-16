@@ -11,7 +11,7 @@ import Link from "next/link"
 const DEFAULT_BANNERS = [
   {
     id: "default-1",
-    url: "https://cdn.discordapp.com/attachments/1445794462033776721/1453797128643153920/back1.png?ex=6961df55&is=69608dd5&hm=35c5b9c0b9c4f44685edb4c45b6e2c6150ed793b5f85b7f9da02a618de13c55c",
+    url: "/back1.png",
     title: "FiveM Tools V7.0"
   },
   {

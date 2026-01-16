@@ -1,24 +1,28 @@
-import { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/server"
+import { createClient, createAdminClient } from "@/lib/supabase/server"
+import { XP_CONFIG, BADGES } from "@/lib/xp-badges"
 
-// XP Activities Configuration
+// XP Activities Configuration (Mapped with key compatibility)
 export const XP_ACTIVITIES = {
-  upload_asset: 100,
-  create_thread: 50,
-  create_reply: 20,
-  receive_like: 10,
-  daily_login: 10,
-  asset_download: 15,
+  upload_asset: XP_CONFIG.rewards.UPLOAD_ASSET,
+  create_thread: XP_CONFIG.rewards.CREATE_THREAD,
+  create_reply: XP_CONFIG.rewards.CREATE_REPLY,
+  receive_like: XP_CONFIG.rewards.RECEIVE_LIKE,
+  daily_login: XP_CONFIG.rewards.DAILY_LOGIN,
+  asset_download: XP_CONFIG.rewards.ASSET_DOWNLOADED,
 }
 
-// Badge Tiers Configuration
-export const BADGE_TIERS = [
-  { tier: 1, name: "Beginner Bolt", minXp: 0, maxXp: 999, color: "#9CA3AF" },
-  { tier: 2, name: "Intermediate Bolt", minXp: 1000, maxXp: 4999, color: "#10B981" },
-  { tier: 3, name: "Advanced Bolt", minXp: 5000, maxXp: 14999, color: "#3B82F6" },
-  { tier: 4, name: "Expert Bolt", minXp: 15000, maxXp: 49999, color: "#8B5CF6" },
-  { tier: 5, name: "Legend Bolt", minXp: 50000, maxXp: 999999, color: "#F59E0B" },
-]
+// Badge Tiers Configuration (Synced with levels)
+export const BADGE_TIERS = XP_CONFIG.levels.map(level => {
+  const badge = BADGES.find(b => b.requirement.type === 'level' && b.requirement.value === level.level)
+  return {
+    tier: level.level,
+    name: level.title,
+    minXp: level.minXP,
+    maxXp: XP_CONFIG.levels.find(l => l.level === level.level + 1)?.minXP ? XP_CONFIG.levels.find(l => l.level === level.level + 1)!.minXP - 1 : 999999,
+    color: badge?.color || "#9CA3AF",
+    icon: badge?.icon || "/badges/badge1.png"
+  }
+})
 
 export const xpQueries = {
   // Award XP to user
@@ -88,18 +92,57 @@ export const xpQueries = {
     }
   },
 
-  // Get user XP stats
-  getUserXPStats: async (discordId: string) => {
+  // Get user XP stats and activity counts
+  getUserXPStats: async (userId: string) => {
     try {
-      const supabase = await createClient()
+      const supabase = createAdminClient()
 
+      // Fetch user basic info
       const { data: user, error } = await supabase
         .from("users")
-        .select("xp, badge_tier")
-        .eq("discord_id", discordId)
+        .select("id, discord_id, xp, badge_tier, membership, created_at")
+        .or(`id.eq.${userId},discord_id.eq.${userId}`)
         .single()
 
       if (error || !user) return null
+
+      // Count Thread Posts
+      const { count: threadsCount } = await supabase
+        .from("forum_threads")
+        .select("*", { count: 'exact', head: true })
+        .eq("author_id", user.id)
+
+      // Count Replies
+      const { count: repliesCount } = await supabase
+        .from("forum_replies")
+        .select("*", { count: 'exact', head: true })
+        .eq("author_id", user.id)
+
+      // Count Assets Uploaded and their likes/downloads
+      const { data: assets } = await supabase
+        .from("assets")
+        .select("downloads, likes")
+        .eq("author_id", user.id)
+
+      const assetsCount = assets?.length || 0
+      const totalAssetDownloads = assets?.reduce((sum, a) => sum + (a.downloads || 0), 0) || 0
+      const assetLikes = assets?.reduce((sum, a) => sum + (a.likes || 0), 0) || 0
+
+      // Count Thread Likes
+      const { data: threadLikes } = await supabase
+        .from("forum_threads")
+        .select("likes")
+        .eq("author_id", user.id)
+      const totalThreadLikes = threadLikes?.reduce((sum, t) => sum + (t.likes || 0), 0) || 0
+
+      // Count Reply Likes
+      const { data: replyLikes } = await supabase
+        .from("forum_replies")
+        .select("likes")
+        .eq("author_id", user.id)
+      const totalReplyLikes = replyLikes?.reduce((sum, r) => sum + (r.likes || 0), 0) || 0
+
+      const totalLikesReceived = assetLikes + totalThreadLikes + totalReplyLikes
 
       const currentTier = BADGE_TIERS.find(t => t.tier === (user.badge_tier || 1)) || BADGE_TIERS[0]
       const nextTier = BADGE_TIERS.find(t => t.tier === (user.badge_tier || 1) + 1)
@@ -108,13 +151,27 @@ export const xpQueries = {
         ? ((user.xp - currentTier.minXp) / (nextTier.minXp - currentTier.minXp)) * 100
         : 100
 
+      const userStats = {
+        level: user.badge_tier || 1,
+        posts: (threadsCount || 0) + (repliesCount || 0),
+        threads: threadsCount || 0,
+        likes_received: totalLikesReceived,
+        assets: assetsCount,
+        asset_downloads: totalAssetDownloads,
+        membership: (user.membership as string) || "member",
+        created_at: user.created_at
+      }
+
       return {
+        userId: user.id,
+        discordId: user.discord_id,
         xp: user.xp || 0,
         badgeTier: user.badge_tier || 1,
         currentBadge: currentTier,
         nextBadge: nextTier,
         progress: Math.min(Math.max(progress, 0), 100),
         xpToNext: nextTier ? nextTier.minXp - user.xp : 0,
+        userStats
       }
     } catch (error) {
       console.error("[XP] Get stats error:", error)

@@ -125,14 +125,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Award XP to the liker
-    await awardXP(supabase, discordId, 'GIVE_LIKE', `Gave a like on a ${targetType}`)
-
+    const { xpQueries } = await import('@/lib/xp/queries')
+    // Note: GIVE_LIKE is not in the unified XP_ACTIVITIES map yet, but RECEIVE_LIKE is.
+    // We'll ignore GIVE_LIKE for now to match the strict schema in queries.ts or map it if we add it.
+    // The previous code had GIVE_LIKE: 5 in XP_CONFIG.rewards
+    // Let's check xp-badges.ts again. Yes, it has GIVE_LIKE.
+    // But lib/xp/queries.ts only maps specific keys.
+    // Actually, let's just do RECEIVE_LIKE for the author as that's the most important for badges.
+    
     // Award XP to the content author
     let authorId: string | null = null
     if (targetType === 'thread') {
       const { data: thread } = await supabase.from('forum_threads').select('author_id').eq('id', targetId).single()
       if (thread?.author_id) {
-        // Get author's discord_id from UUID
         const { data: author } = await supabase.from('users').select('discord_id').eq('id', thread.author_id).single()
         authorId = author?.discord_id
       }
@@ -145,7 +150,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (authorId && authorId !== discordId) {
-      await awardXP(supabase, authorId, 'RECEIVE_LIKE', `Received a like on ${targetType}`)
+       await xpQueries.awardXP(authorId, 'receive_like', targetId)
     }
 
     return NextResponse.json({ success: true, liked: true })

@@ -51,6 +51,7 @@ const navItems = [
   { label: "Vehicles", href: "/vehicles", icon: ICONS_3D.car },
   { label: "EUP & Clothing", href: "/clothing", icon: ICONS_3D.clothing },
   { label: "Messages", href: "/messages", icon: ICONS_3D.message },
+  { label: "Daily Spin", href: "/daily-spin", icon: ICONS_3D.ticket, badge: "NEW" },
   { label: "Membership", href: "/membership", icon: ICONS_3D.crown },
   { label: "Decrypt CFX V7", href: "/decrypt", icon: ICONS_3D.decrypt },
   { label: "Upvotes Server", href: "/upvotes", icon: ICONS_3D.rocket },

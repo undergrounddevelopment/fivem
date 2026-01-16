@@ -201,7 +201,7 @@ export const SPONSORS: Sponsor[] = [
     id: "sponsor-1",
     name: "FiveManage",
     image: SPONSOR_BANNERS[0],
-    type: "video",
+    type: "image",
     isActive: true,
   },
   {

@@ -4,13 +4,18 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdminClient } from "@/lib/supabase/server"
 
-const BADGE_DATA = [
-  { id: 'beginner', name: 'Beginner Bolt', description: 'Start your journey - New member rank', image_url: '/badges/badge1.png', min_xp: 0, max_xp: 999, color: '#84CC16', tier: 1 },
-  { id: 'intermediate', name: 'Intermediate Bolt', description: 'Rising star - Active community member', image_url: '/badges/badge2.png', min_xp: 1000, max_xp: 4999, color: '#3B82F6', tier: 2 },
-  { id: 'advanced', name: 'Advanced Bolt', description: 'Skilled contributor - Experienced member', image_url: '/badges/badge3.png', min_xp: 5000, max_xp: 14999, color: '#9333EA', tier: 3 },
-  { id: 'expert', name: 'Expert Bolt', description: 'Elite status - Top community member', image_url: '/badges/badge4.png', min_xp: 15000, max_xp: 49999, color: '#DC2626', tier: 4 },
-  { id: 'legend', name: 'Legend Bolt', description: 'Legendary - Ultimate rank achieved', image_url: '/badges/badge5.png', min_xp: 50000, max_xp: null, color: '#F59E0B', tier: 5 },
-]
+import { BADGES } from "@/lib/xp-badges"
+
+const BADGE_DATA = BADGES.map(b => ({
+  id: b.id,
+  name: b.name,
+  description: b.description,
+  image_url: b.icon,
+  min_xp: b.requirement.type === 'level' ? b.requirement.value * 1000 : 0, // Approximate fallback or strict mapping
+  max_xp: null,
+  color: b.color,
+  tier: b.requirement.type === 'level' ? b.requirement.value : 1
+}))
 
 // Check database status
 export async function GET() {

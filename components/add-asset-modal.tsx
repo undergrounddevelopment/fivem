@@ -74,9 +74,13 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <VisuallyHidden>
-          <DialogTitle>Add New Asset</DialogTitle>
-        </VisuallyHidden>
+        <DialogHeader className="px-6 pt-6">
+          <DialogTitle className="text-2xl font-bold text-foreground">Add New Asset</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Complete the form below to upload a new script, MLO, or vehicle asset.
+          </DialogDescription>
+        </DialogHeader>
+
         {success ? (
           <div className="p-6 text-center space-y-4">
             <CheckCircle className="h-16 w-16 text-success mx-auto" />
@@ -84,8 +88,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
             <p className="text-muted-foreground">Redirecting...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            <h2 className="text-2xl font-bold text-foreground mb-4">Add New Asset</h2>
+          <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
             
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Title</label>

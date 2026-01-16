@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { getEarnedBadges, BADGES, getLevelFromXP } from "@/lib/xp-badges"
+
 
 function getSupabase() {
   return createClient(
@@ -18,33 +20,36 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     
     let user = null
 
-    // Method 1: Try discord_id first (most common from session)
-    const { data: byDiscord } = await supabase
-      .from("users")
-      .select("*")
-      .eq("discord_id", id)
-      .single()
-    
-    if (byDiscord) {
-      user = byDiscord
-      console.log("[Profile] Found by discord_id:", user.username)
+    // Smart ID Detection
+    const isDiscordId = /^\d{17,20}$/.test(id)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+
+    // Method 1: Discord ID (Priority if matches snowflake format)
+    if (isDiscordId) {
+      console.log("[Profile] Detected Discord ID format")
+      const { data: byDiscord } = await supabase
+        .from("users")
+        .select("*")
+        .eq("discord_id", id)
+        .single()
+      
+      if (byDiscord) user = byDiscord
     }
 
-    // Method 2: Try UUID if not found
-    if (!user) {
+    // Method 2: UUID (Priority if matches UUID format)
+    if (!user && isUuid) {
+      console.log("[Profile] Detected UUID format")
       const { data: byUuid } = await supabase
         .from("users")
         .select("*")
         .eq("id", id)
         .single()
       
-      if (byUuid) {
-        user = byUuid
-        console.log("[Profile] Found by UUID:", user.username)
-      }
+      if (byUuid) user = byUuid
     }
 
-    // Method 3: Try username as last resort
+    // Method 3: Username (Fallback or if vague format)
+    // Only search username if not found yet, and if it's NOT a clear UUID (usernames can be numbers so check discord ID format too)
     if (!user) {
       const { data: byUsername } = await supabase
         .from("users")
@@ -52,10 +57,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         .ilike("username", id)
         .single()
       
-      if (byUsername) {
-        user = byUsername
-        console.log("[Profile] Found by username:", user.username)
-      }
+      if (byUsername) user = byUsername
+    }
+
+    // Method 4: Fallback - If it looked like Discord ID but failed, try searching generic 'id' column just in case
+    // This handles cases where maybe it IS a UUID but regex failed, or vice versa
+    if (!user && !isUuid && !isDiscordId) {
+       // Generic search
     }
 
     if (!user) {
@@ -78,7 +86,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const [assetCount, threadCount, downloadCount] = await Promise.all([
       supabase.from("assets").select("*", { count: "exact", head: true }).eq("author_id", user.id).eq("status", "approved"),
       supabase.from("forum_threads").select("*", { count: "exact", head: true }).eq("author_id", user.id).eq("is_deleted", false),
-      supabase.from("downloads").select("*", { count: "exact", head: true }).eq("user_id", user.discord_id)
+      supabase.from("downloads").select("*", { count: "exact", head: true }).eq("user_id", user.discord_id || '0')
     ])
 
     // Get download details
@@ -89,20 +97,35 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       })
     )
 
-    // Badges
-    const badges = [
-      { id: "1", name: "Beginner", description: "Start", image_url: "/badges/badge1.png", min_xp: 0, max_xp: 999, color: "#84CC16", tier: 1 },
-      { id: "2", name: "Intermediate", description: "Rising", image_url: "/badges/badge2.png", min_xp: 1000, max_xp: 4999, color: "#3B82F6", tier: 2 },
-      { id: "3", name: "Advanced", description: "Skilled", image_url: "/badges/badge3.png", min_xp: 5000, max_xp: 14999, color: "#9333EA", tier: 3 },
-      { id: "4", name: "Expert", description: "Elite", image_url: "/badges/badge4.png", min_xp: 15000, max_xp: 49999, color: "#DC2626", tier: 4 },
-      { id: "5", name: "Legend", description: "Legendary", image_url: "/badges/badge5.png", min_xp: 50000, max_xp: null, color: "#F59E0B", tier: 5 },
-    ]
+    const [replyCountRes, threadsLikeRes, repliesLikeRes, assetsLikeRes] = await Promise.all([
+      supabase.from("forum_replies").select("*", { count: "exact", head: true }).eq("author_id", user.id).eq("is_deleted", false),
+      supabase.from("forum_threads").select("likes").eq("author_id", user.id),
+      supabase.from("forum_replies").select("likes").eq("author_id", user.id),
+      supabase.from("assets").select("likes").eq("author_id", user.id)
+    ])
+
+    const totalLikes = (threadsLikeRes.data || []).reduce((acc, curr) => acc + (curr.likes || 0), 0) +
+                       (repliesLikeRes.data || []).reduce((acc, curr) => acc + (curr.likes || 0), 0) +
+                       (assetsLikeRes.data || []).reduce((acc, curr) => acc + (curr.likes || 0), 0)
     
-    const earnedBadges = badges.filter(b => (user.xp || 0) >= b.min_xp && (!b.max_xp || (user.xp || 0) <= b.max_xp))
+    // Construct user stats object for badge calculator
+    const calcStats = {
+      level: user.level || 1,
+      posts: (threadCount.count || 0) + (replyCountRes.count || 0), // Total posts = threads + replies
+      threads: threadCount.count || 0,
+      likes_received: totalLikes,
+      assets: assetCount.count || 0,
+      asset_downloads: downloadCount.count || 0,
+      membership: user.membership || "free",
+      created_at: user.created_at
+    }
+
+    const earnedBadges = getEarnedBadges(calcStats)
+    const levelInfo = getLevelFromXP(user.xp || 0)
 
     const response = {
       user: {
-        id: user.discord_id || user.id,
+        id: user.discord_id || user.id, // Prefer Discord ID if available for cleaner URLs
         discordId: user.discord_id,
         username: user.username || "Unknown",
         email: user.email,
@@ -115,8 +138,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         createdAt: user.created_at,
         lastSeen: user.last_seen,
         xp: user.xp || 0,
-        level: user.level || 1,
-        current_badge: user.current_badge || "Beginner"
+        level: user.level || 1, 
+        current_badge: levelInfo.title,
+        banner: user.banner || null,
+        bio: user.bio || null,
+        social_links: user.social_links || null
       },
       assets,
       threads,
@@ -124,16 +150,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       stats: {
         totalUploads: assetCount.count || 0,
         totalDownloads: downloadCount.count || 0,
-        totalPosts: threadCount.count || 0,
+        totalPosts: calcStats.posts,
         coins: user.coins || 0,
         membership: user.membership || "free",
-        joinedAt: user.created_at
+        joinedAt: user.created_at,
+        // Add robust stats for BadgesDisplay
+        level: user.level || 1,
+        xp: user.xp || 0,
+        posts: calcStats.posts,
+        threads: calcStats.threads,
+        likes_received: calcStats.likes_received,
+        assets: calcStats.assets,
+        asset_downloads: calcStats.asset_downloads,
+        created_at: user.created_at // Duplicate for compatibility
       },
       downloadCount: downloadCount.count || 0,
-      postCount: threadCount.count || 0,
-      likeCount: 0,
+      postCount: calcStats.posts,
+      likeCount: totalLikes, // Real like count!
       points: user.coins || 0,
-      badges: { earned: earnedBadges, equipped: [], all: badges }
+      badges: { 
+        earned: earnedBadges, 
+        equipped: [], 
+        all: BADGES // Return all potential badges for "locked" view
+      }
     }
 
     console.log("[Profile] Success:", user.username)
