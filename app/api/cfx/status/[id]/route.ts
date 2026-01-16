@@ -13,100 +13,52 @@ export async function GET(
             return NextResponse.json({ error: "Invalid server ID format" }, { status: 400 })
         }
 
-        // Parallel Execution Strategy
-        // We race multiple sources to get the fastest valid response
-        
+        console.log(`[CFX API] Fetching server: ${id}`)
+
         const fetchWithTimeout = async (url: string, timeoutMs: number) => {
             const controller = new AbortController()
             const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
             
             try {
+                console.log(`[CFX API] Trying: ${url}`)
                 const res = await fetch(url, {
                     headers: {
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                        "Accept": "application/json",
-                        "Origin": "https://servers.fivem.net",
-                        "Referer": "https://servers.fivem.net/"
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                        "Accept": "application/json"
                     },
                     signal: controller.signal,
-                    next: { revalidate: 30 }
+                    cache: 'no-store'
                 })
                 clearTimeout(timeoutId)
                 if (!res.ok) throw new Error(`HTTP ${res.status}`)
                 const data = await res.json()
-                if (!data || (!data.Data && !data.hostname)) throw new Error("Invalid data")
+                console.log(`[CFX API] Success from: ${url}`)
                 return data
-            } catch (e) {
+            } catch (e: any) {
                 clearTimeout(timeoutId)
-                throw e
-            }
-        }
-
-        // Strategy 3 (Direct Join) Wrapper
-        const tryDirectJoin = async () => {
-            try {
-                const joinUrl = `https://cfx.re/join/${id}`
-                const joinRes = await fetch(joinUrl, {
-                    method: "HEAD",
-                    redirect: "manual",
-                    headers: { "User-Agent": "Mozilla/5.0" },
-                    signal: AbortSignal.timeout(2500) // Fast timeout for scraping
-                })
-
-                const location = joinRes.headers.get("location") || joinRes.headers.get("x-citizenfx-url")
-                
-                if (location && location.includes("fivem://connect/")) {
-                    const ipPort = location.replace("fivem://connect/", "").replace(/\/$/, "")
-                    const infoUrl = `http://${ipPort}/info.json`
-                    
-                    const infoRes = await fetch(infoUrl, { 
-                        next: { revalidate: 60 }, 
-                        signal: AbortSignal.timeout(2500) 
-                    })
-                    
-                    if (infoRes.ok) {
-                        const infoData = await infoRes.json()
-                        return {
-                            Data: {
-                                hostname: infoData.vars?.sv_hostname || infoData.hostname || "Unknown Server",
-                                clients: infoData.players?.length || infoData.clients || 0,
-                                sv_maxclients: infoData.vars?.sv_maxclients || infoData.sv_maxclients || 32,
-                                connectEndPoints: [ipPort],
-                                vars: infoData.vars || {}
-                            },
-                            EndPoint: ipPort
-                        }
-                    }
-                }
-                throw new Error("Direct join failed")
-            } catch (e) {
+                console.log(`[CFX API] Failed: ${url} - ${e.message}`)
                 throw e
             }
         }
 
         try {
-            // Race all strategies with a global 5s timeout
             const result = await Promise.any([
-                fetchWithTimeout(`https://servers-frontend.fivem.net/api/servers/single/${id}`, 3500),
-                fetchWithTimeout(`https://servers-live.fivem.net/api/servers/single/${id}`, 3500),
-                tryDirectJoin()
+                fetchWithTimeout(`https://servers-frontend.fivem.net/api/servers/single/${id}`, 5000),
+                fetchWithTimeout(`https://servers.cfg.re/api/servers/single/${id}`, 5000)
             ])
 
             return NextResponse.json(result)
 
-        } catch (aggregateError) {
-             console.warn(`[FiveM Proxy] All strategies failed for ID ${id}`)
-             return NextResponse.json(
-                { error: "Server unavailable or timeout", serverId: id },
+        } catch (error) {
+            console.error(`[CFX API] All failed for: ${id}`)
+            return NextResponse.json(
+                { error: "Server not found or offline" },
                 { status: 404 }
             )
         }
 
     } catch (error) {
-        console.error("[FiveM Proxy] Critical Error:", error)
-        return NextResponse.json(
-            { error: "Internal Server Error" },
-            { status: 500 }
-        )
+        console.error("[CFX API] Error:", error)
+        return NextResponse.json({ error: "Internal error" }, { status: 500 })
     }
 }

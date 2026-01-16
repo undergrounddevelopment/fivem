@@ -1362,7 +1362,6 @@ export function UpvoteBotClient() {
                     <DialogHeader className="hidden">
                         <DialogTitle>Boost Successful</DialogTitle>
                     </DialogHeader>
-                    {/* Header Bar */}
                     <div className="h-14 border-b border-white/10 bg-black/50 backdrop-blur-xl flex items-center justify-between px-6 shrink-0">
                         <div className="flex items-center gap-4">
                             <div className="flex gap-1.5">
@@ -1391,7 +1390,6 @@ export function UpvoteBotClient() {
                         </div>
                     </div>
 
-                    {/* Iframe Window */}
                     <div className="flex-1 bg-white relative group">
                         <iframe 
                             src={`https://servers.fivem.net/servers/detail/${validatedId}`}
@@ -1400,15 +1398,11 @@ export function UpvoteBotClient() {
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
                         />
-                        
-                         {/* Fallback Overlay if needed (optional, purely visual hint) */}
-                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {/* This is just a subtle interaction layer, actual content is in iframe */}
-                        </div>
                     </div>
                 </DialogContent>
             </Dialog>
         </div>
+    </div>
     )
 }
 
