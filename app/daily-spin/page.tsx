@@ -460,20 +460,10 @@ export default function SpinWheelPage() {
       const offset = 162 // Align Item 0 (108deg) to Pointer (270deg) -> 270 - 108 = 162
       
       // Calculate final rotation
-      // random * 30 - 15 adds some randomness within the segment (segment is 36 deg)
-      // We subtract because wheel rotates Clockwise (increasing degrees), so to bring a segment "back" to top, we need target.
-      // Actually: Target Rotation = Current + Distance.
-      // Position of Index i is (108 + i*36).
-      // We want Position to be 270 (mod 360).
-      // So (StartPos + Rotation) % 360 = 270.
-      // Rotation = 270 - StartPos.
-      // Rotation = 162 - i*36.
-      // Add loops * 360.
       const spinAngle = loops * 360 + (162 - (targetIndex * segmentAngle)) + (Math.random() * 20 - 10)
       
-      const newRotation = rotation + spinAngle
-
-      setRotation(newRotation)
+      // Use functional update to avoid closure staleness
+      setRotation(prev => prev + spinAngle)
       
       // --- AUDIO EXPERIENCE (Dynamic & Immersive) ---
       const spinLoop = playAudio(SPIN_LOOP, 0.3)
@@ -617,7 +607,6 @@ export default function SpinWheelPage() {
                 </mask>
                 <motion.g 
                     style={{ transformOrigin: "1000px 1000px" }}
-                    initial={{ rotate: 0 }}
                     animate={{ rotate: rotation }} 
                     transition={{ 
                         duration: 8, 
@@ -675,7 +664,7 @@ export default function SpinWheelPage() {
                     <motion.div initial={{scale: 0.95}} animate={{scale: 1}} exit={{scale: 0.95}} className="w-full max-w-sm glass-modal rounded-xl p-6 shadow-2xl relative">
                         <button onClick={() => setShowBuyModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><div className="rotate-45"><Plus/></div></button>
                         <h2 className="text-xl font-bold mb-4">Buy Tickets</h2>
-                        <BuyTicketForm coins={userCoins} price={ticketPrice} onSuccess={(t, c) => { setTickets(tickets+t); setUserCoins(c); setShowBuyModal(false); }} />
+                        <BuyTicketForm coins={userCoins} price={ticketPrice} onSuccess={(t, c) => { setTickets(prev => prev + t); setUserCoins(c); setShowBuyModal(false); }} />
                     </motion.div>
                 </motion.div>
             )}

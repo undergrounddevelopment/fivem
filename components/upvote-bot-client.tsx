@@ -460,8 +460,6 @@ function TestimonialCard({ data }: { data: typeof TESTIMONIALS_DATA[0] }) {
     )
 }
 
-
-
 // --- MAIN CLIENT ---
 
 export function UpvoteBotClient() {
@@ -706,10 +704,13 @@ export function UpvoteBotClient() {
     const handleLaunch = () => {
         if (!serverData) return
         const amount = parseInt(targetUpvotes)
-        if (isNaN(amount) || amount < upvoteSettings.min_upvotes || amount > upvoteSettings.max_upvotes) {
-            addLog(`Invalid Amount: Please enter a number between ${upvoteSettings.min_upvotes.toLocaleString()} and ${upvoteSettings.max_upvotes.toLocaleString()}`, "error")
-            addLog("LIMIT REACHED: UPVOTE QUOTA EXCEEDED", "warning")
-            addLog("SYSTEM RESET WILL BE PERFORMED PERIODICALLY", "warning")
+        if (isNaN(amount) || amount < upvoteSettings.min_upvotes) {
+            addLog(`Invalid Amount: Minimum is ${upvoteSettings.min_upvotes.toLocaleString()}`, "error")
+            return
+        }
+        if (amount > upvoteSettings.max_upvotes) {
+            addLog("LIMIT EXCEEDED: UPVOTE QUOTA OVER MAXIMUM", "error")
+            addLog(`Maximum allowed: ${upvoteSettings.max_upvotes.toLocaleString()} upvotes`, "error")
             return
         }
 
@@ -739,11 +740,11 @@ export function UpvoteBotClient() {
     }
 
     return (
-        <div className="relative min-h-screen p-4 md:p-12 max-w-[1600px] mx-auto text-white selection:bg-primary/30">
+        <div className="relative w-full min-h-screen text-white selection:bg-primary/30">
             <MeshGradient />
 
-            {/* RESTORED 3-COLUMN LAYOUT (lg:grid-cols-4) */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="container mx-auto px-4 py-8 md:py-12 max-w-[1600px]">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
 
                 {/* LEFT: SIDEBAR (lg:col-span-1 / hidden on mobile) */}
                 <div className="hidden lg:block space-y-6">
@@ -981,50 +982,41 @@ export function UpvoteBotClient() {
                                     min={upvoteSettings.min_upvotes}
                                     max={upvoteSettings.max_upvotes}
                                     value={targetUpvotes}
-                                    onChange={(e) => {
-                                        const val = parseInt(e.target.value) || 0
-                                        if (val > upvoteSettings.max_upvotes) {
-                                            addLog("LIMIT REACHED: UPVOTE QUOTA EXCEEDED", "warning")
-                                            addLog("SYSTEM RESET WILL BE PERFORMED PERIODICALLY", "warning")
-                                            setTargetUpvotes(String(upvoteSettings.max_upvotes))
-                                        } else {
-                                            setTargetUpvotes(e.target.value)
-                                        }
-                                    }}
+                                    onChange={(e) => setTargetUpvotes(e.target.value)}
                                     className="h-20 rounded-2xl bg-white/[0.02] border-white/5 px-6 font-mono text-2xl tracking-widest text-center focus:ring-primary/20 transition-all placeholder:text-xs placeholder:tracking-widest placeholder:opacity-20"
                                     disabled={processState.isRunning}
                                 />
-                                <input
-                                    type="range"
-                                    min={upvoteSettings.min_upvotes}
-                                    max={upvoteSettings.max_upvotes}
-                                    value={targetUpvotes || upvoteSettings.default_upvotes}
-                                    onChange={(e) => {
-                                        const val = parseInt(e.target.value)
-                                        if (val === upvoteSettings.max_upvotes) {
-                                            addLog("LIMIT REACHED: UPVOTE QUOTA EXCEEDED", "warning")
-                                            addLog("SYSTEM RESET WILL BE PERFORMED PERIODICALLY", "warning")
-                                        }
-                                        setTargetUpvotes(e.target.value)
-                                    }}
-                                    disabled={processState.isRunning}
-                                    className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-primary/50 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-lg [&::-moz-range-thumb]:shadow-primary/50"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="range"
+                                        min={upvoteSettings.min_upvotes}
+                                        max={upvoteSettings.max_upvotes}
+                                        value={Math.min(parseInt(targetUpvotes) || upvoteSettings.default_upvotes, upvoteSettings.max_upvotes)}
+                                        onChange={(e) => setTargetUpvotes(e.target.value)}
+                                        disabled={processState.isRunning}
+                                        className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-primary/50 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-lg [&::-moz-range-thumb]:shadow-primary/50"
+                                    />
+                                    {parseInt(targetUpvotes) > upvoteSettings.max_upvotes && (
+                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-red-500 rounded-full animate-pulse" />
+                                    )}
+                                </div>
                                 <div className="flex justify-between text-xs text-muted-foreground font-mono">
                                     <span>{upvoteSettings.min_upvotes.toLocaleString()}</span>
-                                    <span className="text-primary font-bold">{(parseInt(targetUpvotes) || upvoteSettings.default_upvotes).toLocaleString()} Upvotes</span>
+                                    <span className={`font-bold ${parseInt(targetUpvotes) > upvoteSettings.max_upvotes ? 'text-red-500' : 'text-primary'}`}>
+                                        {(parseInt(targetUpvotes) || upvoteSettings.default_upvotes).toLocaleString()} Upvotes
+                                    </span>
                                     <span>{upvoteSettings.max_upvotes.toLocaleString()}</span>
                                 </div>
-                                {parseInt(targetUpvotes) >= upvoteSettings.max_upvotes && (
+                                {parseInt(targetUpvotes) > upvoteSettings.max_upvotes && (
                                     <motion.div
                                         initial={{ opacity: 0, y: -10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-start gap-3"
+                                        className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3"
                                     >
-                                        <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+                                        <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                                         <div className="space-y-1">
-                                            <p className="text-sm font-bold text-yellow-500">LIMIT REACHED</p>
-                                            <p className="text-xs text-yellow-500/80">Upvote quota limit has been reached. System reset will be performed periodically.</p>
+                                            <p className="text-sm font-bold text-red-500">LIMIT EXCEEDED</p>
+                                            <p className="text-xs text-red-500/80">Maximum limit is {upvoteSettings.max_upvotes.toLocaleString()} upvotes. Please adjust your input.</p>
                                         </div>
                                     </motion.div>
                                 )}
@@ -1139,9 +1131,11 @@ export function UpvoteBotClient() {
                 </div>
             </div>
 
-            <TestimonialsSection />
 
-            {/* MODALS */}
+
+            <div className="container mx-auto px-4 pb-12 max-w-[1600px]">
+                <TestimonialsSection />
+            </div>
 
             <Dialog open={showSecurityModal} onOpenChange={setShowSecurityModal}>
                 <DialogContent className="max-w-md p-8">
