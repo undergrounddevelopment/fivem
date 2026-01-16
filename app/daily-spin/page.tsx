@@ -296,8 +296,9 @@ export default function SpinWheelPage() {
                 <div className="ml-2 text-base font-semibold"><span className="text-white">{userCoins.toLocaleString()}</span></div>
              </div>
              
+             {/* User Avatar - Connected to real profile */}
              <div className="size-10 rounded-full bg-[#25282f] border-[2px] border-[#404859e5] overflow-hidden"> 
-                 <img src="https://assets.codepen.io/3685267/wheel-of-fortune-tvcbwknt.png" className="w-full h-full object-cover"/>
+                 <img src={user?.user_metadata?.avatar_url || user?.user_metadata?.picture || "https://cdn.discordapp.com/embed/avatars/0.png"} className="w-full h-full object-cover"/>
              </div>
         </div>
       </div>
@@ -324,7 +325,7 @@ export default function SpinWheelPage() {
                     <g transform="translate(1000, 1000)">
                         {f1.map((d, i) => <path key={`seg-${i}`} d={d} style={{fill: "#343a46c2", stroke: "#444c59c2", strokeWidth: "6"}} />)}
                         {f3.map(([path, id], idx) => (<React.Fragment key={`title-${idx}`}><path d={path} stroke="none" strokeWidth={5} id={id} /><text dy={20} className="circ-title"><textPath xlinkHref={`#${id}`} textAnchor="middle" startOffset="50%" style={{ textAnchor: "middle" }}>{items[idx] ? items[idx].title : ''}</textPath></text></React.Fragment>))}
-                        {f4.map(([path, id], idx) => (<React.Fragment key={`rate-${idx}`}><path d={path} stroke="none" strokeWidth={5} id={id} /><text dy={16} className="circl-desc"><textPath xlinkHref={`#${id}`} textAnchor="middle" startOffset="50%" style={{ textAnchor: "middle" }}>{items[idx] ? items[idx].dropRate : '0'}% drop rate</textPath></text></React.Fragment>))}
+                        {/* Drop rates hidden from users - only visible in admin panel */}
                         {f2.map(({x, y, rt}, idx) => (<g key={`img-${idx}`} transform={`translate(${x-90}, ${y-90})`}><g transform={`rotate(${rt}, 90, 90)`}><image href={items[idx] ? items[idx].image : ''} height="180" width="180" className="scale-on-hover"/></g></g>))}
                     </g>
                 </motion.g>
@@ -355,7 +356,8 @@ export default function SpinWheelPage() {
                      <div key={i} className="flex-shrink-0 w-32 bg-[#212530] border border-[#393f51] rounded-md p-3 pt-8 relative flex flex-col items-center group">
                           <img src={item.image} className="size-16 object-cover absolute -top-6 group-hover:scale-110 transition-transform duration-300"/>
                           <span className="text-white text-xs font-semibold text-center mt-2 line-clamp-1">{item.title}</span>
-                          <span className="text-[10px] text-[#667088] mt-1">{item.dropRate}% drop rate</span>
+                          {/* Drop rate hidden - users only see prize name */}
+                          <span className="text-[10px] text-[#667088] mt-1">Prize</span>
                      </div>
                  ))}
             </div>
