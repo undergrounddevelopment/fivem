@@ -43,8 +43,8 @@ export async function GET(
 
         try {
             const result = await Promise.any([
-                fetchWithTimeout(`https://servers-frontend.fivem.net/api/servers/single/${id}`, 5000),
-                fetchWithTimeout(`https://servers.cfg.re/api/servers/single/${id}`, 5000)
+                fetchWithTimeout(`https://servers.fivem.net/api/servers/single/${id}`, 5000),
+                fetchWithTimeout(`https://servers-frontend.fivem.net/api/servers/single/${id}`, 5000)
             ])
 
             return NextResponse.json(result)
